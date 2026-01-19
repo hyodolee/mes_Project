@@ -1,0 +1,381 @@
+-- ============================================================
+-- MES 시스템 데이터베이스 DDL 스크립트
+-- DBMS: MariaDB 10.x
+-- 파일: mes_ddl_01_master.sql (데이터베이스, 공통코드, 기준정보)
+-- 작성일: 2025-01-19
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- 1. 데이터베이스 생성
+-- ------------------------------------------------------------
+CREATE DATABASE IF NOT EXISTS MES_DB
+    DEFAULT CHARACTER SET utf8mb4
+    DEFAULT COLLATE utf8mb4_general_ci;
+
+USE MES_DB;
+
+-- ------------------------------------------------------------
+-- 2. 공통코드 테이블
+-- ------------------------------------------------------------
+
+-- 2.1 공통코드그룹 (COM_CODE_GRP)
+CREATE TABLE COM_CODE_GRP (
+    GRP_CD          VARCHAR(20)     NOT NULL    COMMENT '그룹코드',
+    GRP_NM          VARCHAR(100)    NOT NULL    COMMENT '그룹명',
+    GRP_DESC        VARCHAR(500)    NULL        COMMENT '그룹설명',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (GRP_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='공통코드그룹';
+
+-- 2.2 공통코드 (COM_CODE)
+CREATE TABLE COM_CODE (
+    GRP_CD          VARCHAR(20)     NOT NULL    COMMENT '그룹코드',
+    COM_CD          VARCHAR(20)     NOT NULL    COMMENT '공통코드',
+    COM_NM          VARCHAR(100)    NOT NULL    COMMENT '코드명',
+    COM_DESC        VARCHAR(500)    NULL        COMMENT '코드설명',
+    SORT_SEQ        INT             NOT NULL    DEFAULT 0 COMMENT '정렬순서',
+    ATTR1           VARCHAR(100)    NULL        COMMENT '속성1',
+    ATTR2           VARCHAR(100)    NULL        COMMENT '속성2',
+    ATTR3           VARCHAR(100)    NULL        COMMENT '속성3',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (GRP_CD, COM_CD),
+    CONSTRAINT FK_COM_CODE_GRP FOREIGN KEY (GRP_CD) REFERENCES COM_CODE_GRP(GRP_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='공통코드';
+
+-- 2.3 채번관리 (COM_SEQ_NO)
+CREATE TABLE COM_SEQ_NO (
+    SEQ_TYPE        VARCHAR(20)     NOT NULL    COMMENT '채번유형',
+    PREFIX          VARCHAR(10)     NOT NULL    COMMENT '접두어',
+    SEQ_DT          DATE            NOT NULL    COMMENT '채번일자',
+    CURRENT_SEQ     INT             NOT NULL    DEFAULT 0 COMMENT '현재순번',
+    SEQ_LENGTH      INT             NOT NULL    DEFAULT 4 COMMENT '순번자릿수',
+    PRIMARY KEY (SEQ_TYPE, SEQ_DT)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='채번관리';
+
+-- ------------------------------------------------------------
+-- 3. 기준정보 테이블
+-- ------------------------------------------------------------
+
+-- 3.1 회사정보 (MST_COMPANY)
+CREATE TABLE MST_COMPANY (
+    COMPANY_CD      VARCHAR(20)     NOT NULL    COMMENT '회사코드',
+    COMPANY_NM      VARCHAR(100)    NOT NULL    COMMENT '회사명',
+    BIZ_NO          VARCHAR(20)     NULL        COMMENT '사업자번호',
+    CEO_NM          VARCHAR(50)     NULL        COMMENT '대표자명',
+    BIZ_TYPE        VARCHAR(100)    NULL        COMMENT '업태',
+    BIZ_ITEM        VARCHAR(100)    NULL        COMMENT '종목',
+    ADDR            VARCHAR(500)    NULL        COMMENT '주소',
+    TEL_NO          VARCHAR(20)     NULL        COMMENT '전화번호',
+    FAX_NO          VARCHAR(20)     NULL        COMMENT '팩스번호',
+    EMAIL           VARCHAR(100)    NULL        COMMENT '이메일',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (COMPANY_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='회사정보';
+
+-- 3.2 공장정보 (MST_PLANT)
+CREATE TABLE MST_PLANT (
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    COMPANY_CD      VARCHAR(20)     NOT NULL    COMMENT '회사코드',
+    PLANT_NM        VARCHAR(100)    NOT NULL    COMMENT '공장명',
+    PLANT_TYPE      VARCHAR(20)     NULL        COMMENT '공장유형',
+    ADDR            VARCHAR(500)    NULL        COMMENT '주소',
+    TEL_NO          VARCHAR(20)     NULL        COMMENT '전화번호',
+    FAX_NO          VARCHAR(20)     NULL        COMMENT '팩스번호',
+    MANAGER_NM      VARCHAR(50)     NULL        COMMENT '담당자명',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (PLANT_CD),
+    CONSTRAINT FK_MST_PLANT_COMPANY FOREIGN KEY (COMPANY_CD) REFERENCES MST_COMPANY(COMPANY_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='공장정보';
+
+-- 3.3 부서정보 (MST_DEPT)
+CREATE TABLE MST_DEPT (
+    DEPT_CD         VARCHAR(20)     NOT NULL    COMMENT '부서코드',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    DEPT_NM         VARCHAR(100)    NOT NULL    COMMENT '부서명',
+    PARENT_DEPT_CD  VARCHAR(20)     NULL        COMMENT '상위부서코드',
+    DEPT_LEVEL      INT             NOT NULL    DEFAULT 1 COMMENT '부서레벨',
+    SORT_SEQ        INT             NOT NULL    DEFAULT 0 COMMENT '정렬순서',
+    MANAGER_ID      VARCHAR(20)     NULL        COMMENT '부서장ID',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (DEPT_CD),
+    CONSTRAINT FK_MST_DEPT_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='부서정보';
+
+-- 3.4 작업자정보 (MST_WORKER)
+CREATE TABLE MST_WORKER (
+    WORKER_ID       VARCHAR(20)     NOT NULL    COMMENT '작업자ID',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    DEPT_CD         VARCHAR(20)     NULL        COMMENT '부서코드',
+    WORKER_NM       VARCHAR(50)     NOT NULL    COMMENT '작업자명',
+    WORKER_TYPE     VARCHAR(20)     NOT NULL    DEFAULT '정규직' COMMENT '작업자유형',
+    POSITION        VARCHAR(50)     NULL        COMMENT '직위',
+    HIRE_DT         DATE            NULL        COMMENT '입사일',
+    RESIGN_DT       DATE            NULL        COMMENT '퇴사일',
+    MOBILE_NO       VARCHAR(20)     NULL        COMMENT '휴대폰번호',
+    EMAIL           VARCHAR(100)    NULL        COMMENT '이메일',
+    SKILL_LEVEL     VARCHAR(20)     NULL        DEFAULT '중급' COMMENT '숙련도',
+    CERT_INFO       VARCHAR(500)    NULL        COMMENT '자격증정보',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (WORKER_ID),
+    CONSTRAINT FK_MST_WORKER_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD),
+    CONSTRAINT FK_MST_WORKER_DEPT FOREIGN KEY (DEPT_CD) REFERENCES MST_DEPT(DEPT_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='작업자정보';
+
+-- 3.5 작업장정보 (MST_WORKCENTER)
+CREATE TABLE MST_WORKCENTER (
+    WORKCENTER_CD   VARCHAR(20)     NOT NULL    COMMENT '작업장코드',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    WORKCENTER_NM   VARCHAR(100)    NOT NULL    COMMENT '작업장명',
+    WORKCENTER_TYPE VARCHAR(20)     NOT NULL    COMMENT '작업장유형',
+    LOCATION        VARCHAR(100)    NULL        COMMENT '위치',
+    CAPACITY_QTY    DECIMAL(15,3)   NULL        COMMENT '생산능력',
+    CAPACITY_UNIT   VARCHAR(20)     NULL        COMMENT '능력단위',
+    WORKER_CNT      INT             NULL        COMMENT '작업인원',
+    MANAGER_ID      VARCHAR(20)     NULL        COMMENT '담당자ID',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (WORKCENTER_CD),
+    CONSTRAINT FK_MST_WORKCENTER_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='작업장정보';
+
+-- 3.6 설비정보 (MST_EQUIPMENT)
+CREATE TABLE MST_EQUIPMENT (
+    EQUIPMENT_CD    VARCHAR(20)     NOT NULL    COMMENT '설비코드',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    WORKCENTER_CD   VARCHAR(20)     NOT NULL    COMMENT '작업장코드',
+    EQUIPMENT_NM    VARCHAR(100)    NOT NULL    COMMENT '설비명',
+    EQUIPMENT_TYPE  VARCHAR(50)     NOT NULL    COMMENT '설비유형',
+    MODEL_NM        VARCHAR(100)    NULL        COMMENT '모델명',
+    MAKER           VARCHAR(100)    NULL        COMMENT '제조사',
+    SERIAL_NO       VARCHAR(100)    NULL        COMMENT '시리얼번호',
+    INSTALL_DT      DATE            NULL        COMMENT '설치일',
+    PURCHASE_DT     DATE            NULL        COMMENT '구매일',
+    PURCHASE_PRICE  DECIMAL(18,2)   NULL        COMMENT '구매가격',
+    CAPACITY_QTY    DECIMAL(15,3)   NULL        COMMENT '생산능력',
+    CAPACITY_UNIT   VARCHAR(20)     NULL        COMMENT '능력단위',
+    POWER_SPEC      VARCHAR(100)    NULL        COMMENT '전력사양',
+    EQUIPMENT_STATUS VARCHAR(20)    NOT NULL    DEFAULT '가동' COMMENT '설비상태',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (EQUIPMENT_CD),
+    CONSTRAINT FK_MST_EQUIPMENT_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD),
+    CONSTRAINT FK_MST_EQUIPMENT_WC FOREIGN KEY (WORKCENTER_CD) REFERENCES MST_WORKCENTER(WORKCENTER_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='설비정보';
+
+-- 3.7 거래처정보 (MST_VENDOR)
+CREATE TABLE MST_VENDOR (
+    VENDOR_CD       VARCHAR(50)     NOT NULL    COMMENT '거래처코드',
+    VENDOR_NM       VARCHAR(200)    NOT NULL    COMMENT '거래처명',
+    VENDOR_TYPE     VARCHAR(20)     NOT NULL    COMMENT '거래처유형',
+    BIZ_NO          VARCHAR(20)     NULL        COMMENT '사업자번호',
+    CEO_NM          VARCHAR(50)     NULL        COMMENT '대표자명',
+    BIZ_TYPE        VARCHAR(100)    NULL        COMMENT '업태',
+    BIZ_ITEM        VARCHAR(100)    NULL        COMMENT '종목',
+    ADDR            VARCHAR(500)    NULL        COMMENT '주소',
+    TEL_NO          VARCHAR(20)     NULL        COMMENT '전화번호',
+    FAX_NO          VARCHAR(20)     NULL        COMMENT '팩스번호',
+    EMAIL           VARCHAR(100)    NULL        COMMENT '이메일',
+    MANAGER_NM      VARCHAR(50)     NULL        COMMENT '담당자명',
+    MANAGER_TEL     VARCHAR(20)     NULL        COMMENT '담당자연락처',
+    PAYMENT_TERMS   VARCHAR(100)    NULL        COMMENT '결제조건',
+    BANK_NM         VARCHAR(50)     NULL        COMMENT '은행명',
+    ACCOUNT_NO      VARCHAR(50)     NULL        COMMENT '계좌번호',
+    ACCOUNT_HOLDER  VARCHAR(50)     NULL        COMMENT '예금주',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (VENDOR_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='거래처정보';
+
+-- 3.8 창고정보 (MST_WAREHOUSE)
+CREATE TABLE MST_WAREHOUSE (
+    WAREHOUSE_CD    VARCHAR(20)     NOT NULL    COMMENT '창고코드',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    WAREHOUSE_NM    VARCHAR(100)    NOT NULL    COMMENT '창고명',
+    WAREHOUSE_TYPE  VARCHAR(20)     NOT NULL    COMMENT '창고유형',
+    LOCATION        VARCHAR(100)    NULL        COMMENT '위치',
+    CAPACITY        DECIMAL(15,3)   NULL        COMMENT '수용능력',
+    CAPACITY_UNIT   VARCHAR(20)     NULL        COMMENT '수용단위',
+    MANAGER_ID      VARCHAR(20)     NULL        COMMENT '담당자ID',
+    TEL_NO          VARCHAR(20)     NULL        COMMENT '전화번호',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (WAREHOUSE_CD),
+    CONSTRAINT FK_MST_WAREHOUSE_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='창고정보';
+
+-- 3.9 품목정보 (MST_ITEM)
+CREATE TABLE MST_ITEM (
+    ITEM_CD         VARCHAR(50)     NOT NULL    COMMENT '품목코드',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    ITEM_NM         VARCHAR(200)    NOT NULL    COMMENT '품목명',
+    ITEM_EN_NM      VARCHAR(200)    NULL        COMMENT '품목영문명',
+    ITEM_SPEC       VARCHAR(500)    NULL        COMMENT '규격',
+    ITEM_TYPE       VARCHAR(20)     NOT NULL    COMMENT '품목유형',
+    ITEM_GRP        VARCHAR(50)     NULL        COMMENT '품목그룹',
+    ITEM_CLASS      VARCHAR(50)     NULL        COMMENT '품목분류',
+    UNIT            VARCHAR(20)     NOT NULL    COMMENT '기본단위',
+    SUB_UNIT        VARCHAR(20)     NULL        COMMENT '보조단위',
+    UNIT_CONV_RATE  DECIMAL(15,5)   NULL        COMMENT '단위환산율',
+    SAFETY_STOCK_QTY DECIMAL(15,3)  NULL        COMMENT '안전재고수량',
+    MIN_ORDER_QTY   DECIMAL(15,3)   NULL        COMMENT '최소발주수량',
+    LEAD_TIME       INT             NULL        COMMENT '리드타임(일)',
+    LOT_SIZE        DECIMAL(15,3)   NULL        COMMENT 'LOT크기',
+    SHELF_LIFE      INT             NULL        COMMENT '유효기간(일)',
+    WEIGHT          DECIMAL(15,5)   NULL        COMMENT '중량',
+    WEIGHT_UNIT     VARCHAR(20)     NULL        COMMENT '중량단위',
+    VOLUME          DECIMAL(15,5)   NULL        COMMENT '부피',
+    VOLUME_UNIT     VARCHAR(20)     NULL        COMMENT '부피단위',
+    PURCHASE_PRICE  DECIMAL(18,2)   NULL        COMMENT '구매단가',
+    SALE_PRICE      DECIMAL(18,2)   NULL        COMMENT '판매단가',
+    STANDARD_COST   DECIMAL(18,2)   NULL        COMMENT '표준원가',
+    VENDOR_CD       VARCHAR(50)     NULL        COMMENT '주거래처코드',
+    INSPECT_YN      CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '검사여부',
+    LOT_MANAGE_YN   CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT 'LOT관리여부',
+    SERIAL_MANAGE_YN CHAR(1)        NOT NULL    DEFAULT 'N' COMMENT '시리얼관리여부',
+    DRAWING_NO      VARCHAR(50)     NULL        COMMENT '도면번호',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (ITEM_CD),
+    CONSTRAINT FK_MST_ITEM_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD),
+    CONSTRAINT FK_MST_ITEM_VENDOR FOREIGN KEY (VENDOR_CD) REFERENCES MST_VENDOR(VENDOR_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='품목정보';
+
+-- 3.10 BOM정보 (MST_BOM)
+CREATE TABLE MST_BOM (
+    BOM_ID          BIGINT          NOT NULL    AUTO_INCREMENT COMMENT 'BOM ID',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    PARENT_ITEM_CD  VARCHAR(50)     NOT NULL    COMMENT '모품목코드',
+    CHILD_ITEM_CD   VARCHAR(50)     NOT NULL    COMMENT '자품목코드',
+    BOM_LEVEL       INT             NOT NULL    DEFAULT 1 COMMENT 'BOM레벨',
+    BOM_QTY         DECIMAL(15,5)   NOT NULL    COMMENT '소요량',
+    LOSS_RATE       DECIMAL(5,2)    NULL        DEFAULT 0 COMMENT '손실율(%)',
+    START_DT        DATE            NOT NULL    COMMENT '유효시작일',
+    END_DT          DATE            NULL        COMMENT '유효종료일',
+    PROCESS_CD      VARCHAR(20)     NULL        COMMENT '투입공정',
+    LOCATION_TYPE   VARCHAR(20)     NULL        COMMENT '투입위치',
+    BOM_RMK         VARCHAR(500)    NULL        COMMENT '비고',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (BOM_ID),
+    UNIQUE KEY UK_MST_BOM (PLANT_CD, PARENT_ITEM_CD, CHILD_ITEM_CD, START_DT),
+    CONSTRAINT FK_MST_BOM_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD),
+    CONSTRAINT FK_MST_BOM_PARENT FOREIGN KEY (PARENT_ITEM_CD) REFERENCES MST_ITEM(ITEM_CD),
+    CONSTRAINT FK_MST_BOM_CHILD FOREIGN KEY (CHILD_ITEM_CD) REFERENCES MST_ITEM(ITEM_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='BOM정보';
+
+-- 3.11 공정정보 (MST_ROUTING)
+CREATE TABLE MST_ROUTING (
+    ROUTING_ID      BIGINT          NOT NULL    AUTO_INCREMENT COMMENT '라우팅ID',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    ITEM_CD         VARCHAR(50)     NOT NULL    COMMENT '품목코드',
+    PROCESS_SEQ     INT             NOT NULL    COMMENT '공정순서',
+    PROCESS_CD      VARCHAR(20)     NOT NULL    COMMENT '공정코드',
+    PROCESS_NM      VARCHAR(100)    NOT NULL    COMMENT '공정명',
+    WORKCENTER_CD   VARCHAR(20)     NULL        COMMENT '작업장코드',
+    EQUIPMENT_CD    VARCHAR(20)     NULL        COMMENT '설비코드',
+    SETUP_TIME      DECIMAL(10,2)   NULL        DEFAULT 0 COMMENT '준비시간(분)',
+    RUN_TIME        DECIMAL(10,2)   NULL        DEFAULT 0 COMMENT '가공시간(분)',
+    WAIT_TIME       DECIMAL(10,2)   NULL        DEFAULT 0 COMMENT '대기시간(분)',
+    MOVE_TIME       DECIMAL(10,2)   NULL        DEFAULT 0 COMMENT '이동시간(분)',
+    LABOR_CNT       INT             NULL        DEFAULT 1 COMMENT '작업인원',
+    YIELD_RATE      DECIMAL(5,2)    NULL        DEFAULT 100 COMMENT '수율(%)',
+    PROCESS_DESC    VARCHAR(1000)   NULL        COMMENT '공정설명',
+    INSPECT_YN      CHAR(1)         NOT NULL    DEFAULT 'N' COMMENT '검사여부',
+    OUTSOURCE_YN    CHAR(1)         NOT NULL    DEFAULT 'N' COMMENT '외주여부',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (ROUTING_ID),
+    UNIQUE KEY UK_MST_ROUTING (PLANT_CD, ITEM_CD, PROCESS_SEQ),
+    CONSTRAINT FK_MST_ROUTING_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD),
+    CONSTRAINT FK_MST_ROUTING_ITEM FOREIGN KEY (ITEM_CD) REFERENCES MST_ITEM(ITEM_CD),
+    CONSTRAINT FK_MST_ROUTING_WC FOREIGN KEY (WORKCENTER_CD) REFERENCES MST_WORKCENTER(WORKCENTER_CD),
+    CONSTRAINT FK_MST_ROUTING_EQP FOREIGN KEY (EQUIPMENT_CD) REFERENCES MST_EQUIPMENT(EQUIPMENT_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='공정정보(라우팅)';
+
+-- 3.12 공정코드 (MST_PROCESS)
+CREATE TABLE MST_PROCESS (
+    PROCESS_CD      VARCHAR(20)     NOT NULL    COMMENT '공정코드',
+    PLANT_CD        VARCHAR(20)     NOT NULL    COMMENT '공장코드',
+    PROCESS_NM      VARCHAR(100)    NOT NULL    COMMENT '공정명',
+    PROCESS_TYPE    VARCHAR(20)     NULL        COMMENT '공정유형',
+    PROCESS_DESC    VARCHAR(500)    NULL        COMMENT '공정설명',
+    SORT_SEQ        INT             NOT NULL    DEFAULT 0 COMMENT '정렬순서',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (PROCESS_CD),
+    CONSTRAINT FK_MST_PROCESS_PLANT FOREIGN KEY (PLANT_CD) REFERENCES MST_PLANT(PLANT_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='공정코드';
+
+-- 3.13 단위정보 (MST_UNIT)
+CREATE TABLE MST_UNIT (
+    UNIT_CD         VARCHAR(20)     NOT NULL    COMMENT '단위코드',
+    UNIT_NM         VARCHAR(50)     NOT NULL    COMMENT '단위명',
+    UNIT_TYPE       VARCHAR(20)     NULL        COMMENT '단위유형',
+    USE_YN          CHAR(1)         NOT NULL    DEFAULT 'Y' COMMENT '사용여부',
+    REG_USER_ID     VARCHAR(50)     NOT NULL    COMMENT '등록자ID',
+    REG_DTM         DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시',
+    UPD_USER_ID     VARCHAR(50)     NULL        COMMENT '수정자ID',
+    UPD_DTM         DATETIME        NULL        ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
+    PRIMARY KEY (UNIT_CD)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='단위정보';
+
+-- ------------------------------------------------------------
+-- 기준정보 인덱스 생성
+-- ------------------------------------------------------------
+CREATE INDEX IDX_MST_ITEM_01 ON MST_ITEM(PLANT_CD, ITEM_TYPE);
+CREATE INDEX IDX_MST_ITEM_02 ON MST_ITEM(ITEM_NM);
+CREATE INDEX IDX_MST_ITEM_03 ON MST_ITEM(ITEM_GRP);
+CREATE INDEX IDX_MST_BOM_01 ON MST_BOM(PARENT_ITEM_CD);
+CREATE INDEX IDX_MST_BOM_02 ON MST_BOM(CHILD_ITEM_CD);
+CREATE INDEX IDX_MST_ROUTING_01 ON MST_ROUTING(ITEM_CD, PROCESS_SEQ);
+CREATE INDEX IDX_MST_ROUTING_02 ON MST_ROUTING(WORKCENTER_CD);
+CREATE INDEX IDX_MST_EQUIPMENT_01 ON MST_EQUIPMENT(WORKCENTER_CD);
+CREATE INDEX IDX_MST_WORKER_01 ON MST_WORKER(PLANT_CD, DEPT_CD);
