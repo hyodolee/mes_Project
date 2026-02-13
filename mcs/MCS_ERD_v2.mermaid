@@ -1,0 +1,255 @@
+erDiagram
+    %% ============================================
+    %% MES 기존 테이블 (참조만 - 수정 안 함)
+    %% ============================================
+
+    MST_PLANT {
+        varchar PLANT_CD PK "공장코드"
+        varchar COMPANY_CD FK "회사코드"
+        varchar PLANT_NM "공장명"
+    }
+
+    MST_WAREHOUSE {
+        varchar WAREHOUSE_CD PK "창고코드"
+        varchar PLANT_CD FK "공장코드"
+        varchar WAREHOUSE_NM "창고명"
+        varchar WAREHOUSE_TYPE "창고유형"
+    }
+
+    MST_ITEM {
+        varchar ITEM_CD PK "품목코드"
+        varchar PLANT_CD FK "공장코드"
+        varchar ITEM_NM "품목명"
+        varchar ITEM_TYPE "품목유형"
+        varchar ITEM_GRP "품목그룹"
+        varchar UNIT "단위"
+        decimal SAFETY_STOCK_QTY "안전재고"
+    }
+
+    MST_VENDOR {
+        varchar VENDOR_CD PK "거래처코드"
+        varchar VENDOR_NM "거래처명"
+        varchar VENDOR_TYPE "거래처유형"
+    }
+
+    MST_WORKER {
+        varchar WORKER_ID PK "작업자ID"
+        varchar PLANT_CD FK "공장코드"
+        varchar WORKER_NM "작업자명"
+    }
+
+    INV_LOT {
+        bigint LOT_ID PK "LOT ID"
+        varchar PLANT_CD FK "공장코드"
+        varchar LOT_NO UK "LOT번호"
+        varchar ITEM_CD FK "품목코드"
+        decimal LOT_QTY "LOT수량"
+        decimal CURRENT_QTY "현재수량"
+        varchar LOT_STATUS "LOT상태"
+        date EXPIRE_DT "유효기한"
+    }
+
+    INV_STOCK {
+        bigint STOCK_ID PK "재고ID"
+        varchar PLANT_CD FK "공장코드"
+        varchar WAREHOUSE_CD FK "창고코드"
+        varchar ITEM_CD FK "품목코드"
+        varchar LOT_NO "LOT번호"
+        decimal STOCK_QTY "재고수량"
+        decimal RESERVED_QTY "예약수량"
+        decimal AVAILABLE_QTY "가용수량(계산)"
+    }
+
+    INV_TRANS_HIS {
+        bigint TRANS_ID PK "거래ID"
+        varchar PLANT_CD FK "공장코드"
+        varchar TRANS_NO UK "거래번호"
+        varchar TRANS_TYPE "거래유형"
+        varchar TRANS_REASON "거래사유"
+        varchar ITEM_CD FK "품목코드"
+        varchar LOT_NO "LOT번호"
+        decimal TRANS_QTY "거래수량"
+    }
+
+    COM_CODE_GRP {
+        varchar GRP_CD PK "그룹코드"
+        varchar GRP_NM "그룹명"
+    }
+
+    COM_CODE {
+        varchar GRP_CD PK "그룹코드"
+        varchar COM_CD PK "공통코드"
+        varchar COM_NM "코드명"
+    }
+
+    PLN_WORK_ORDER {
+        bigint WO_ID PK "작업지시ID"
+        varchar WO_NO UK "작업지시번호"
+        varchar ITEM_CD FK "품목코드"
+        decimal WO_QTY "지시수량"
+        varchar WO_STATUS "작업상태"
+    }
+
+    %% ============================================
+    %% MCS 신규 테이블
+    %% ============================================
+
+    MCS_ZONE {
+        bigint ZONE_ID PK "구역ID"
+        varchar PLANT_CD FK "공장코드"
+        varchar WAREHOUSE_CD FK "창고코드"
+        varchar ZONE_CD "구역코드"
+        varchar ZONE_NM "구역명"
+        varchar ZONE_TYPE "구역유형"
+        int SORT_SEQ "정렬순서"
+        char USE_YN "사용여부"
+    }
+
+    MCS_LOCATION {
+        bigint LOCATION_ID PK "로케이션ID"
+        bigint ZONE_ID FK "구역ID"
+        varchar LOCATION_CD "로케이션코드"
+        varchar LOCATION_NM "로케이션명"
+        decimal MAX_CAPACITY "최대수용량"
+        decimal CURRENT_USAGE "현재사용량"
+        varchar LOCATION_STATUS "로케이션상태"
+        char USE_YN "사용여부"
+    }
+
+    MCS_LOCATION_STOCK {
+        bigint LOC_STOCK_ID PK "로케이션재고ID"
+        varchar PLANT_CD FK "공장코드"
+        bigint LOCATION_ID FK "로케이션ID"
+        varchar ITEM_CD FK "품목코드"
+        varchar LOT_NO "LOT번호"
+        decimal STOCK_QTY "재고수량"
+        decimal RESERVED_QTY "예약수량"
+        decimal AVAILABLE_QTY "가용수량(계산)"
+    }
+
+    MCS_LOC_TRANS_HIS {
+        bigint LOC_TRANS_ID PK "로케이션거래ID"
+        varchar PLANT_CD FK "공장코드"
+        bigint LOC_STOCK_ID FK "로케이션재고ID"
+        varchar TRANS_TYPE "거래유형"
+        decimal TRANS_QTY "변동수량"
+        decimal BEFORE_QTY "변경전수량"
+        decimal AFTER_QTY "변경후수량"
+        varchar REF_TYPE "참조유형"
+        varchar REF_NO "참조번호"
+    }
+
+    MCS_INBOUND_ORDER {
+        bigint INBOUND_ID PK "입고ID"
+        varchar PLANT_CD FK "공장코드"
+        varchar INBOUND_NO UK "입고번호"
+        varchar INBOUND_STATUS "입고상태"
+        varchar VENDOR_CD FK "거래처코드"
+        varchar WAREHOUSE_CD FK "창고코드"
+        date EXPECTED_DT "입고예정일"
+        datetime ACTUAL_DT "실제입고일시"
+        bigint RECEIVE_PLAN_ID "MES연동ID"
+    }
+
+    MCS_INBOUND_ITEM {
+        bigint INBOUND_ITEM_ID PK "입고품목ID"
+        bigint INBOUND_ID FK "입고ID"
+        varchar ITEM_CD FK "품목코드"
+        varchar LOT_NO "LOT번호"
+        bigint LOCATION_ID FK "적치로케이션"
+        decimal EXPECTED_QTY "예정수량"
+        decimal ACTUAL_QTY "실제수량"
+        varchar ITEM_STATUS "품목상태"
+    }
+
+    MCS_OUTBOUND_ORDER {
+        bigint OUTBOUND_ID PK "출고ID"
+        varchar PLANT_CD FK "공장코드"
+        varchar OUTBOUND_NO UK "출고번호"
+        varchar OUTBOUND_STATUS "출고상태"
+        varchar CUSTOMER_CD "고객코드"
+        varchar WAREHOUSE_CD FK "창고코드"
+        bigint ISSUE_PLAN_ID "MES연동ID"
+        bigint WO_ID FK "작업지시ID"
+    }
+
+    MCS_OUTBOUND_ITEM {
+        bigint OUTBOUND_ITEM_ID PK "출고품목ID"
+        bigint OUTBOUND_ID FK "출고ID"
+        varchar ITEM_CD FK "품목코드"
+        varchar LOT_NO "LOT번호"
+        bigint LOCATION_ID FK "출고로케이션"
+        decimal REQUESTED_QTY "요청수량"
+        decimal ALLOCATED_QTY "할당수량"
+        decimal PICKED_QTY "피킹수량"
+        decimal SHIPPED_QTY "출하수량"
+        varchar ITEM_STATUS "품목상태"
+    }
+
+    MCS_TRANSFER_ORDER {
+        bigint TRANSFER_ID PK "이동ID"
+        varchar PLANT_CD FK "공장코드"
+        varchar TRANSFER_NO UK "이동번호"
+        varchar TRANSFER_STATUS "이동상태"
+        bigint FROM_LOCATION_ID FK "출발로케이션"
+        bigint TO_LOCATION_ID FK "도착로케이션"
+        varchar TRANSFER_REASON "이동사유"
+    }
+
+    MCS_TRANSFER_ITEM {
+        bigint TRANSFER_ITEM_ID PK "이동품목ID"
+        bigint TRANSFER_ID FK "이동ID"
+        varchar ITEM_CD FK "품목코드"
+        varchar LOT_NO "LOT번호"
+        decimal TRANSFER_QTY "이동수량"
+        varchar ITEM_STATUS "품목상태"
+    }
+
+    %% ============================================
+    %% 관계: MES 내부
+    %% ============================================
+    MST_PLANT ||--o{ MST_WAREHOUSE : "보유"
+    MST_PLANT ||--o{ MST_ITEM : "관리"
+    MST_PLANT ||--o{ MST_WORKER : "소속"
+    MST_ITEM ||--o{ INV_LOT : "LOT생성"
+    MST_ITEM ||--o{ INV_STOCK : "재고보유"
+    MST_WAREHOUSE ||--o{ INV_STOCK : "보관"
+    COM_CODE_GRP ||--o{ COM_CODE : "포함"
+
+    %% ============================================
+    %% 관계: MCS ← MES 참조
+    %% ============================================
+    MST_PLANT ||--o{ MCS_ZONE : "PLANT_CD"
+    MST_WAREHOUSE ||--o{ MCS_ZONE : "WAREHOUSE_CD"
+    MST_PLANT ||--o{ MCS_LOCATION_STOCK : "PLANT_CD"
+    MST_ITEM ||--o{ MCS_LOCATION_STOCK : "ITEM_CD"
+    MST_VENDOR ||--o{ MCS_INBOUND_ORDER : "VENDOR_CD"
+    MST_WAREHOUSE ||--o{ MCS_INBOUND_ORDER : "WAREHOUSE_CD"
+    MST_ITEM ||--o{ MCS_INBOUND_ITEM : "ITEM_CD"
+    MST_WAREHOUSE ||--o{ MCS_OUTBOUND_ORDER : "WAREHOUSE_CD"
+    MST_ITEM ||--o{ MCS_OUTBOUND_ITEM : "ITEM_CD"
+    MST_ITEM ||--o{ MCS_TRANSFER_ITEM : "ITEM_CD"
+    PLN_WORK_ORDER ||--o{ MCS_OUTBOUND_ORDER : "WO_ID(생산투입)"
+
+    %% ============================================
+    %% 관계: MCS 내부
+    %% ============================================
+    MCS_ZONE ||--o{ MCS_LOCATION : "포함"
+    MCS_LOCATION ||--o{ MCS_LOCATION_STOCK : "재고보유"
+    MCS_LOCATION_STOCK ||--o{ MCS_LOC_TRANS_HIS : "이력기록"
+
+    MCS_INBOUND_ORDER ||--o{ MCS_INBOUND_ITEM : "품목포함"
+    MCS_INBOUND_ITEM }o--o| MCS_LOCATION : "적치위치"
+
+    MCS_OUTBOUND_ORDER ||--o{ MCS_OUTBOUND_ITEM : "품목포함"
+    MCS_OUTBOUND_ITEM }o--o| MCS_LOCATION : "출고위치"
+
+    MCS_TRANSFER_ORDER ||--o{ MCS_TRANSFER_ITEM : "품목포함"
+    MCS_TRANSFER_ORDER }o--|| MCS_LOCATION : "FROM_LOCATION"
+    MCS_TRANSFER_ORDER }o--|| MCS_LOCATION : "TO_LOCATION"
+
+    %% ============================================
+    %% 관계: MCS ↔ MES 재고 동기화
+    %% ============================================
+    MCS_LOCATION_STOCK ||..|| INV_STOCK : "동기화(창고레벨)"
+    MCS_LOC_TRANS_HIS ||..|| INV_TRANS_HIS : "동기화(이력)"
