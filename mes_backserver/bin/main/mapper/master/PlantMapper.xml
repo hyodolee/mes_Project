@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.master.PlantMapper">
+
+    <select id="selectPlants" resultType="com.mes.domain.master.plant.dto.PlantDto">
+        SELECT
+            p.PLANT_CD AS plantCd,
+            p.COMPANY_CD AS companyCd,
+            c.COMPANY_NM AS companyNm,
+            p.PLANT_NM AS plantNm,
+            p.ADDR AS addr,
+            p.TEL_NO AS telNo,
+            p.USE_YN AS useYn
+        FROM MST_PLANT p
+        JOIN MST_COMPANY c ON c.COMPANY_CD = p.COMPANY_CD
+        WHERE 1 = 1
+        <if test="companyCd != null and companyCd != ''">
+            AND p.COMPANY_CD = #{companyCd}
+        </if>
+        <if test="plantNm != null and plantNm != ''">
+            AND p.PLANT_NM LIKE CONCAT('%', #{plantNm}, '%')
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND p.USE_YN = #{useYn}
+        </if>
+        ORDER BY p.PLANT_CD
+    </select>
+
+    <select id="selectPlantById" resultType="com.mes.domain.master.plant.dto.PlantDto">
+        SELECT
+            p.PLANT_CD AS plantCd,
+            p.COMPANY_CD AS companyCd,
+            c.COMPANY_NM AS companyNm,
+            p.PLANT_NM AS plantNm,
+            p.ADDR AS addr,
+            p.TEL_NO AS telNo,
+            p.USE_YN AS useYn
+        FROM MST_PLANT p
+        JOIN MST_COMPANY c ON c.COMPANY_CD = p.COMPANY_CD
+        WHERE p.PLANT_CD = #{plantCd}
+    </select>
+
+    <insert id="insertPlant">
+        INSERT INTO MST_PLANT (
+            PLANT_CD, COMPANY_CD, PLANT_NM, ADDR, TEL_NO, USE_YN, REG_USER_ID
+        ) VALUES (
+            #{request.plantCd}, #{request.companyCd}, #{request.plantNm},
+            #{request.addr}, #{request.telNo}, COALESCE(#{request.useYn}, 'Y'), #{regUserId}
+        )
+    </insert>
+
+    <update id="updatePlant">
+        UPDATE MST_PLANT
+        SET
+            COMPANY_CD = #{request.companyCd},
+            PLANT_NM = #{request.plantNm},
+            ADDR = #{request.addr},
+            TEL_NO = #{request.telNo},
+            USE_YN = COALESCE(#{request.useYn}, 'Y'),
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE PLANT_CD = #{request.plantCd}
+    </update>
+
+</mapper>

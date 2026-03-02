@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공장 정보 등록/수정</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('plants')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar(${mode == 'create'} ? '공장 등록' : '공장 수정', '공장 정보를 입력하고 저장합니다.')}"></header>
+
+        <section class="card">
+            <form th:action="${mode == 'create'} ? @{/master/plants} : @{'/master/plants/' + ${request.plantCd}}" method="post" class="form-grid">
+                <div class="field">
+                    <label for="plantCd">공장코드</label>
+                    <input id="plantCd" type="text" name="plantCd" th:value="${request.plantCd}" th:readonly="${mode == 'edit'}">
+                </div>
+                <div class="field">
+                    <label for="companyCd">회사</label>
+                    <select id="companyCd" name="companyCd">
+                        <option th:each="c : ${companies}" th:value="${c.companyCd}" th:text="${c.companyNm}" th:selected="${request.companyCd == c.companyCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="plantNm">공장명</label>
+                    <input id="plantNm" type="text" name="plantNm" th:value="${request.plantNm}">
+                </div>
+                <div class="field field-span-2">
+                    <label for="addr">주소</label>
+                    <input id="addr" type="text" name="addr" th:value="${request.addr}">
+                </div>
+                <div class="field">
+                    <label for="telNo">전화번호</label>
+                    <input id="telNo" type="text" name="telNo" th:value="${request.telNo}">
+                </div>
+                <div class="field">
+                    <label for="useYn">사용여부</label>
+                    <select id="useYn" name="useYn">
+                        <option value="Y" th:selected="${request.useYn == 'Y' ?: true}">사용 (Y)</option>
+                        <option value="N" th:selected="${request.useYn == 'N'}">미사용 (N)</option>
+                    </select>
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">저장</button>
+                    <a class="btn btn-secondary" href="/master/plants">취소</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

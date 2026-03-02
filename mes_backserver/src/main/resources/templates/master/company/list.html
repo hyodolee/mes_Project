@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회사 정보 목록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('companies')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('회사 정보 목록', '회사 정보를 조회하고 관리합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/master/companies" class="search-grid">
+                <div class="field">
+                    <label for="companyNm">회사명</label>
+                    <input id="companyNm" type="text" name="companyNm" th:value="${companyNm}">
+                </div>
+                <div class="field">
+                    <label for="useYn">사용여부(Y/N)</label>
+                    <input id="useYn" type="text" name="useYn" th:value="${useYn}">
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                    <a class="btn btn-secondary" href="/master/companies/new">회사 등록</a>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>회사코드</th>
+                        <th>회사명</th>
+                        <th>대표자</th>
+                        <th>전화번호</th>
+                        <th>사용여부</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="c : ${companies}">
+                        <td th:text="${c.companyCd}"></td>
+                        <td th:text="${c.companyNm}"></td>
+                        <td th:text="${c.ceoNm}"></td>
+                        <td th:text="${c.telNo}"></td>
+                        <td th:text="${c.useYn}"></td>
+                        <td><a class="table-link" th:href="@{'/master/companies/' + ${c.companyCd} + '/edit'}">수정</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

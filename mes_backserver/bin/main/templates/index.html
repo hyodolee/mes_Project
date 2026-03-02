@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES Backserver</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('home')}"></aside>
+        <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+        <main class="app-content">
+            <header th:replace="~{fragments/layout :: topbar('MES 대시보드', '기준정보와 생산계획 메뉴로 빠르게 이동합니다.')}">
+            </header>
+
+            <section class="card">
+                <div class="quick-links">
+                    <a class="quick-link" href="/master/companies">
+                        <span>회사 정보 관리</span>
+                        <small>회사 마스터 조회/등록/수정</small>
+                    </a>
+                    <a class="quick-link" href="/master/plants">
+                        <span>공장 정보 관리</span>
+                        <small>사업장 마스터 조회/등록/수정</small>
+                    </a>
+                    <a class="quick-link" href="/planning/prod-plans">
+                        <span>생산계획 관리</span>
+                        <small>생산계획 조회/등록</small>
+                    </a>
+                    <a class="quick-link" href="/api/v1/ping">
+                        <span>API 점검</span>
+                        <small>백엔드 API 연결 상태 확인</small>
+                    </a>
+                    <a class="quick-link" href="/actuator/health">
+                        <span>헬스 체크</span>
+                        <small>서비스 헬스체크 상태 확인</small>
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

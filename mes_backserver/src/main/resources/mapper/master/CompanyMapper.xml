@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.master.CompanyMapper">
+
+    <select id="selectCompanies" resultType="com.mes.domain.master.company.dto.CompanyDto">
+        SELECT
+            COMPANY_CD AS companyCd,
+            COMPANY_NM AS companyNm,
+            BIZ_NO AS bizNo,
+            CEO_NM AS ceoNm,
+            ADDR AS addr,
+            TEL_NO AS telNo,
+            USE_YN AS useYn
+        FROM MST_COMPANY
+        WHERE 1 = 1
+        <if test="companyNm != null and companyNm != ''">
+            AND COMPANY_NM LIKE CONCAT('%', #{companyNm}, '%')
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND USE_YN = #{useYn}
+        </if>
+        ORDER BY COMPANY_CD
+    </select>
+
+    <select id="selectCompanyById" resultType="com.mes.domain.master.company.dto.CompanyDto">
+        SELECT
+            COMPANY_CD AS companyCd,
+            COMPANY_NM AS companyNm,
+            BIZ_NO AS bizNo,
+            CEO_NM AS ceoNm,
+            ADDR AS addr,
+            TEL_NO AS telNo,
+            USE_YN AS useYn
+        FROM MST_COMPANY
+        WHERE COMPANY_CD = #{companyCd}
+    </select>
+
+    <insert id="insertCompany">
+        INSERT INTO MST_COMPANY (
+            COMPANY_CD, COMPANY_NM, BIZ_NO, CEO_NM, ADDR, TEL_NO, USE_YN, REG_USER_ID
+        ) VALUES (
+            #{request.companyCd}, #{request.companyNm}, #{request.bizNo}, #{request.ceoNm},
+            #{request.addr}, #{request.telNo}, COALESCE(#{request.useYn}, 'Y'), #{regUserId}
+        )
+    </insert>
+
+    <update id="updateCompany">
+        UPDATE MST_COMPANY
+        SET
+            COMPANY_NM = #{request.companyNm},
+            BIZ_NO = #{request.bizNo},
+            CEO_NM = #{request.ceoNm},
+            ADDR = #{request.addr},
+            TEL_NO = #{request.telNo},
+            USE_YN = COALESCE(#{request.useYn}, 'Y'),
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE COMPANY_CD = #{request.companyCd}
+    </update>
+
+</mapper>

@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: ${MES_DB_URL}
+    username: ${MES_DB_USERNAME}
+    password: ${MES_DB_PASSWORD}

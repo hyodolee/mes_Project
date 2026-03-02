@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.master.ItemMapper">
+
+    <select id="findItems" resultType="com.mes.domain.master.item.dto.ItemDto">
+        SELECT ITEM_CD as itemCd,
+               PLANT_CD as plantCd,
+               ITEM_NM as itemNm,
+               ITEM_SPEC as itemSpec,
+               ITEM_TYPE as itemType,
+               ITEM_GRP as itemGrp,
+               UNIT as unit,
+               USE_YN as useYn
+        FROM MST_ITEM
+        WHERE 1=1
+        <if test="itemNm != null and itemNm != ''">
+            AND (ITEM_NM LIKE CONCAT('%', #{itemNm}, '%') OR ITEM_CD LIKE CONCAT('%', #{itemNm}, '%'))
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND USE_YN = #{useYn}
+        </if>
+        ORDER BY ITEM_NM ASC
+    </select>
+
+</mapper>

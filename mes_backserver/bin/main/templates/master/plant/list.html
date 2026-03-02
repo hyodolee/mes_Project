@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공장 정보 목록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('plants')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('공장 정보 목록', '공장 정보를 조회하고 관리합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/master/plants" class="search-grid">
+                <div class="field">
+                    <label for="companyCd">회사</label>
+                    <select id="companyCd" name="companyCd">
+                        <option value="">전체</option>
+                        <option th:each="c : ${companies}" th:value="${c.companyCd}" th:text="${c.companyNm}" th:selected="${companyCd == c.companyCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="plantNm">공장명</label>
+                    <input id="plantNm" type="text" name="plantNm" th:value="${plantNm}">
+                </div>
+                <div class="field">
+                    <label for="useYn">사용여부(Y/N)</label>
+                    <input id="useYn" type="text" name="useYn" th:value="${useYn}">
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                    <a class="btn btn-secondary" href="/master/plants/new">공장 등록</a>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>공장코드</th>
+                        <th>회사명</th>
+                        <th>공장명</th>
+                        <th>전화번호</th>
+                        <th>사용여부</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${plants}">
+                        <td th:text="${p.plantCd}"></td>
+                        <td th:text="${p.companyNm}"></td>
+                        <td th:text="${p.plantNm}"></td>
+                        <td th:text="${p.telNo}"></td>
+                        <td th:text="${p.useYn}"></td>
+                        <td><a class="table-link" th:href="@{'/master/plants/' + ${p.plantCd} + '/edit'}">수정</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
