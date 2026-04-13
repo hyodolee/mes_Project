@@ -72,8 +72,41 @@
                         <td th:text="${plan.planQty}"></td>
                         <td th:text="${plan.planStatus}"></td>
                     </tr>
+                    <tr th:if="${#lists.isEmpty(plans)}">
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 생산계획이 없습니다.</td>
+                    </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/planning/prod-plans(page=1, plantCd=${plantCd}, itemCd=${itemCd}, planStatus=${planStatus}, planFromDt=${planFromDt}, planToDt=${planToDt})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/planning/prod-plans(page=${page.currentPage - 1}, plantCd=${plantCd}, itemCd=${itemCd}, planStatus=${planStatus}, planFromDt=${planFromDt}, planToDt=${planToDt})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/planning/prod-plans(page=${p}, plantCd=${plantCd}, itemCd=${itemCd}, planStatus=${planStatus}, planFromDt=${planFromDt}, planToDt=${planToDt})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/planning/prod-plans(page=${page.currentPage + 1}, plantCd=${plantCd}, itemCd=${itemCd}, planStatus=${planStatus}, planFromDt=${planFromDt}, planToDt=${planToDt})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/planning/prod-plans(page=${page.totalPages}, plantCd=${plantCd}, itemCd=${itemCd}, planStatus=${planStatus}, planFromDt=${planFromDt}, planToDt=${planToDt})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
             </div>
         </section>
     </main>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>생산실적 목록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('workResults')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('생산실적 목록', '생산실적을 조회합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/production/work-results" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장코드</label>
+                    <input id="plantCd" type="text" name="plantCd" th:value="${param.plantCd}">
+                </div>
+                <div class="field">
+                    <label for="itemCd">품목코드</label>
+                    <input id="itemCd" type="text" name="itemCd" th:value="${param.itemCd}">
+                </div>
+                <div class="field">
+                    <label for="resultFromDt">실적일자(시작)</label>
+                    <input id="resultFromDt" type="date" name="resultFromDt" th:value="${param.resultFromDt}">
+                </div>
+                <div class="field">
+                    <label for="resultToDt">실적일자(종료)</label>
+                    <input id="resultToDt" type="date" name="resultToDt" th:value="${param.resultToDt}">
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>실적일자</th>
+                        <th>실적번호</th>
+                        <th>공장코드</th>
+                        <th>품목코드</th>
+                        <th>양품수량</th>
+                        <th>불량수량</th>
+                        <th>상태</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="res : ${results}">
+                        <td th:text="${res.resultDt}"></td>
+                        <td th:text="${res.resultNo}"></td>
+                        <td th:text="${res.plantCd}"></td>
+                        <td th:text="${res.itemCd}"></td>
+                        <td th:text="${res.goodQty}"></td>
+                        <td th:text="${res.defectQty}"></td>
+                        <td th:text="${res.resultStatus}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(results)}">
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">조회된 생산실적이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/production/work-results(page=1, plantCd=${param.plantCd}, itemCd=${param.itemCd}, resultFromDt=${param.resultFromDt}, resultToDt=${param.resultToDt})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/production/work-results(page=${page.currentPage - 1}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, resultFromDt=${param.resultFromDt}, resultToDt=${param.resultToDt})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/production/work-results(page=${p}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, resultFromDt=${param.resultFromDt}, resultToDt=${param.resultToDt})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/production/work-results(page=${page.currentPage + 1}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, resultFromDt=${param.resultFromDt}, resultToDt=${param.resultToDt})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/production/work-results(page=${page.totalPages}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, resultFromDt=${param.resultFromDt}, resultToDt=${param.resultToDt})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

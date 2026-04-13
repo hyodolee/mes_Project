@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.inventory.TransMapper">
+
+    <select id="selectTransHistories" resultType="com.mes.domain.inventory.trans.dto.TransDto">
+        SELECT
+            th.TRANS_ID AS transId,
+            th.PLANT_CD AS plantCd,
+            th.TRANS_NO AS transNo,
+            th.TRANS_DT AS transDt,
+            th.TRANS_TYPE AS transType,
+            th.TRANS_REASON AS transReason,
+            th.ITEM_CD AS itemCd,
+            th.LOT_NO AS lotNo,
+            th.TRANS_QTY AS transQty,
+            th.UNIT AS unit,
+            th.FROM_WAREHOUSE_CD AS fromWarehouseCd,
+            th.TO_WAREHOUSE_CD AS toWarehouseCd,
+            th.REF_NO AS refNo,
+            th.REG_DTM AS regDtm
+        FROM INV_TRANS_HIS th
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND th.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND th.ITEM_CD = #{itemCd}
+        </if>
+        <if test="fromDt != null">
+            AND th.TRANS_DT &gt;= #{fromDt}
+        </if>
+        <if test="toDt != null">
+            AND th.TRANS_DT &lt;= #{toDt}
+        </if>
+        ORDER BY th.TRANS_DT DESC, th.TRANS_ID DESC
+    </select>
+
+    <insert id="insertTransHistory">
+        INSERT INTO INV_TRANS_HIS (
+            PLANT_CD, TRANS_NO, TRANS_DT, TRANS_TYPE, TRANS_REASON,
+            ITEM_CD, LOT_NO, TRANS_QTY, UNIT,
+            FROM_WAREHOUSE_CD, TO_WAREHOUSE_CD, FROM_LOCATION_CD, TO_LOCATION_CD,
+            REF_TYPE, REF_NO, REF_ID, VENDOR_CD, TRANS_USER_ID, TRANS_RMK,
+            REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{request.plantCd}, #{transNo}, #{transDt}, #{request.transType}, #{request.transReason},
+            #{request.itemCd}, #{request.lotNo}, #{request.transQty}, #{request.unit},
+            #{request.fromWarehouseCd}, #{request.toWarehouseCd}, #{request.fromLocationCd}, #{request.toLocationCd},
+            #{request.refType}, #{request.refNo}, #{request.refId}, #{request.vendorCd}, #{request.transUserId}, #{request.transRmk},
+            #{request.regUserId}, NOW()
+        )
+    </insert>
+
+    <select id="selectTransCountByDate" resultType="int">
+        SELECT COUNT(*)
+        FROM INV_TRANS_HIS
+        WHERE TRANS_DT = #{transDt}
+    </select>
+
+</mapper>

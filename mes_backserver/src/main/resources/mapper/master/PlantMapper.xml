@@ -28,6 +28,40 @@
         ORDER BY p.PLANT_CD
     </select>
 
+    <select id="selectPlantList" resultType="com.mes.domain.master.plant.dto.PlantDto">
+        SELECT
+            p.PLANT_CD AS plantCd,
+            p.COMPANY_CD AS companyCd,
+            c.COMPANY_NM AS companyNm,
+            p.PLANT_NM AS plantNm,
+            p.ADDR AS addr,
+            p.TEL_NO AS telNo,
+            p.USE_YN AS useYn
+        FROM MST_PLANT p
+        JOIN MST_COMPANY c ON c.COMPANY_CD = p.COMPANY_CD
+        WHERE 1 = 1
+        <if test="plantNm != null and plantNm != ''">
+            AND (p.PLANT_NM LIKE CONCAT('%', #{plantNm}, '%') OR p.PLANT_CD LIKE CONCAT('%', #{plantNm}, '%'))
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND p.USE_YN = #{useYn}
+        </if>
+        ORDER BY p.PLANT_CD
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPlants" resultType="int">
+        SELECT COUNT(*)
+        FROM MST_PLANT p
+        WHERE 1 = 1
+        <if test="plantNm != null and plantNm != ''">
+            AND (p.PLANT_NM LIKE CONCAT('%', #{plantNm}, '%') OR p.PLANT_CD LIKE CONCAT('%', #{plantNm}, '%'))
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND p.USE_YN = #{useYn}
+        </if>
+    </select>
+
     <select id="selectPlantById" resultType="com.mes.domain.master.plant.dto.PlantDto">
         SELECT
             p.PLANT_CD AS plantCd,

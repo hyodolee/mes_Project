@@ -8,15 +8,20 @@
 
 USE MES_DB;
 
+-- 외래 키 제약 조건 검사 일시 중지 (안전한 테이블 초기화를 위함)
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- ------------------------------------------------------------
 -- 1. 회사정보
 -- ------------------------------------------------------------
+TRUNCATE TABLE MST_COMPANY;
 INSERT INTO MST_COMPANY (COMPANY_CD, COMPANY_NM, BIZ_NO, CEO_NM, BIZ_TYPE, BIZ_ITEM, ADDR, TEL_NO, FAX_NO, EMAIL, USE_YN, REG_USER_ID) VALUES
 ('C001', '(주)그린에너지셀', '210-86-12345', '김에너지', '제조업', '리튬이온배터리, 배터리팩', '충북 청주시 오창읍 중심상업1로 100', '043-900-1000', '043-900-1001', 'info@greenenergycell.co.kr', 'Y', 'SYSTEM');
 
 -- ------------------------------------------------------------
 -- 2. 공장정보
 -- ------------------------------------------------------------
+TRUNCATE TABLE MST_PLANT;
 INSERT INTO MST_PLANT (PLANT_CD, COMPANY_CD, PLANT_NM, PLANT_TYPE, ADDR, TEL_NO, FAX_NO, MANAGER_NM, USE_YN, REG_USER_ID) VALUES
 ('P001', 'C001', '오창1공장', '셀생산공장', '충북 청주시 오창읍 중심상업1로 100', '043-900-1000', '043-900-1001', '박셀장', 'Y', 'SYSTEM'),
 ('P002', 'C001', '대전2공장', '팩조립공장', '대전광역시 유성구 테크노2로 200', '042-800-2000', '042-800-2001', '이팩장', 'Y', 'SYSTEM');
@@ -24,6 +29,7 @@ INSERT INTO MST_PLANT (PLANT_CD, COMPANY_CD, PLANT_NM, PLANT_TYPE, ADDR, TEL_NO,
 -- ------------------------------------------------------------
 -- 3. 부서정보
 -- ------------------------------------------------------------
+TRUNCATE TABLE MST_DEPT;
 INSERT INTO MST_DEPT (DEPT_CD, PLANT_CD, DEPT_NM, PARENT_DEPT_CD, DEPT_LEVEL, SORT_SEQ, USE_YN, REG_USER_ID) VALUES
 -- 오창1공장 부서 (셀 생산)
 ('D001', 'P001', '전극부', NULL, 1, 1, 'Y', 'SYSTEM'),
@@ -51,6 +57,7 @@ INSERT INTO MST_DEPT (DEPT_CD, PLANT_CD, DEPT_NM, PARENT_DEPT_CD, DEPT_LEVEL, SO
 -- ------------------------------------------------------------
 -- 4. 작업자정보
 -- ------------------------------------------------------------
+TRUNCATE TABLE MST_WORKER;
 INSERT INTO MST_WORKER (WORKER_ID, PLANT_CD, DEPT_CD, WORKER_NM, WORKER_TYPE, POSITION, HIRE_DT, MOBILE_NO, EMAIL, SKILL_LEVEL, USE_YN, REG_USER_ID) VALUES
 -- 오창1공장 작업자
 ('W001', 'P001', 'D002', '김양극', '정규직', '팀장', '2015-03-01', '010-1111-1001', 'kim.cathode@gec.co.kr', '전문가', 'Y', 'SYSTEM'),
@@ -82,6 +89,7 @@ INSERT INTO MST_WORKER (WORKER_ID, PLANT_CD, DEPT_CD, WORKER_NM, WORKER_TYPE, PO
 -- ------------------------------------------------------------
 -- 5. 작업장정보
 -- ------------------------------------------------------------
+TRUNCATE TABLE MST_WORKCENTER;
 INSERT INTO MST_WORKCENTER (WORKCENTER_CD, PLANT_CD, WORKCENTER_NM, WORKCENTER_TYPE, LOCATION, CAPACITY_QTY, CAPACITY_UNIT, MANAGER_ID, USE_YN, REG_USER_ID) VALUES
 -- 오창1공장 작업장 (전극공정)
 ('WC001', 'P001', '양극믹싱작업장', '전극', 'A동 1층', 5000, 'KG/일', 'W001', 'Y', 'SYSTEM'),
@@ -111,6 +119,7 @@ INSERT INTO MST_WORKCENTER (WORKCENTER_CD, PLANT_CD, WORKCENTER_NM, WORKCENTER_T
 -- ------------------------------------------------------------
 -- 6. 설비정보
 -- ------------------------------------------------------------
+TRUNCATE TABLE MST_EQUIPMENT;
 INSERT INTO MST_EQUIPMENT (EQUIPMENT_CD, PLANT_CD, WORKCENTER_CD, EQUIPMENT_NM, EQUIPMENT_TYPE, MODEL_NM, MAKER, SERIAL_NO, INSTALL_DT, PURCHASE_DT, PURCHASE_PRICE, CAPACITY_QTY, CAPACITY_UNIT, EQUIPMENT_STATUS, USE_YN, REG_USER_ID) VALUES
 -- 전극공정 설비
 ('EQ001', 'P001', 'WC001', '양극믹서 #1', '믹서', 'PM-2000', '프리믹스코리아', 'PM2000-2022-001', '2022-03-01', '2022-01-15', 850000000, 2500, 'KG/일', '가동', 'Y', 'SYSTEM'),
@@ -157,28 +166,30 @@ INSERT INTO MST_EQUIPMENT (EQUIPMENT_CD, PLANT_CD, WORKCENTER_CD, EQUIPMENT_NM, 
 -- ------------------------------------------------------------
 -- 7. 거래처정보
 -- ------------------------------------------------------------
-INSERT INTO MST_VENDOR (VENDOR_CD, VENDOR_NM, VENDOR_TYPE, BIZ_NO, CEO_NM, BIZ_TYPE, BIZ_ITEM, ADDR, TEL_NO, EMAIL, MANAGER_NM, MANAGER_TEL, PAYMENT_TERMS, VENDOR_GRADE, USE_YN, REG_USER_ID) VALUES
+TRUNCATE TABLE MST_VENDOR;
+INSERT INTO MST_VENDOR (VENDOR_CD, VENDOR_NM, VENDOR_TYPE, BIZ_NO, CEO_NM, BIZ_TYPE, BIZ_ITEM, ADDR, TEL_NO, EMAIL, MANAGER_NM, MANAGER_TEL, PAYMENT_TERMS, USE_YN, REG_USER_ID) VALUES
 -- 매입처 (원자재 공급업체)
-('V001', '(주)에코프로비엠', '매입처', '301-81-11111', '김양극', '제조업', '양극활물질', '충북 청주시 흥덕구', '043-201-1111', 'ecopro@vendor.co.kr', '이소재', '010-3001-0001', '월말결제', 'A', 'Y', 'SYSTEM'),
-('V002', '(주)포스코퓨처엠', '매입처', '302-81-22222', '박양극', '제조업', '양극/음극활물질', '경북 포항시', '054-202-2222', 'posco@vendor.co.kr', '김소재', '010-3002-0002', '월말결제', 'A', 'Y', 'SYSTEM'),
-('V003', '(주)SK아이테크', '매입처', '303-81-33333', '최분리', '제조업', '분리막', '충남 서산시', '041-303-3333', 'skitech@vendor.co.kr', '정분리', '010-3003-0003', '익월10일', 'A', 'Y', 'SYSTEM'),
-('V004', '(주)솔브레인', '매입처', '304-81-44444', '한전해', '제조업', '전해액', '경기도 성남시', '031-404-4444', 'soulbrain@vendor.co.kr', '오전해', '010-3004-0004', '월말결제', 'A', 'Y', 'SYSTEM'),
-('V005', '(주)일진소재', '매입처', '305-81-55555', '서포일', '제조업', '동박/알루미늄박', '충남 당진시', '041-505-5555', 'iljin@vendor.co.kr', '강포일', '010-3005-0005', '월말결제', 'A', 'Y', 'SYSTEM'),
-('V006', '(주)쿠라레', '매입처', '306-81-66666', '윤바인', '제조업', '바인더/도전재', '경기도 화성시', '031-606-6666', 'kuraray@vendor.co.kr', '임바인', '010-3006-0006', '익월말', 'B', 'Y', 'SYSTEM'),
-('V007', '(주)상보', '매입처', '307-81-77777', '조파우', '제조업', '파우치필름', '경기도 파주시', '031-707-7777', 'sangbo@vendor.co.kr', '나파우', '010-3007-0007', '월말결제', 'B', 'Y', 'SYSTEM'),
-('V008', '(주)이엔에프테크', '매입처', '308-81-88888', '구도전', '제조업', 'CNT도전재', '충남 아산시', '041-808-8888', 'enf@vendor.co.kr', '신도전', '010-3008-0008', '선결제', 'A', 'Y', 'SYSTEM'),
-('V009', '(주)디에이테크놀로지', '매입처', '309-81-99999', '문BMS', '제조업', 'BMS/커넥터', '경기도 수원시', '031-909-9999', 'datech@vendor.co.kr', '장BMS', '010-3009-0009', '월말결제', 'A', 'Y', 'SYSTEM'),
+('V001', '(주)에코프로비엠', '매입처', '301-81-11111', '김양극', '제조업', '양극활물질', '충북 청주시 흥덕구', '043-201-1111', 'ecopro@vendor.co.kr', '이소재', '010-3001-0001', '월말결제', 'Y', 'SYSTEM'),
+('V002', '(주)포스코퓨처엠', '매입처', '302-81-22222', '박양극', '제조업', '양극/음극활물질', '경북 포항시', '054-202-2222', 'posco@vendor.co.kr', '김소재', '010-3002-0002', '월말결제', 'Y', 'SYSTEM'),
+('V003', '(주)SK아이테크', '매입처', '303-81-33333', '최분리', '제조업', '분리막', '충남 서산시', '041-303-3333', 'skitech@vendor.co.kr', '정분리', '010-3003-0003', '익월10일', 'Y', 'SYSTEM'),
+('V004', '(주)솔브레인', '매입처', '304-81-44444', '한전해', '제조업', '전해액', '경기도 성남시', '031-404-4444', 'soulbrain@vendor.co.kr', '오전해', '010-3004-0004', '월말결제', 'Y', 'SYSTEM'),
+('V005', '(주)일진소재', '매입처', '305-81-55555', '서포일', '제조업', '동박/알루미늄박', '충남 당진시', '041-505-5555', 'iljin@vendor.co.kr', '강포일', '010-3005-0005', '월말결제', 'Y', 'SYSTEM'),
+('V006', '(주)쿠라레', '매입처', '306-81-66666', '윤바인', '제조업', '바인더/도전재', '경기도 화성시', '031-606-6666', 'kuraray@vendor.co.kr', '임바인', '010-3006-0006', '익월말', 'Y', 'SYSTEM'),
+('V007', '(주)상보', '매입처', '307-81-77777', '조파우', '제조업', '파우치필름', '경기도 파주시', '031-707-7777', 'sangbo@vendor.co.kr', '나파우', '010-3007-0007', '월말결제', 'Y', 'SYSTEM'),
+('V008', '(주)이엔에프테크', '매입처', '308-81-88888', '구도전', '제조업', 'CNT도전재', '충남 아산시', '041-808-8888', 'enf@vendor.co.kr', '신도전', '010-3008-0008', '선결제', 'Y', 'SYSTEM'),
+('V009', '(주)디에이테크놀로지', '매입처', '309-81-99999', '문BMS', '제조업', 'BMS/커넥터', '경기도 수원시', '031-909-9999', 'datech@vendor.co.kr', '장BMS', '010-3009-0009', '월말결제', 'Y', 'SYSTEM'),
 -- 매출처 (고객사)
-('V010', '현대자동차(주)', '매출처', '401-81-10101', '정의선', '제조업', '자동차', '서울시 서초구', '02-410-1010', 'hyundai@customer.co.kr', '배구매', '010-4010-0001', '익월말', 'VIP', 'Y', 'SYSTEM'),
-('V011', '기아(주)', '매출처', '402-81-20202', '송호성', '제조업', '자동차', '서울시 서초구', '02-420-2020', 'kia@customer.co.kr', '유발주', '010-4020-0002', '익월말', 'VIP', 'Y', 'SYSTEM'),
-('V012', 'SK온(주)', '매출처', '403-81-30303', '이석희', '제조업', 'ESS', '대전광역시 유성구', '042-430-3030', 'skon@customer.co.kr', '하주문', '010-4030-0003', '익월말', 'A', 'Y', 'SYSTEM'),
-('V013', '(주)LS일렉트릭', '매출처', '404-81-40404', '구자은', '제조업', 'ESS', '경기도 안양시', '031-440-4040', 'lselec@customer.co.kr', '추발주', '010-4040-0004', '월말결제', 'A', 'Y', 'SYSTEM'),
+('V010', '현대자동차(주)', '매출처', '401-81-10101', '정의선', '제조업', '자동차', '서울시 서초구', '02-410-1010', 'hyundai@customer.co.kr', '배구매', '010-4010-0001', '익월말', 'Y', 'SYSTEM'),
+('V011', '기아(주)', '매출처', '402-81-20202', '송호성', '제조업', '자동차', '서울시 서초구', '02-420-2020', 'kia@customer.co.kr', '유발주', '010-4020-0002', '익월말', 'Y', 'SYSTEM'),
+('V012', 'SK온(주)', '매출처', '403-81-30303', '이석희', '제조업', 'ESS', '대전광역시 유성구', '042-430-3030', 'skon@customer.co.kr', '하주문', '010-4030-0003', '익월말', 'Y', 'SYSTEM'),
+('V013', '(주)LS일렉트릭', '매출처', '404-81-40404', '구자은', '제조업', 'ESS', '경기도 안양시', '031-440-4040', 'lselec@customer.co.kr', '추발주', '010-4040-0004', '월말결제', 'Y', 'SYSTEM'),
 -- 매입/매출 겸용
-('V014', '(주)에너지협력', '매입/매출', '405-81-50505', '최협력', '제조업', '배터리부품', '충북 청주시', '043-450-5050', 'partner@vendor.co.kr', '윤협력', '010-4050-0005', '월말결제', 'A', 'Y', 'SYSTEM');
+('V014', '(주)에너지협력', '매입/매출', '405-81-50505', '최협력', '제조업', '배터리부품', '충북 청주시', '043-450-5050', 'partner@vendor.co.kr', '윤협력', '010-4050-0005', '월말결제', 'Y', 'SYSTEM');
 
 -- ------------------------------------------------------------
 -- 8. 창고정보
 -- ------------------------------------------------------------
+TRUNCATE TABLE MST_WAREHOUSE;
 INSERT INTO MST_WAREHOUSE (WAREHOUSE_CD, PLANT_CD, WAREHOUSE_NM, WAREHOUSE_TYPE, LOCATION, CAPACITY, CAPACITY_UNIT, MANAGER_ID, USE_YN, REG_USER_ID) VALUES
 -- 오창1공장 창고
 ('WH001', 'P001', '양극소재창고', '원자재창고', 'H동 1층(항온항습)', 5000, 'M2', 'W015', 'Y', 'SYSTEM'),
@@ -198,6 +209,7 @@ INSERT INTO MST_WAREHOUSE (WAREHOUSE_CD, PLANT_CD, WAREHOUSE_NM, WAREHOUSE_TYPE,
 -- ------------------------------------------------------------
 -- 9. 공정코드
 -- ------------------------------------------------------------
+TRUNCATE TABLE MST_PROCESS;
 INSERT INTO MST_PROCESS (PROCESS_CD, PLANT_CD, PROCESS_NM, PROCESS_TYPE, PROCESS_DESC, SORT_SEQ, USE_YN, REG_USER_ID) VALUES
 -- 오창1공장: 전극공정
 ('PR001', 'P001', '양극믹싱', '전극', '양극활물질+바인더+도전재 혼합하여 양극슬러리 제조', 1, 'Y', 'SYSTEM'),
@@ -226,3 +238,6 @@ INSERT INTO MST_PROCESS (PROCESS_CD, PLANT_CD, PROCESS_NM, PROCESS_TYPE, PROCESS
 ('PR021', 'P002', '팩조립', '팩', '모듈+BMS+냉각시스템 조립하여 팩 완성', 4, 'Y', 'SYSTEM'),
 ('PR022', 'P002', '팩검사', '검사', '팩 성능/안전/절연 최종 검사', 5, 'Y', 'SYSTEM'),
 ('PR023', 'P002', '포장', '포장', '출하용 포장', 6, 'Y', 'SYSTEM');
+
+-- 작업 완료 후 외래 키 제약 조건 원상 복구
+SET FOREIGN_KEY_CHECKS = 1;

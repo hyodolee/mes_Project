@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>품목 정보 목록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('items')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('품목 정보 목록', '품목 정보를 조회하고 관리합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/master/items" class="search-grid">
+                <div class="field">
+                    <label for="itemNm">품목명</label>
+                    <input id="itemNm" type="text" name="itemNm" th:value="${itemNm}">
+                </div>
+                <div class="field field-use-yn">
+                    <label for="useYn">사용여부</label>
+                    <select id="useYn" name="useYn">
+                        <option value="">전체</option>
+                        <option value="Y" th:selected="${useYn == 'Y'}">사용 (Y)</option>
+                        <option value="N" th:selected="${useYn == 'N'}">미사용 (N)</option>
+                    </select>
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                    <a class="btn btn-secondary" href="/master/items/new">품목 등록</a>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>품목코드</th>
+                        <th>공장코드</th>
+                        <th>품목명</th>
+                        <th>규격</th>
+                        <th>단위</th>
+                        <th>품목유형</th>
+                        <th>품목그룹</th>
+                        <th>사용여부</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="i : ${items}">
+                        <td th:text="${i.itemCd}"></td>
+                        <td th:text="${i.plantCd}"></td>
+                        <td th:text="${i.itemNm}"></td>
+                        <td th:text="${i.itemSpec}"></td>
+                        <td th:text="${i.unit}"></td>
+                        <td th:text="${i.itemType}"></td>
+                        <td th:text="${i.itemGrp}"></td>
+                        <td th:text="${i.useYn}"></td>
+                        <td><a class="table-link" th:href="@{'/master/items/' + ${i.itemCd} + '/edit'}">수정</a></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(items)}">
+                        <td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 품목 정보가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/master/items(page=1, itemNm=${itemNm}, useYn=${useYn})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/master/items(page=${page.currentPage - 1}, itemNm=${itemNm}, useYn=${useYn})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/master/items(page=${p}, itemNm=${itemNm}, useYn=${useYn})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/master/items(page=${page.currentPage + 1}, itemNm=${itemNm}, useYn=${useYn})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/master/items(page=${page.totalPages}, itemNm=${itemNm}, useYn=${useYn})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

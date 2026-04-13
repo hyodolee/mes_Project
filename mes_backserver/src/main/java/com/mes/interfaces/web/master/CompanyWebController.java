@@ -1,7 +1,10 @@
 package com.mes.interfaces.web.master;
 
 import com.mes.application.service.master.CompanyService;
+import com.mes.domain.master.company.dto.CompanyDto;
+import com.mes.domain.master.company.dto.CompanySearchDto;
 import com.mes.domain.master.company.dto.CompanyUpsertRequest;
+import com.mes.global.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,12 +23,13 @@ public class CompanyWebController {
     }
 
     @GetMapping
-    public String list(@RequestParam(name = "companyNm", required = false) String companyNm,
-                       @RequestParam(name = "useYn", required = false) String useYn,
-                       Model model) {
-        model.addAttribute("companies", companyService.getCompanies(companyNm, useYn));
-        model.addAttribute("companyNm", companyNm);
-        model.addAttribute("useYn", useYn);
+    public String list(@ModelAttribute CompanySearchDto searchDto, Model model) {
+        PageResponse<CompanyDto> pageResponse = companyService.getCompanyList(searchDto);
+        model.addAttribute("companies", pageResponse.getContent());
+        model.addAttribute("page", pageResponse);
+        model.addAttribute("companyNm", searchDto.getCompanyNm());
+        model.addAttribute("useYn", searchDto.getUseYn());
+        model.addAttribute("active", "companies");
         return "master/company/list";
     }
 
@@ -38,8 +42,8 @@ public class CompanyWebController {
 
     @PostMapping
     public String create(@Valid @ModelAttribute("request") CompanyUpsertRequest request,
-                         BindingResult bindingResult,
-                         RedirectAttributes redirectAttributes) {
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             return "master/company/form";
         }
@@ -58,17 +62,16 @@ public class CompanyWebController {
                 company.ceoNm(),
                 company.addr(),
                 company.telNo(),
-                company.useYn()
-        ));
+                company.useYn()));
         model.addAttribute("mode", "edit");
         return "master/company/form";
     }
 
     @PostMapping("/{companyCd}")
     public String update(@PathVariable("companyCd") String companyCd,
-                         @Valid @ModelAttribute("request") CompanyUpsertRequest request,
-                         BindingResult bindingResult,
-                         RedirectAttributes redirectAttributes) {
+            @Valid @ModelAttribute("request") CompanyUpsertRequest request,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             return "master/company/form";
         }

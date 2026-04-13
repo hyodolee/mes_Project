@@ -24,6 +24,39 @@
         ORDER BY COMPANY_CD
     </select>
 
+    <select id="selectCompanyList" resultType="com.mes.domain.master.company.dto.CompanyDto">
+        SELECT
+            COMPANY_CD AS companyCd,
+            COMPANY_NM AS companyNm,
+            BIZ_NO AS bizNo,
+            CEO_NM AS ceoNm,
+            ADDR AS addr,
+            TEL_NO AS telNo,
+            USE_YN AS useYn
+        FROM MST_COMPANY
+        WHERE 1 = 1
+        <if test="companyNm != null and companyNm != ''">
+            AND (COMPANY_NM LIKE CONCAT('%', #{companyNm}, '%') OR COMPANY_CD LIKE CONCAT('%', #{companyNm}, '%'))
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND USE_YN = #{useYn}
+        </if>
+        ORDER BY COMPANY_CD
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countCompanies" resultType="int">
+        SELECT COUNT(*)
+        FROM MST_COMPANY
+        WHERE 1 = 1
+        <if test="companyNm != null and companyNm != ''">
+            AND (COMPANY_NM LIKE CONCAT('%', #{companyNm}, '%') OR COMPANY_CD LIKE CONCAT('%', #{companyNm}, '%'))
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND USE_YN = #{useYn}
+        </if>
+    </select>
+
     <select id="selectCompanyById" resultType="com.mes.domain.master.company.dto.CompanyDto">
         SELECT
             COMPANY_CD AS companyCd,

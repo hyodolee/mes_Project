@@ -22,4 +22,70 @@
         ORDER BY ITEM_NM ASC
     </select>
 
+    <select id="selectItemList" resultType="com.mes.domain.master.item.dto.ItemDto">
+        SELECT ITEM_CD as itemCd,
+               PLANT_CD as plantCd,
+               ITEM_NM as itemNm,
+               ITEM_SPEC as itemSpec,
+               ITEM_TYPE as itemType,
+               ITEM_GRP as itemGrp,
+               UNIT as unit,
+               USE_YN as useYn
+        FROM MST_ITEM
+        WHERE 1=1
+        <if test="itemNm != null and itemNm != ''">
+            AND (ITEM_NM LIKE CONCAT('%', #{itemNm}, '%') OR ITEM_CD LIKE CONCAT('%', #{itemNm}, '%'))
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND USE_YN = #{useYn}
+        </if>
+        ORDER BY ITEM_NM ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countItems" resultType="int">
+        SELECT COUNT(*)
+        FROM MST_ITEM
+        WHERE 1=1
+        <if test="itemNm != null and itemNm != ''">
+            AND (ITEM_NM LIKE CONCAT('%', #{itemNm}, '%') OR ITEM_CD LIKE CONCAT('%', #{itemNm}, '%'))
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND USE_YN = #{useYn}
+        </if>
+    </select>
+
+    <select id="getItem" resultType="com.mes.domain.master.item.dto.ItemDto">
+        SELECT ITEM_CD as itemCd,
+               PLANT_CD as plantCd,
+               ITEM_NM as itemNm,
+               ITEM_SPEC as itemSpec,
+               ITEM_TYPE as itemType,
+               ITEM_GRP as itemGrp,
+               UNIT as unit,
+               USE_YN as useYn
+        FROM MST_ITEM
+        WHERE ITEM_CD = #{itemCd}
+    </select>
+
+    <insert id="save">
+        INSERT INTO MST_ITEM (
+            ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, USE_YN
+        ) VALUES (
+            #{itemCd}, #{plantCd}, #{itemNm}, #{itemSpec}, #{itemType}, #{itemGrp}, #{unit}, #{useYn}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE MST_ITEM
+        SET ITEM_NM = #{itemNm},
+            PLANT_CD = #{plantCd},
+            ITEM_SPEC = #{itemSpec},
+            ITEM_TYPE = #{itemType},
+            ITEM_GRP = #{itemGrp},
+            UNIT = #{unit},
+            USE_YN = #{useYn}
+        WHERE ITEM_CD = #{itemCd}
+    </update>
+
 </mapper>

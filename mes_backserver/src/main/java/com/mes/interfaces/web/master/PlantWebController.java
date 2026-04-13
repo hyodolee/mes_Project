@@ -2,7 +2,10 @@ package com.mes.interfaces.web.master;
 
 import com.mes.application.service.master.CompanyService;
 import com.mes.application.service.master.PlantService;
+import com.mes.domain.master.plant.dto.PlantDto;
+import com.mes.domain.master.plant.dto.PlantSearchDto;
 import com.mes.domain.master.plant.dto.PlantUpsertRequest;
+import com.mes.global.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,15 +26,14 @@ public class PlantWebController {
     }
 
     @GetMapping
-    public String list(@RequestParam(name = "companyCd", required = false) String companyCd,
-                       @RequestParam(name = "plantNm", required = false) String plantNm,
-                       @RequestParam(name = "useYn", required = false) String useYn,
-                       Model model) {
-        model.addAttribute("plants", plantService.getPlants(companyCd, plantNm, useYn));
+    public String list(@ModelAttribute PlantSearchDto searchDto, Model model) {
+        PageResponse<PlantDto> pageResponse = plantService.getPlantList(searchDto);
+        model.addAttribute("plants", pageResponse.getContent());
+        model.addAttribute("page", pageResponse);
         model.addAttribute("companies", companyService.getCompanies(null, "Y"));
-        model.addAttribute("companyCd", companyCd);
-        model.addAttribute("plantNm", plantNm);
-        model.addAttribute("useYn", useYn);
+        model.addAttribute("plantNm", searchDto.getPlantNm());
+        model.addAttribute("useYn", searchDto.getUseYn());
+        model.addAttribute("active", "plants");
         return "master/plant/list";
     }
 

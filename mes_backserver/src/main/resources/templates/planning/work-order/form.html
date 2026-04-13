@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>작업지시 등록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('workOrders')}"></aside>
+        <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+        <main class="app-content">
+            <header th:replace="~{fragments/layout :: topbar('작업지시 등록', '작업지시 정보를 입력하고 저장합니다.')}"></header>
+
+            <section class="card">
+                <form action="/planning/work-orders" method="post" class="form-grid">
+                    <input type="hidden" id="itemCd" name="itemCd" th:value="${request.itemCd}">
+
+                    <div class="field">
+                        <label for="plantCd">공장</label>
+                        <select id="plantCd" name="plantCd">
+                            <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}"
+                                th:selected="${request.plantCd == p.plantCd}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="woDt">작업지시일</label>
+                        <input id="woDt" type="date" name="woDt"
+                            th:value="${request.woDt ?: #temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+                    </div>
+                    <div class="field">
+                        <label for="itemSearch">품목검색 (코드/명)</label>
+                        <div class="search-input-group">
+                            <input id="itemSearch" type="text" th:value="${request.itemCd}"
+                                placeholder="품목코드나 명칭을 입력하세요." autocomplete="off">
+                            <button type="button" class="btn-icon-search" id="btnItemSearch" title="품목 상세검색">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
+                            </button>
+                            <div id="itemDropdown" class="autocomplete-dropdown"></div>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="woQty">지시수량</label>
+                        <input id="woQty" type="number" step="1" name="woQty" th:value="${request.woQty ?: 0}">
+                    </div>
+                    <div class="field">
+                        <label for="workcenterCd">작업장코드</label>
+                        <input id="workcenterCd" type="text" name="workcenterCd" th:value="${request.workcenterCd}">
+                    </div>
+                    <div class="field">
+                        <label for="equipmentCd">설비코드</label>
+                        <input id="equipmentCd" type="text" name="equipmentCd" th:value="${request.equipmentCd}">
+                    </div>
+                    <div class="field">
+                        <label for="workerId">작업자ID</label>
+                        <input id="workerId" type="text" name="workerId" th:value="${request.workerId}">
+                    </div>
+                    <div class="field">
+                        <label for="planStartDtm">계획시작일시</label>
+                        <input id="planStartDtm" type="datetime-local" name="planStartDtm"
+                            th:value="${request.planStartDtm}">
+                    </div>
+                    <div class="field">
+                        <label for="planEndDtm">계획종료일시</label>
+                        <input id="planEndDtm" type="datetime-local" name="planEndDtm"
+                            th:value="${request.planEndDtm}">
+                    </div>
+                    <div class="field">
+                        <label for="priority">우선순위</label>
+                        <input id="priority" type="number" name="priority" min="1" max="10"
+                            th:value="${request.priority ?: 5}">
+                    </div>
+                    <div class="field">
+                        <label for="orderNo">수주번호</label>
+                        <input id="orderNo" type="text" name="orderNo" th:value="${request.orderNo}">
+                    </div>
+                    <div class="field">
+                        <label for="deliveryDt">납기일</label>
+                        <input id="deliveryDt" type="date" name="deliveryDt" th:value="${request.deliveryDt}">
+                    </div>
+                    <div class="field">
+                        <label for="lotNo">LOT번호</label>
+                        <input id="lotNo" type="text" name="lotNo" th:value="${request.lotNo}">
+                    </div>
+                    <div class="field field-span-2">
+                        <label for="woRmk">비고</label>
+                        <input id="woRmk" type="text" name="woRmk" th:value="${request.woRmk}">
+                    </div>
+
+                    <!-- 품목 검색 모달 -->
+                    <div id="itemModal" class="modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3>품목 검색</h3>
+                                <button type="button" class="modal-close">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="modal-search-box">
+                                    <input type="text" id="modalItemSearchInput" placeholder="품목명이나 코드를 입력하세요...">
+                                    <button type="button" class="btn btn-primary" id="btnDoItemModalSearch">검색</button>
+                                </div>
+                                <div class="table-wrap">
+                                    <table id="itemTable">
+                                        <thead>
+                                            <tr>
+                                                <th>품목코드</th>
+                                                <th>품목명</th>
+                                                <th>유형</th>
+                                                <th>선택</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemListBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions field-span-2">
+                        <button class="btn btn-primary" type="submit">저장</button>
+                        <a class="btn btn-secondary" href="/planning/work-orders">취소</a>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    // 품목 검색 기능
+    document.addEventListener('DOMContentLoaded', function() {
+        var itemSearch = document.getElementById('itemSearch');
+        var itemCd = document.getElementById('itemCd');
+        var itemDropdown = document.getElementById('itemDropdown');
+        var btnItemSearch = document.getElementById('btnItemSearch');
+        var itemModal = document.getElementById('itemModal');
+        var modalClose = itemModal.querySelector('.modal-close');
+        var btnDoItemModalSearch = document.getElementById('btnDoItemModalSearch');
+        var modalItemSearchInput = document.getElementById('modalItemSearchInput');
+        var itemListBody = document.getElementById('itemListBody');
+
+        // 실시간 품목 검색
+        var debounceTimer;
+        itemSearch.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            var keyword = this.value.trim();
+            if (keyword.length < 1) { itemDropdown.innerHTML = ''; itemDropdown.style.display = 'none'; return; }
+            debounceTimer = setTimeout(function() {
+                fetch('/api/v1/master/items?itemNm=' + encodeURIComponent(keyword))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.success || !data.data || data.data.length === 0) {
+                        itemDropdown.innerHTML = '<div class="dropdown-item">검색 결과 없음</div>';
+                        itemDropdown.style.display = 'block';
+                        return;
+                    }
+                    itemDropdown.innerHTML = data.data.map(function(item) {
+                        return '<div class="dropdown-item" data-cd="' + item.itemCd + '">' + item.itemCd + ' / ' + item.itemNm + '</div>';
+                    }).join('');
+                    itemDropdown.style.display = 'block';
+                });
+            }, 300);
+        });
+
+        itemDropdown.addEventListener('click', function(e) {
+            var el = e.target.closest('.dropdown-item');
+            if (el && el.dataset.cd) {
+                itemCd.value = el.dataset.cd;
+                itemSearch.value = el.textContent;
+                itemDropdown.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!itemSearch.contains(e.target) && !itemDropdown.contains(e.target)) {
+                itemDropdown.style.display = 'none';
+            }
+        });
+
+        // 모달 열기/닫기
+        btnItemSearch.addEventListener('click', function() { itemModal.style.display = 'flex'; });
+        modalClose.addEventListener('click', function() { itemModal.style.display = 'none'; });
+
+        // 모달 품목 검색
+        btnDoItemModalSearch.addEventListener('click', function() { doItemModalSearch(); });
+        modalItemSearchInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); doItemModalSearch(); } });
+
+        function doItemModalSearch() {
+            var keyword = modalItemSearchInput.value.trim();
+            fetch('/api/v1/master/items?itemNm=' + encodeURIComponent(keyword))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.data) { itemListBody.innerHTML = '<tr><td colspan="4">검색 결과 없음</td></tr>'; return; }
+                itemListBody.innerHTML = data.data.map(function(item) {
+                    return '<tr><td>' + item.itemCd + '</td><td>' + item.itemNm + '</td><td>' + (item.itemType || '') + '</td>'
+                        + '<td><button type="button" class="btn btn-sm btn-primary" onclick="selectItem(\'' + item.itemCd + '\', \'' + item.itemNm + '\')">선택</button></td></tr>';
+                }).join('');
+            });
+        }
+    });
+
+    function selectItem(cd, nm) {
+        document.getElementById('itemCd').value = cd;
+        document.getElementById('itemSearch').value = cd + ' / ' + nm;
+        document.getElementById('itemModal').style.display = 'none';
+    }
+    </script>
+</body>
+
+</html>

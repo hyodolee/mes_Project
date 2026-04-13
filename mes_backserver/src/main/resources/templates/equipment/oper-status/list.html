@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설비가동현황 목록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('operStatuses')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('설비가동현황', '설비 가동 상태를 조회합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/equipment/oper-statuses" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장코드</label>
+                    <input id="plantCd" type="text" name="plantCd" th:value="${param.plantCd}">
+                </div>
+                <div class="field">
+                    <label for="equipmentCd">설비코드</label>
+                    <input id="equipmentCd" type="text" name="equipmentCd" th:value="${param.equipmentCd}">
+                </div>
+                <div class="field">
+                    <label for="fromDt">가동일자(시작)</label>
+                    <input id="fromDt" type="date" name="fromDt" th:value="${param.fromDt}">
+                </div>
+                <div class="field">
+                    <label for="toDt">가동일자(종료)</label>
+                    <input id="toDt" type="date" name="toDt" th:value="${param.toDt}">
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>공장코드</th>
+                        <th>설비코드</th>
+                        <th>가동일자</th>
+                        <th>근무조</th>
+                        <th>가동상태</th>
+                        <th>생산수량</th>
+                        <th>가동시간(분)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="st : ${statuses}">
+                        <td th:text="${st.plantCd}"></td>
+                        <td th:text="${st.equipmentCd}"></td>
+                        <td th:text="${st.operDt}"></td>
+                        <td th:text="${st.shift}"></td>
+                        <td th:text="${st.operStatus}"></td>
+                        <td th:text="${st.prodQty}"></td>
+                        <td th:text="${st.operTime}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(statuses)}">
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">조회된 가동현황이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/equipment/oper-statuses(page=1, plantCd=${param.plantCd}, equipmentCd=${param.equipmentCd}, fromDt=${param.fromDt}, toDt=${param.toDt})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/equipment/oper-statuses(page=${page.currentPage - 1}, plantCd=${param.plantCd}, equipmentCd=${param.equipmentCd}, fromDt=${param.fromDt}, toDt=${param.toDt})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/equipment/oper-statuses(page=${p}, plantCd=${param.plantCd}, equipmentCd=${param.equipmentCd}, fromDt=${param.fromDt}, toDt=${param.toDt})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/equipment/oper-statuses(page=${page.currentPage + 1}, plantCd=${param.plantCd}, equipmentCd=${param.equipmentCd}, fromDt=${param.fromDt}, toDt=${param.toDt})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/equipment/oper-statuses(page=${page.totalPages}, plantCd=${param.plantCd}, equipmentCd=${param.equipmentCd}, fromDt=${param.fromDt}, toDt=${param.toDt})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

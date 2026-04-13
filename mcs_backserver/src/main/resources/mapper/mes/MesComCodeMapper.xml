@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.mes.MesComCodeMapper">
+    <select id="selectComCodeList" resultType="com.mcs.domain.mes.dto.ComCodeDto">
+        SELECT
+            GRP_CD,
+            COM_CD,
+            COM_NM,
+            SORT_SEQ,
+            ATTR1,
+            USE_YN
+        FROM COM_CODE
+        <where>
+            <if test="grpCd != null and grpCd != ''">AND GRP_CD = #{grpCd}</if>
+            <if test="useYn != null and useYn != ''">AND USE_YN = #{useYn}</if>
+        </where>
+        ORDER BY GRP_CD, SORT_SEQ
+    </select>
+</mapper>

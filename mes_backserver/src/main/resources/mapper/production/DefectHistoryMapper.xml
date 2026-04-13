@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.production.DefectHistoryMapper">
+
+    <select id="selectDefectHistories" resultType="com.mes.domain.production.defect.dto.DefectHistoryDto">
+        SELECT
+            dh.DEFECT_ID AS defectId,
+            dh.PLANT_CD AS plantCd,
+            dh.RESULT_ID AS resultId,
+            dh.PROC_RESULT_ID AS procResultId,
+            dh.DEFECT_DT AS defectDt,
+            dh.DEFECT_TYPE AS defectType,
+            dh.DEFECT_CD AS defectCd,
+            dh.DEFECT_NM AS defectNm,
+            dh.DEFECT_QTY AS defectQty,
+            dh.DEFECT_CAUSE AS defectCause,
+            dh.DEFECT_ACTION AS defectAction,
+            dh.DISPOSITION AS disposition,
+            dh.DISPOSITION_QTY AS dispositionQty,
+            dh.DISPOSITION_DT AS dispositionDt,
+            dh.ITEM_CD AS itemCd,
+            dh.LOT_NO AS lotNo,
+            dh.WORKER_ID AS workerId,
+            dh.EQUIPMENT_CD AS equipmentCd,
+            dh.PROCESS_CD AS processCd,
+            dh.DEFECT_RMK AS defectRmk,
+            dh.REG_USER_ID AS regUserId,
+            dh.REG_DTM AS regDtm
+        FROM PRD_DEFECT_HIS dh
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND dh.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND dh.ITEM_CD = #{itemCd}
+        </if>
+        <if test="defectFromDt != null">
+            AND dh.DEFECT_DT &gt;= #{defectFromDt}
+        </if>
+        <if test="defectToDt != null">
+            AND dh.DEFECT_DT &lt;= #{defectToDt}
+        </if>
+        ORDER BY dh.DEFECT_DT DESC, dh.DEFECT_ID DESC
+    </select>
+
+    <insert id="insertDefectHistory">
+        INSERT INTO PRD_DEFECT_HIS (
+            PLANT_CD, RESULT_ID, PROC_RESULT_ID, DEFECT_DT, DEFECT_TYPE, DEFECT_CD,
+            DEFECT_NM, DEFECT_QTY, DEFECT_CAUSE, DEFECT_ACTION, DISPOSITION,
+            DISPOSITION_QTY, DISPOSITION_DT, ITEM_CD, LOT_NO, WORKER_ID,
+            EQUIPMENT_CD, PROCESS_CD, DEFECT_RMK, REG_USER_ID
+        ) VALUES (
+            #{request.plantCd}, #{request.resultId}, #{request.procResultId}, #{request.defectDt}, #{request.defectType}, #{request.defectCd},
+            #{request.defectNm}, #{request.defectQty}, #{request.defectCause}, #{request.defectAction}, #{request.disposition},
+            #{request.dispositionQty}, #{request.dispositionDt}, #{request.itemCd}, #{request.lotNo}, #{request.workerId},
+            #{request.equipmentCd}, #{request.processCd}, #{request.defectRmk}, #{regUserId}
+        )
+    </insert>
+
+</mapper>

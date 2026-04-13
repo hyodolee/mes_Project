@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCS 관리자</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments/layout :: sidebar('home')}"></div>
+    <main class="app-content">
+        <div th:replace="~{fragments/layout :: topbar('MCS 대시보드', '자재 관리 시스템 (Material Control System)')}"></div>
+        <div class="card">
+            <div class="quick-links">
+                <a th:href="@{/zones}" class="quick-link">
+                    <span>구역 관리</span>
+                    <small>창고 내 구역(Zone)을 관리합니다.</small>
+                </a>
+                <a th:href="@{/locations}" class="quick-link">
+                    <span>로케이션 관리</span>
+                    <small>구역 내 상세 위치를 관리합니다.</small>
+                </a>
+                <a th:href="@{/inbounds}" class="quick-link">
+                    <span>입고 관리</span>
+                    <small>입고 오더 등록 및 입고 확정 처리</small>
+                </a>
+                <a th:href="@{/outbounds}" class="quick-link">
+                    <span>출고 관리</span>
+                    <small>출고 요청, 할당, 피킹 및 출하 처리</small>
+                </a>
+                <a th:href="@{/transfers}" class="quick-link">
+                    <span>이동 관리</span>
+                    <small>로케이션 간 자재 이동 처리</small>
+                </a>
+                <a th:href="@{/inventory/stock}" class="quick-link">
+                    <span>로케이션 재고</span>
+                    <small>로케이션별 실시간 재고 현황</small>
+                </a>
+            </div>
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/layout.js}"></script>
+</body>
+</html>

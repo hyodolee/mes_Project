@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.mes.MesItemMapper">
+    <select id="selectItemList" resultType="com.mcs.domain.mes.dto.ItemDto">
+        SELECT
+            i.ITEM_CD,
+            i.PLANT_CD,
+            i.ITEM_NM,
+            i.ITEM_SPEC,
+            i.ITEM_TYPE,
+            i.ITEM_GRP,
+            i.UNIT,
+            i.SAFETY_STOCK_QTY,
+            i.MAIN_VENDOR_CD,
+            v.VENDOR_NM AS MAIN_VENDOR_NM
+        FROM MST_ITEM i
+        LEFT JOIN MST_VENDOR v ON i.MAIN_VENDOR_CD = v.VENDOR_CD
+        <where>
+            i.USE_YN = 'Y'
+            <if test="plantCd != null and plantCd != ''">AND i.PLANT_CD = #{plantCd}</if>
+            <if test="itemCd != null and itemCd != ''">AND i.ITEM_CD LIKE CONCAT('%', #{itemCd}, '%')</if>
+            <if test="itemNm != null and itemNm != ''">AND i.ITEM_NM LIKE CONCAT('%', #{itemNm}, '%')</if>
+            <if test="itemType != null and itemType != ''">AND i.ITEM_TYPE = #{itemType}</if>
+        </where>
+        ORDER BY i.ITEM_CD
+    </select>
+</mapper>

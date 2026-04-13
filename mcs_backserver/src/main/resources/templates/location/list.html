@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로케이션 관리 - MCS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('locations')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('로케이션 관리', '구역 내 상세 로케이션 정보를 관리합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/locations" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd">
+                        <option value="">전체</option>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${search.plantCd == p.plantCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="zoneId">구역</label>
+                    <select id="zoneId" name="zoneId">
+                        <option value="">전체</option>
+                        <option th:each="z : ${zones}" th:value="${z.zoneId}" th:text="${z.zoneNm}" th:selected="${search.zoneId == z.zoneId}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="locationCd">로케이션코드/명</label>
+                    <input id="locationCd" type="text" name="locationCd" th:value="${search.locationCd}" placeholder="코드 또는 명">
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                    <a class="btn btn-secondary" href="/locations/new">로케이션 등록</a>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}" style="color: var(--primary-color); margin-top: 1rem; font-weight: 500;"></p>
+            <p class="error" th:if="${error}" th:text="${error}" style="color: red; margin-top: 1rem; font-weight: 500;"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>공장/창고</th>
+                        <th>구역</th>
+                        <th>로케이션코드</th>
+                        <th>로케이션명</th>
+                        <th>최대수용량</th>
+                        <th>현재사용량</th>
+                        <th>상태</th>
+                        <th>사용여부</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="loc : ${locationsList}" th:onclick="|location.href='@{/locations/{id}/edit(id=${loc.locationId})}'|" style="cursor: pointer;" class="hover-row">
+                        <td><span th:text="${loc.plantNm}"></span><br><small th:text="${loc.warehouseNm}"></small></td>
+                        <td th:text="${loc.zoneNm}"></td>
+                        <td th:text="${loc.locationCd}"></td>
+                        <td th:text="${loc.locationNm}"></td>
+                        <td th:text="${loc.maxCapacity}"></td>
+                        <td th:text="${loc.currentUsage}"></td>
+                        <td th:text="${loc.locationStatusNm}"></td>
+                        <td th:text="${loc.useYn}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(locationsList)}">
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 로케이션 정보가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/locations(page=1, plantCd=${search.plantCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/locations(page=${page.currentPage - 1}, plantCd=${search.plantCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/locations(page=${p}, plantCd=${search.plantCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/locations(page=${page.currentPage + 1}, plantCd=${search.plantCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/locations(page=${page.totalPages}, plantCd=${search.plantCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

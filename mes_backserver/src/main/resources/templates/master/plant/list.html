@@ -28,9 +28,13 @@
                     <label for="plantNm">공장명</label>
                     <input id="plantNm" type="text" name="plantNm" th:value="${plantNm}">
                 </div>
-                <div class="field">
-                    <label for="useYn">사용여부(Y/N)</label>
-                    <input id="useYn" type="text" name="useYn" th:value="${useYn}">
+                <div class="field field-use-yn">
+                    <label for="useYn">사용여부</label>
+                    <select id="useYn" name="useYn">
+                        <option value="">전체</option>
+                        <option value="Y" th:selected="${useYn == 'Y'}">사용 (Y)</option>
+                        <option value="N" th:selected="${useYn == 'N'}">미사용 (N)</option>
+                    </select>
                 </div>
                 <div class="actions field-span-2">
                     <button class="btn btn-primary" type="submit">조회</button>
@@ -62,8 +66,41 @@
                         <td th:text="${p.useYn}"></td>
                         <td><a class="table-link" th:href="@{'/master/plants/' + ${p.plantCd} + '/edit'}">수정</a></td>
                     </tr>
+                    <tr th:if="${#lists.isEmpty(plants)}">
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 공장 정보가 없습니다.</td>
+                    </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/master/plants(page=1, plantNm=${plantNm}, useYn=${useYn})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/master/plants(page=${page.currentPage - 1}, plantNm=${plantNm}, useYn=${useYn})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/master/plants(page=${p}, plantNm=${plantNm}, useYn=${useYn})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/master/plants(page=${page.currentPage + 1}, plantNm=${plantNm}, useYn=${useYn})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/master/plants(page=${page.totalPages}, plantNm=${plantNm}, useYn=${useYn})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
             </div>
         </section>
     </main>

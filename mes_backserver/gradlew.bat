@@ -1,4 +1,4 @@
-@if "%DEBUG%" == "" @echo off
+@if "%DEBUG%" == "true" @echo on
 @rem ##########################################################################
 @rem
 @rem  Gradle startup script for Windows
@@ -7,6 +7,9 @@
 
 @rem Set local scope for the variables with windows NT shell
 if "%OS%"=="Windows_NT" setlocal
+
+SET JAVA_HOME=C:\Program Files\Java\jdk-21.0.10
+
 
 set DIRNAME=%~dp0
 if "%DIRNAME%" == "" set DIRNAME=.

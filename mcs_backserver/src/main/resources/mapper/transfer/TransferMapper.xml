@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.transfer.TransferMapper">
+
+    <select id="selectTransferList" resultType="com.mcs.domain.transfer.dto.TransferOrderDto">
+        SELECT
+            t.TRANSFER_ID,
+            t.PLANT_CD,
+            t.TRANSFER_NO,
+            t.TRANSFER_STATUS,
+            t.FROM_LOCATION_ID,
+            t.TO_LOCATION_ID,
+            t.TRANSFER_REASON,
+            t.REG_USER_ID,
+            t.REG_DTM,
+            t.UPD_USER_ID,
+            t.UPD_DTM,
+            p.PLANT_NM,
+            c.COM_NM AS TRANSFER_STATUS_NM,
+            lf.LOCATION_CD AS FROM_LOCATION_CD,
+            lt.LOCATION_CD AS TO_LOCATION_CD
+        FROM MCS_TRANSFER_ORDER t
+        INNER JOIN MST_PLANT p ON t.PLANT_CD = p.PLANT_CD
+        INNER JOIN MCS_LOCATION lf ON t.FROM_LOCATION_ID = lf.LOCATION_ID
+        INNER JOIN MCS_LOCATION lt ON t.TO_LOCATION_ID = lt.LOCATION_ID
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_TF_STATUS' AND t.TRANSFER_STATUS = c.COM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND t.PLANT_CD = #{plantCd}</if>
+            <if test="transferStatus != null and transferStatus != ''">AND t.TRANSFER_STATUS = #{transferStatus}</if>
+            <if test="transferNo != null and transferNo != ''">AND t.TRANSFER_NO LIKE CONCAT('%', #{transferNo}, '%')</if>
+        </where>
+        ORDER BY t.REG_DTM DESC, t.TRANSFER_NO DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectTransferCount" resultType="long">
+        SELECT COUNT(*)
+        FROM MCS_TRANSFER_ORDER t
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND t.PLANT_CD = #{plantCd}</if>
+            <if test="transferStatus != null and transferStatus != ''">AND t.TRANSFER_STATUS = #{transferStatus}</if>
+            <if test="transferNo != null and transferNo != ''">AND t.TRANSFER_NO LIKE CONCAT('%', #{transferNo}, '%')</if>
+        </where>
+    </select>
+
+    <select id="selectTransferById" resultType="com.mcs.domain.transfer.dto.TransferOrderDto">
+        SELECT
+            t.TRANSFER_ID,
+            t.PLANT_CD,
+            t.TRANSFER_NO,
+            t.TRANSFER_STATUS,
+            t.FROM_LOCATION_ID,
+            t.TO_LOCATION_ID,
+            t.TRANSFER_REASON,
+            t.REG_USER_ID,
+            t.REG_DTM,
+            t.UPD_USER_ID,
+            t.UPD_DTM,
+            p.PLANT_NM,
+            c.COM_NM AS TRANSFER_STATUS_NM,
+            lf.LOCATION_CD AS FROM_LOCATION_CD,
+            lt.LOCATION_CD AS TO_LOCATION_CD
+        FROM MCS_TRANSFER_ORDER t
+        INNER JOIN MST_PLANT p ON t.PLANT_CD = p.PLANT_CD
+        INNER JOIN MCS_LOCATION lf ON t.FROM_LOCATION_ID = lf.LOCATION_ID
+        INNER JOIN MCS_LOCATION lt ON t.TO_LOCATION_ID = lt.LOCATION_ID
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_TF_STATUS' AND t.TRANSFER_STATUS = c.COM_CD
+        WHERE t.TRANSFER_ID = #{transferId}
+    </select>
+
+    <insert id="insertTransferOrder" parameterType="com.mcs.domain.transfer.dto.TransferOrderDto">
+        INSERT INTO MCS_TRANSFER_ORDER (
+            PLANT_CD, TRANSFER_NO, TRANSFER_STATUS, FROM_LOCATION_ID, TO_LOCATION_ID, 
+            TRANSFER_REASON, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{plantCd}, #{transferNo}, #{transferStatus}, #{fromLocationId}, #{toLocationId},
+            #{transferReason}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <update id="updateTransferOrder" parameterType="com.mcs.domain.transfer.dto.TransferOrderDto">
+        UPDATE MCS_TRANSFER_ORDER
+        SET FROM_LOCATION_ID = #{fromLocationId},
+            TO_LOCATION_ID = #{toLocationId},
+            TRANSFER_REASON = #{transferReason},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE TRANSFER_ID = #{transferId}
+    </update>
+
+    <update id="updateTransferStatus">
+        UPDATE MCS_TRANSFER_ORDER
+        SET TRANSFER_STATUS = #{status},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE TRANSFER_ID = #{transferId}
+    </update>
+
+    <delete id="deleteTransferOrder">
+        DELETE FROM MCS_TRANSFER_ORDER WHERE TRANSFER_ID = #{transferId} AND TRANSFER_STATUS = 'REQUESTED'
+    </delete>
+
+    <!-- ITEM 매핑 -->
+    <select id="selectTransferItems" resultType="com.mcs.domain.transfer.dto.TransferItemDto">
+        SELECT
+            i.TRANSFER_ITEM_ID,
+            i.TRANSFER_ID,
+            i.ITEM_CD,
+            i.LOT_NO,
+            i.TRANSFER_QTY,
+            i.ITEM_STATUS,
+            i.REG_USER_ID,
+            i.REG_DTM,
+            i.UPD_USER_ID,
+            i.UPD_DTM,
+            mi.ITEM_NM,
+            mi.ITEM_SPEC,
+            mi.UNIT,
+            c.COM_NM AS ITEM_STATUS_NM
+        FROM MCS_TRANSFER_ITEM i
+        INNER JOIN MST_ITEM mi ON i.ITEM_CD = mi.ITEM_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_TF_ITEM_STATUS' AND i.ITEM_STATUS = c.COM_CD
+        WHERE i.TRANSFER_ID = #{transferId}
+        ORDER BY i.TRANSFER_ITEM_ID
+    </select>
+
+    <insert id="insertTransferItem" parameterType="com.mcs.domain.transfer.dto.TransferItemDto">
+        INSERT INTO MCS_TRANSFER_ITEM (
+            TRANSFER_ID, ITEM_CD, LOT_NO, TRANSFER_QTY, ITEM_STATUS, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{transferId}, #{itemCd}, #{lotNo}, #{transferQty}, #{itemStatus}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <update id="updateTransferItem" parameterType="com.mcs.domain.transfer.dto.TransferItemDto">
+        UPDATE MCS_TRANSFER_ITEM
+        SET ITEM_CD = #{itemCd},
+            LOT_NO = #{lotNo},
+            TRANSFER_QTY = #{transferQty},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE TRANSFER_ITEM_ID = #{transferItemId}
+    </update>
+
+    <update id="updateTransferItemStatus">
+        UPDATE MCS_TRANSFER_ITEM
+        SET ITEM_STATUS = #{status},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE TRANSFER_ITEM_ID = #{transferItemId}
+    </update>
+
+    <delete id="deleteTransferItems">
+        DELETE FROM MCS_TRANSFER_ITEM WHERE TRANSFER_ID = #{transferId}
+    </delete>
+
+</mapper>

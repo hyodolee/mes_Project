@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로케이션 재고 이력 - MCS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('transactions')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('로케이션 재고 이력', '로케이션 재고의 입출고 및 이동 변동 내역을 조회합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/inventory/transactions" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd">
+                        <option value="">전체</option>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${search.plantCd == p.plantCd}"></option>
+                    </select>
+                </div>
+                <div class="field" style="display:flex; gap:0.5rem;">
+                    <div style="flex:1;">
+                        <label for="fromDate">조회시작일</label>
+                        <input id="fromDate" type="date" name="fromDate" th:value="${search.fromDate}">
+                    </div>
+                    <div style="flex:1;">
+                        <label for="toDate">조회종료일</label>
+                        <input id="toDate" type="date" name="toDate" th:value="${search.toDate}">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="transType">거래유형</label>
+                    <select id="transType" name="transType">
+                        <option value="">전체</option>
+                        <option th:each="t : ${transTypes}" th:value="${t.comCd}" th:text="${t.comNm}" th:selected="${search.transType == t.comCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="locationCd">로케이션</label>
+                    <input id="locationCd" type="text" name="locationCd" th:value="${search.locationCd}" placeholder="코드">
+                </div>
+                <div class="field">
+                    <label for="itemCd">품목코드/명</label>
+                    <input id="itemCd" type="text" name="itemCd" th:value="${search.itemCd}" placeholder="코드 또는 명">
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>일시</th>
+                        <th>로케이션</th>
+                        <th>품목</th>
+                        <th>유형</th>
+                        <th style="text-align: right;">이전수량</th>
+                        <th style="text-align: right;">변동수량</th>
+                        <th style="text-align: right;">이후수량</th>
+                        <th>참조번호</th>
+                        <th>비고</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="his : ${transList}" class="hover-row">
+                        <td th:text="${#temporals.format(his.regDtm, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                        <td><span th:text="${his.locationCd}"></span><br><small th:text="${his.warehouseNm}"></small></td>
+                        <td><span th:text="${his.itemCd}"></span><br><small th:text="${his.itemNm}"></small></td>
+                        <td><span class="badge badge-outline" th:text="${his.transTypeNm}"></span></td>
+                        <td style="text-align: right;" th:text="${#numbers.formatDecimal(his.beforeQty, 1, 'COMMA', 3, 'POINT')}"></td>
+                        <td style="text-align: right; font-weight: bold;" th:classappend="${his.afterQty > his.beforeQty ? 'text-success' : 'text-danger'}">
+                            <span th:text="${his.afterQty > his.beforeQty ? '+' : '-'}"></span>
+                            <span th:text="${#numbers.formatDecimal(his.transQty, 1, 'COMMA', 3, 'POINT')}"></span>
+                        </td>
+                        <td style="text-align: right;" th:text="${#numbers.formatDecimal(his.afterQty, 1, 'COMMA', 3, 'POINT')}"></td>
+                        <td th:text="${his.refNo ?: '-'}"></td>
+                        <td th:text="${his.transRmk ?: '-'}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(transList)}">
+                        <td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">조회된 이력 정보가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/inventory/transactions(page=1, plantCd=${search.plantCd}, fromDate=${search.fromDate}, toDate=${search.toDate}, transType=${search.transType}, locationCd=${search.locationCd}, itemCd=${search.itemCd})}" aria-label="First">&laquo;</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/inventory/transactions(page=${page.currentPage - 1}, plantCd=${search.plantCd}, fromDate=${search.fromDate}, toDate=${search.toDate}, transType=${search.transType}, locationCd=${search.locationCd}, itemCd=${search.itemCd})}" aria-label="Previous">&lsaquo;</a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/inventory/transactions(page=${p}, plantCd=${search.plantCd}, fromDate=${search.fromDate}, toDate=${search.toDate}, transType=${search.transType}, locationCd=${search.locationCd}, itemCd=${search.itemCd})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/inventory/transactions(page=${page.currentPage + 1}, plantCd=${search.plantCd}, fromDate=${search.fromDate}, toDate=${search.toDate}, transType=${search.transType}, locationCd=${search.locationCd}, itemCd=${search.itemCd})}" aria-label="Next">&rsaquo;</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/inventory/transactions(page=${page.totalPages}, plantCd=${search.plantCd}, fromDate=${search.fromDate}, toDate=${search.toDate}, transType=${search.transType}, locationCd=${search.locationCd}, itemCd=${search.itemCd})}" aria-label="Last">&raquo;</a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

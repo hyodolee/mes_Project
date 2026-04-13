@@ -7,10 +7,16 @@
 
 USE MES_DB;
 
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE MST_ROUTING;
+TRUNCATE TABLE MST_BOM;
+TRUNCATE TABLE MST_ITEM;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ------------------------------------------------------------
 -- 1. 품목정보 - 원자재
 -- ------------------------------------------------------------
-INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, SAFETY_STOCK_QTY, MIN_ORDER_QTY, LEAD_TIME, PURCHASE_PRICE, VENDOR_CD, LOT_MGMT_YN, INSPECT_YN, USE_YN, REG_USER_ID) VALUES
+INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, SAFETY_STOCK_QTY, MIN_ORDER_QTY, LEAD_TIME, PURCHASE_PRICE, VENDOR_CD, LOT_MANAGE_YN, INSPECT_YN, USE_YN, REG_USER_ID) VALUES
 -- 양극소재
 ('RM-NCM-001', 'P001', 'NCM811 양극활물질', 'LiNi0.8Co0.1Mn0.1O2 D50=12μm', '원자재', '양극활물질', 'KG', 5000, 1000, 14, 45000, 'V001', 'Y', 'Y', 'Y', 'SYSTEM'),
 ('RM-NCM-002', 'P001', 'NCM622 양극활물질', 'LiNi0.6Co0.2Mn0.2O2 D50=10μm', '원자재', '양극활물질', 'KG', 3000, 500, 14, 38000, 'V001', 'Y', 'Y', 'Y', 'SYSTEM'),
@@ -39,7 +45,7 @@ INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP
 ('RM-TPE-001', 'P001', '절연테이프', '폴리이미드테이프 10mm', '원자재', '부자재', 'ROLL', 200, 50, 3, 15000, 'V014', 'N', 'N', 'Y', 'SYSTEM');
 
 -- 팩공정 원자재 (대전2공장)
-INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, SAFETY_STOCK_QTY, MIN_ORDER_QTY, LEAD_TIME, PURCHASE_PRICE, VENDOR_CD, LOT_MGMT_YN, INSPECT_YN, USE_YN, REG_USER_ID) VALUES
+INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, SAFETY_STOCK_QTY, MIN_ORDER_QTY, LEAD_TIME, PURCHASE_PRICE, VENDOR_CD, LOT_MANAGE_YN, INSPECT_YN, USE_YN, REG_USER_ID) VALUES
 ('RM-BMS-001', 'P002', 'BMS보드', 'BMS-M100 16S', '원자재', 'BMS', 'EA', 200, 50, 14, 85000, 'V009', 'Y', 'Y', 'Y', 'SYSTEM'),
 ('RM-BMS-002', 'P002', 'BMS보드', 'BMS-P200 32S', '원자재', 'BMS', 'EA', 100, 30, 14, 150000, 'V009', 'Y', 'Y', 'Y', 'SYSTEM'),
 ('RM-BUS-001', 'P002', '버스바', 'Cu 2T x 20W Ni도금', '부품', '연결부품', 'EA', 5000, 1000, 5, 2500, 'V014', 'N', 'N', 'Y', 'SYSTEM'),
@@ -54,7 +60,7 @@ INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP
 -- ------------------------------------------------------------
 -- 2. 품목정보 - 반제품
 -- ------------------------------------------------------------
-INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, SAFETY_STOCK_QTY, LEAD_TIME, STANDARD_COST, LOT_MGMT_YN, INSPECT_YN, USE_YN, REG_USER_ID) VALUES
+INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, SAFETY_STOCK_QTY, LEAD_TIME, STANDARD_COST, LOT_MANAGE_YN, INSPECT_YN, USE_YN, REG_USER_ID) VALUES
 -- 전극공정 반제품
 ('SF-CSL-001', 'P001', 'NCM811 양극슬러리', '고형분 72% 점도 5000cP', '반제품', '슬러리', 'KG', 500, 0.5, 52000, 'Y', 'Y', 'Y', 'SYSTEM'),
 ('SF-CSL-002', 'P001', 'NCM622 양극슬러리', '고형분 70% 점도 4500cP', '반제품', '슬러리', 'KG', 300, 0.5, 44000, 'Y', 'Y', 'Y', 'SYSTEM'),
@@ -80,7 +86,7 @@ INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP
 -- ------------------------------------------------------------
 -- 3. 품목정보 - 완제품
 -- ------------------------------------------------------------
-INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, SAFETY_STOCK_QTY, LEAD_TIME, STANDARD_COST, SALE_PRICE, LOT_MGMT_YN, INSPECT_YN, USE_YN, REG_USER_ID) VALUES
+INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP, UNIT, SAFETY_STOCK_QTY, LEAD_TIME, STANDARD_COST, SALE_PRICE, LOT_MANAGE_YN, INSPECT_YN, USE_YN, REG_USER_ID) VALUES
 -- 배터리셀
 ('FG-CEL-001', 'P001', '파우치셀 60Ah (NCM811)', '3.7V 60Ah 222Wh', '완제품', '배터리셀', 'EA', 2000, 10, 18000, 28000, 'Y', 'Y', 'Y', 'SYSTEM'),
 ('FG-CEL-002', 'P001', '파우치셀 50Ah (NCM622)', '3.7V 50Ah 185Wh', '완제품', '배터리셀', 'EA', 1500, 10, 15000, 23000, 'Y', 'Y', 'Y', 'SYSTEM'),
@@ -94,72 +100,72 @@ INSERT INTO MST_ITEM (ITEM_CD, PLANT_CD, ITEM_NM, ITEM_SPEC, ITEM_TYPE, ITEM_GRP
 -- ------------------------------------------------------------
 -- 4. BOM 정보 - 배터리셀 (NCM811 60Ah)
 -- ------------------------------------------------------------
-INSERT INTO MST_BOM (PLANT_CD, PARENT_ITEM_CD, CHILD_ITEM_CD, BOM_LEVEL, BOM_QTY, LOSS_RATE, BASE_QTY, START_DT, PROCESS_CD, USE_YN, REG_USER_ID) VALUES
+INSERT INTO MST_BOM (PLANT_CD, PARENT_ITEM_CD, CHILD_ITEM_CD, BOM_LEVEL, BOM_QTY, LOSS_RATE, START_DT, PROCESS_CD, USE_YN, REG_USER_ID) VALUES
 -- FG-CEL-001 완성셀 ← 에이징셀
-('P001', 'FG-CEL-001', 'SF-AGC-001', 1, 1, 1, 1, '2024-01-01', 'PR017', 'Y', 'SYSTEM'),
+('P001', 'FG-CEL-001', 'SF-AGC-001', 1, 1, 1, '2024-01-01', 'PR017', 'Y', 'SYSTEM'),
 -- SF-AGC-001 에이징셀 ← Formation셀
-('P001', 'SF-AGC-001', 'SF-FMC-001', 2, 1, 0.5, 1, '2024-01-01', 'PR014', 'Y', 'SYSTEM'),
+('P001', 'SF-AGC-001', 'SF-FMC-001', 2, 1, 0.5, '2024-01-01', 'PR014', 'Y', 'SYSTEM'),
 -- SF-FMC-001 Formation셀 ← 웻셀
-('P001', 'SF-FMC-001', 'SF-WET-001', 3, 1, 0.5, 1, '2024-01-01', 'PR013', 'Y', 'SYSTEM'),
+('P001', 'SF-FMC-001', 'SF-WET-001', 3, 1, 0.5, '2024-01-01', 'PR013', 'Y', 'SYSTEM'),
 -- SF-WET-001 웻셀 ← 드라이셀 + 전해액
-('P001', 'SF-WET-001', 'SF-DRC-001', 4, 1, 0.5, 1, '2024-01-01', 'PR011', 'Y', 'SYSTEM'),
-('P001', 'SF-WET-001', 'RM-ELY-001', 4, 0.12, 3, 1, '2024-01-01', 'PR011', 'Y', 'SYSTEM'),
+('P001', 'SF-WET-001', 'SF-DRC-001', 4, 1, 0.5, '2024-01-01', 'PR011', 'Y', 'SYSTEM'),
+('P001', 'SF-WET-001', 'RM-ELY-001', 4, 0.12, 3, '2024-01-01', 'PR011', 'Y', 'SYSTEM'),
 -- SF-DRC-001 드라이셀 ← 젤리롤 + 파우치 + 탭
-('P001', 'SF-DRC-001', 'SF-JEL-001', 5, 1, 0.5, 1, '2024-01-01', 'PR009', 'Y', 'SYSTEM'),
-('P001', 'SF-DRC-001', 'RM-PCH-001', 5, 1, 2, 1, '2024-01-01', 'PR010', 'Y', 'SYSTEM'),
-('P001', 'SF-DRC-001', 'RM-TAB-001', 5, 1, 1, 1, '2024-01-01', 'PR009', 'Y', 'SYSTEM'),
-('P001', 'SF-DRC-001', 'RM-TAB-002', 5, 1, 1, 1, '2024-01-01', 'PR009', 'Y', 'SYSTEM'),
-('P001', 'SF-DRC-001', 'RM-TPE-001', 5, 0.02, 5, 1, '2024-01-01', 'PR009', 'Y', 'SYSTEM'),
+('P001', 'SF-DRC-001', 'SF-JEL-001', 5, 1, 0.5, '2024-01-01', 'PR009', 'Y', 'SYSTEM'),
+('P001', 'SF-DRC-001', 'RM-PCH-001', 5, 1, 2, '2024-01-01', 'PR010', 'Y', 'SYSTEM'),
+('P001', 'SF-DRC-001', 'RM-TAB-001', 5, 1, 1, '2024-01-01', 'PR009', 'Y', 'SYSTEM'),
+('P001', 'SF-DRC-001', 'RM-TAB-002', 5, 1, 1, '2024-01-01', 'PR009', 'Y', 'SYSTEM'),
+('P001', 'SF-DRC-001', 'RM-TPE-001', 5, 0.02, 5, '2024-01-01', 'PR009', 'Y', 'SYSTEM'),
 -- SF-JEL-001 젤리롤 ← 양극(슬리팅) + 음극(슬리팅) + 분리막
-('P001', 'SF-JEL-001', 'SF-CES-001', 6, 30, 1, 1, '2024-01-01', 'PR008', 'Y', 'SYSTEM'),
-('P001', 'SF-JEL-001', 'SF-AES-001', 6, 31, 1, 1, '2024-01-01', 'PR008', 'Y', 'SYSTEM'),
-('P001', 'SF-JEL-001', 'RM-SEP-001', 6, 0.06, 3, 1, '2024-01-01', 'PR008', 'Y', 'SYSTEM'),
+('P001', 'SF-JEL-001', 'SF-CES-001', 6, 30, 1, '2024-01-01', 'PR008', 'Y', 'SYSTEM'),
+('P001', 'SF-JEL-001', 'SF-AES-001', 6, 31, 1, '2024-01-01', 'PR008', 'Y', 'SYSTEM'),
+('P001', 'SF-JEL-001', 'RM-SEP-001', 6, 0.06, 3, '2024-01-01', 'PR008', 'Y', 'SYSTEM'),
 -- SF-CES-001 양극(슬리팅) ← 양극(압연)
-('P001', 'SF-CES-001', 'SF-CER-001', 7, 0.1, 3, 1, '2024-01-01', 'PR006', 'Y', 'SYSTEM'),
+('P001', 'SF-CES-001', 'SF-CER-001', 7, 0.1, 3, '2024-01-01', 'PR006', 'Y', 'SYSTEM'),
 -- SF-AES-001 음극(슬리팅) ← 음극(압연)
-('P001', 'SF-AES-001', 'SF-AER-001', 7, 0.1, 3, 1, '2024-01-01', 'PR006', 'Y', 'SYSTEM'),
+('P001', 'SF-AES-001', 'SF-AER-001', 7, 0.1, 3, '2024-01-01', 'PR006', 'Y', 'SYSTEM'),
 -- SF-CER-001 양극(압연) ← 양극전극시트
-('P001', 'SF-CER-001', 'SF-CEL-001', 8, 1, 1, 1, '2024-01-01', 'PR005', 'Y', 'SYSTEM'),
+('P001', 'SF-CER-001', 'SF-CEL-001', 8, 1, 1, '2024-01-01', 'PR005', 'Y', 'SYSTEM'),
 -- SF-AER-001 음극(압연) ← 음극전극시트
-('P001', 'SF-AER-001', 'SF-AEL-001', 8, 1, 1, 1, '2024-01-01', 'PR005', 'Y', 'SYSTEM'),
+('P001', 'SF-AER-001', 'SF-AEL-001', 8, 1, 1, '2024-01-01', 'PR005', 'Y', 'SYSTEM'),
 -- SF-CEL-001 양극전극시트 ← 양극슬러리 + 알루미늄포일
-('P001', 'SF-CEL-001', 'SF-CSL-001', 9, 0.5, 5, 1, '2024-01-01', 'PR002', 'Y', 'SYSTEM'),
-('P001', 'SF-CEL-001', 'RM-ALF-001', 9, 0.005, 2, 1, '2024-01-01', 'PR002', 'Y', 'SYSTEM'),
+('P001', 'SF-CEL-001', 'SF-CSL-001', 9, 0.5, 5, '2024-01-01', 'PR002', 'Y', 'SYSTEM'),
+('P001', 'SF-CEL-001', 'RM-ALF-001', 9, 0.005, 2, '2024-01-01', 'PR002', 'Y', 'SYSTEM'),
 -- SF-AEL-001 음극전극시트 ← 음극슬러리 + 구리포일
-('P001', 'SF-AEL-001', 'SF-ASL-001', 9, 0.35, 5, 1, '2024-01-01', 'PR004', 'Y', 'SYSTEM'),
-('P001', 'SF-AEL-001', 'RM-CUF-001', 9, 0.005, 2, 1, '2024-01-01', 'PR004', 'Y', 'SYSTEM'),
+('P001', 'SF-AEL-001', 'SF-ASL-001', 9, 0.35, 5, '2024-01-01', 'PR004', 'Y', 'SYSTEM'),
+('P001', 'SF-AEL-001', 'RM-CUF-001', 9, 0.005, 2, '2024-01-01', 'PR004', 'Y', 'SYSTEM'),
 -- SF-CSL-001 양극슬러리 ← 원자재
-('P001', 'SF-CSL-001', 'RM-NCM-001', 10, 0.92, 1, 1, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
-('P001', 'SF-CSL-001', 'RM-PVD-001', 10, 0.03, 2, 1, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
-('P001', 'SF-CSL-001', 'RM-CNT-001', 10, 0.01, 2, 1, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
-('P001', 'SF-CSL-001', 'RM-CB-001', 10, 0.02, 2, 1, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
-('P001', 'SF-CSL-001', 'RM-NMP-001', 10, 0.4, 3, 1, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
+('P001', 'SF-CSL-001', 'RM-NCM-001', 10, 0.92, 1, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
+('P001', 'SF-CSL-001', 'RM-PVD-001', 10, 0.03, 2, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
+('P001', 'SF-CSL-001', 'RM-CNT-001', 10, 0.01, 2, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
+('P001', 'SF-CSL-001', 'RM-CB-001', 10, 0.02, 2, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
+('P001', 'SF-CSL-001', 'RM-NMP-001', 10, 0.4, 3, '2024-01-01', 'PR001', 'Y', 'SYSTEM'),
 -- SF-ASL-001 음극슬러리 ← 원자재
-('P001', 'SF-ASL-001', 'RM-GRP-001', 10, 0.95, 1, 1, '2024-01-01', 'PR003', 'Y', 'SYSTEM'),
-('P001', 'SF-ASL-001', 'RM-SBR-001', 10, 0.02, 2, 1, '2024-01-01', 'PR003', 'Y', 'SYSTEM'),
-('P001', 'SF-ASL-001', 'RM-CMC-001', 10, 0.015, 2, 1, '2024-01-01', 'PR003', 'Y', 'SYSTEM'),
-('P001', 'SF-ASL-001', 'RM-CB-001', 10, 0.015, 2, 1, '2024-01-01', 'PR003', 'Y', 'SYSTEM'),
-('P001', 'SF-ASL-001', 'RM-DIW-001', 10, 1.0, 3, 1, '2024-01-01', 'PR003', 'Y', 'SYSTEM');
+('P001', 'SF-ASL-001', 'RM-GRP-001', 10, 0.95, 1, '2024-01-01', 'PR003', 'Y', 'SYSTEM'),
+('P001', 'SF-ASL-001', 'RM-SBR-001', 10, 0.02, 2, '2024-01-01', 'PR003', 'Y', 'SYSTEM'),
+('P001', 'SF-ASL-001', 'RM-CMC-001', 10, 0.015, 2, '2024-01-01', 'PR003', 'Y', 'SYSTEM'),
+('P001', 'SF-ASL-001', 'RM-CB-001', 10, 0.015, 2, '2024-01-01', 'PR003', 'Y', 'SYSTEM'),
+('P001', 'SF-ASL-001', 'RM-DIW-001', 10, 1.0, 3, '2024-01-01', 'PR003', 'Y', 'SYSTEM');
 
 -- ------------------------------------------------------------
 -- 5. BOM 정보 - 배터리팩
 -- ------------------------------------------------------------
-INSERT INTO MST_BOM (PLANT_CD, PARENT_ITEM_CD, CHILD_ITEM_CD, BOM_LEVEL, BOM_QTY, LOSS_RATE, BASE_QTY, START_DT, PROCESS_CD, USE_YN, REG_USER_ID) VALUES
+INSERT INTO MST_BOM (PLANT_CD, PARENT_ITEM_CD, CHILD_ITEM_CD, BOM_LEVEL, BOM_QTY, LOSS_RATE, START_DT, PROCESS_CD, USE_YN, REG_USER_ID) VALUES
 -- FG-PCK-001 배터리팩A(EV용) ← 모듈 + 팩부품
-('P002', 'FG-PCK-001', 'FG-MOD-001', 1, 6, 0, 1, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
-('P002', 'FG-PCK-001', 'RM-BMS-002', 1, 1, 0, 1, '2024-01-01', 'PR020', 'Y', 'SYSTEM'),
-('P002', 'FG-PCK-001', 'RM-CON-001', 1, 2, 1, 1, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
-('P002', 'FG-PCK-001', 'RM-CON-002', 1, 1, 1, 1, '2024-01-01', 'PR020', 'Y', 'SYSTEM'),
-('P002', 'FG-PCK-001', 'RM-HOS-001', 1, 1, 0, 1, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
-('P002', 'FG-PCK-001', 'RM-CAS-001', 1, 1, 0, 1, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
-('P002', 'FG-PCK-001', 'RM-SCR-001', 1, 48, 3, 1, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
+('P002', 'FG-PCK-001', 'FG-MOD-001', 1, 6, 0, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
+('P002', 'FG-PCK-001', 'RM-BMS-002', 1, 1, 0, '2024-01-01', 'PR020', 'Y', 'SYSTEM'),
+('P002', 'FG-PCK-001', 'RM-CON-001', 1, 2, 1, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
+('P002', 'FG-PCK-001', 'RM-CON-002', 1, 1, 1, '2024-01-01', 'PR020', 'Y', 'SYSTEM'),
+('P002', 'FG-PCK-001', 'RM-HOS-001', 1, 1, 0, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
+('P002', 'FG-PCK-001', 'RM-CAS-001', 1, 1, 0, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
+('P002', 'FG-PCK-001', 'RM-SCR-001', 1, 48, 3, '2024-01-01', 'PR021', 'Y', 'SYSTEM'),
 -- FG-MOD-001 배터리모듈A(EV용) ← 셀 + 모듈부품
-('P002', 'FG-MOD-001', 'FG-CEL-001', 2, 16, 0, 1, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
-('P002', 'FG-MOD-001', 'RM-BMS-001', 2, 1, 0, 1, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
-('P002', 'FG-MOD-001', 'RM-BUS-001', 2, 15, 2, 1, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
-('P002', 'FG-MOD-001', 'RM-TIM-001', 2, 16, 1, 1, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
-('P002', 'FG-MOD-001', 'RM-HSK-001', 2, 1, 0, 1, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
-('P002', 'FG-MOD-001', 'RM-SCR-001', 2, 32, 3, 1, '2024-01-01', 'PR019', 'Y', 'SYSTEM');
+('P002', 'FG-MOD-001', 'FG-CEL-001', 2, 16, 0, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
+('P002', 'FG-MOD-001', 'RM-BMS-001', 2, 1, 0, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
+('P002', 'FG-MOD-001', 'RM-BUS-001', 2, 15, 2, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
+('P002', 'FG-MOD-001', 'RM-TIM-001', 2, 16, 1, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
+('P002', 'FG-MOD-001', 'RM-HSK-001', 2, 1, 0, '2024-01-01', 'PR019', 'Y', 'SYSTEM'),
+('P002', 'FG-MOD-001', 'RM-SCR-001', 2, 32, 3, '2024-01-01', 'PR019', 'Y', 'SYSTEM');
 
 -- ------------------------------------------------------------
 -- 6. 라우팅(공정) 정보

@@ -1,9 +1,11 @@
 spring:
+  flyway:
+    enabled: true
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3306/mes_backend_server
-    username: root
-    password: 551654
+    url: jdbc:mariadb://mysql-hd-mes.j.aivencloud.com:10483/MES_DB?allowPublicKeyRetrieval=true&useSSL=true&trustServerCertificate=true&sslMode=trust
+    username: avnadmin
+    password: YOUR_DB_PASSWORD
 
 logging:
   level:
@@ -16,5 +18,4 @@ logging:
     # MyBatis 쿼리 로그 (SQL 문 및 파라미터 확인)
     com.mes.infra.persistence.mybatis.mapper: DEBUG
     # SQL 쿼리 결과(Result Set) 표 형태로 출력 (개발 시 유용, 필요 시 주석 처리)
-    # jdbc.resultsettable: DEBUG 
-
+    # jdbc.resultsettable: DEBUG

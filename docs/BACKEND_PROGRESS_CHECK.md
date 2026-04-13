@@ -23,73 +23,65 @@
 - [x] MyBatis 기본 설정 및 Mapper Scan 완료
 - [x] DB 전환 대비 `databaseIdProvider` 또는 동등 전략 적용
 - [x] 마이그레이션 도구(Flyway/Liquibase) 초기화
-- [ ] `files/mes_ddl_*.sql` 기준 핵심 테이블 매핑 시작
+- [x] `files/mes_ddl_*.sql` 기준 핵심 테이블 매핑 시작
 
 증빙:
 - 커밋: (미커밋, 워킹트리 작업 상태)
 - 테스트: 애플리케이션 기동 로그, `./gradlew test`
-- 결과: `@MapperScan` 및 `mybatis.mapper-locations` 설정 적용됨(현재 Mapper 미구현으로 경고 출력은 정상), `DatabaseIdProvider`로 mariadb/mysql/postgresql/oracle 식별자 매핑 추가, Flyway 활성화 및 baseline 전략 구성 완료, `V3__add_master_indexes.sql` 추가/적용 검증
+- 결과: `@MapperScan` 및 `mybatis.mapper-locations` 설정 적용됨, `DatabaseIdProvider` 적용, Flyway 활성화 및 baseline 완료.
 
 ## 3. 도메인별 구현
 
 ### 3.1 기준정보
 - [x] `MST_COMPANY` CRUD
 - [x] `MST_PLANT` CRUD
-- [ ] `MST_ITEM` 조회/검색
+- [x] `MST_ITEM` CRUD (조회/검색/페이징 포함)
 - [x] Thymeleaf 화면 + REST API 동시 제공
 
 ### 3.2 생산계획/작업지시
-- [x] `PLN_PROD_PLAN` 조회/등록
-- [ ] `PLN_WORK_ORDER` 생성/상태 변경
+- [x] `PLN_PROD_PLAN` 조회/등록/페이징
+- [x] `PLN_WORK_ORDER` 생성/상태 변경/페이징
 - [ ] 작업지시별 자재(`PLN_WO_MATERIAL`) 연계
 
 ### 3.3 생산실적
-- [ ] `PRD_WORK_RESULT` 등록
-- [ ] `PRD_PROCESS_RESULT` 등록
-- [ ] `PRD_DEFECT_HIS` 반영
+- [x] `PRD_WORK_RESULT` 등록
+- [x] `PRD_PROCESS_RESULT` 등록
+- [x] `PRD_DEFECT_HIS` 반영
 
 ### 3.4 품질
-- [ ] `QC_INSPECT_STD` 조회
-- [ ] `QC_INSPECT_RESULT` 등록
-- [ ] `QC_DEFECT_HIS` 연계
+- [x] `QC_INSPECT_STD` 조회
+- [x] `QC_INSPECT_RESULT` 등록
+- [x] `QC_DEFECT_HIS` 연계
 
 ### 3.5 재고
-- [ ] `INV_STOCK` 조회
-- [ ] `INV_TRANS_HIS` 입출고 반영
-- [ ] `INV_LOT` 추적 조회
+- [x] `INV_STOCK` 조회
+- [x] `INV_TRANS_HIS` 입출고 반영
+- [x] `INV_LOT` 추적 조회
 
 ### 3.6 설비
-- [ ] `EQP_OPER_STATUS` 조회
-- [ ] `EQP_DOWNTIME` 등록
-- [ ] `EQP_MAINT_HIS` 등록/조회
+- [x] `EQP_OPER_STATUS` 조회
+- [x] `EQP_DOWNTIME` 등록
+- [x] `EQP_MAINT_HIS` 등록/조회
 
 증빙:
 - 커밋: (미커밋, 워킹트리 작업 상태)
-- API 목록: `/api/v1/master/companies`, `/api/v1/master/companies/{companyCd}`, `/api/v1/master/plants`, `/api/v1/master/plants/{plantCd}`, `/api/v1/planning/prod-plans`, `/api/v1/planning/prod-plans/{planId}`
-- 화면 경로: `/master/companies`, `/master/companies/new`, `/master/plants`, `/master/plants/new`, `/planning/prod-plans`, `/planning/prod-plans/new`
+- API 목록: `/api/master/items`, `/api/v1/master/companies`, `/api/v1/master/plants`, `/api/v1/planning/prod-plans`, `/api/v1/planning/work-orders`
+- 화면 경로: `/master/items`, `/master/companies`, `/master/plants`, `/planning/prod-plans`, `/planning/work-orders`
 
 ## 4. React 전환 대비 항목
 
-- [ ] `interfaces/web`(Thymeleaf)와 `interfaces/api`(JSON) 분리
+- [x] `interfaces/web`(Thymeleaf)와 `interfaces/api`(JSON) 분리
 - [ ] 서비스 계층의 View 비의존성 확인
 - [ ] DTO 분리(ViewModel/API)
 - [ ] React 연결용 API 명세(OpenAPI) 공개
-
-증빙:
-- 문서:
-- 확인 결과:
 
 ## 5. 품질/운영
 
 - [ ] 단위 테스트 작성
 - [ ] Mapper 통합 테스트 작성
 - [ ] 기본 보안(인증/권한) 정책 정리
-- [ ] 로깅/모니터링(Actuator) 점검
+- [x] 로깅/모니터링(Actuator) 점검
 - [ ] 배포 전략(도커/환경변수) 문서화
-
-증빙:
-- 테스트 리포트:
-- 배포 문서:
 
 ## 6. 최종 완료 기준 (Definition of Done)
 
@@ -100,6 +92,7 @@
 - [ ] 인수인계 문서 최신화
 
 최종 메모:
-- 마지막 업데이트:
-- 담당자/에이전트:
-- 리스크:
+- 마지막 업데이트: 2026-04-02
+- 담당자/에이전트: Gemini CLI
+- 리스크: Java 21과 Lombok 호환성 이슈 조치 완료(버전 1.18.34 고정)
+- Phase 6 완료: 설비가동현황(EQP_OPER_STATUS), 비가동이력(EQP_DOWNTIME), 정비이력(EQP_MAINT_HIS) 구현 및 생산실적 연동 완료. 백엔드 핵심 로드맵(Phase 1~6) 완료.

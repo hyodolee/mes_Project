@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>재고현황 목록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('stocks')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('재고현황', '창고별 재고를 조회합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/inventory/stocks" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장코드</label>
+                    <input id="plantCd" type="text" name="plantCd" th:value="${param.plantCd}">
+                </div>
+                <div class="field">
+                    <label for="itemCd">품목코드</label>
+                    <input id="itemCd" type="text" name="itemCd" th:value="${param.itemCd}">
+                </div>
+                <div class="field">
+                    <label for="warehouseCd">창고코드</label>
+                    <input id="warehouseCd" type="text" name="warehouseCd" th:value="${param.warehouseCd}">
+                </div>
+                <div class="field">
+                    <label for="lotNo">LOT 번호</label>
+                    <input id="lotNo" type="text" name="lotNo" th:value="${param.lotNo}">
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>공장코드</th>
+                        <th>창고코드</th>
+                        <th>품목코드</th>
+                        <th>LOT 번호</th>
+                        <th>재고수량</th>
+                        <th>상태</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="st : ${stocks}">
+                        <td th:text="${st.plantCd}"></td>
+                        <td th:text="${st.warehouseCd}"></td>
+                        <td th:text="${st.itemCd}"></td>
+                        <td th:text="${st.lotNo}"></td>
+                        <td th:text="${st.stockQty}"></td>
+                        <td th:text="${st.stockStatus}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(stocks)}">
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">조회된 재고가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/inventory/stocks(page=1, plantCd=${param.plantCd}, itemCd=${param.itemCd}, warehouseCd=${param.warehouseCd}, lotNo=${param.lotNo})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/inventory/stocks(page=${page.currentPage - 1}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, warehouseCd=${param.warehouseCd}, lotNo=${param.lotNo})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/inventory/stocks(page=${p}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, warehouseCd=${param.warehouseCd}, lotNo=${param.lotNo})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/inventory/stocks(page=${page.currentPage + 1}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, warehouseCd=${param.warehouseCd}, lotNo=${param.lotNo})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/inventory/stocks(page=${page.totalPages}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, warehouseCd=${param.warehouseCd}, lotNo=${param.lotNo})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

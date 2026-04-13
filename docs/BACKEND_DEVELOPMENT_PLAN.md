@@ -107,7 +107,10 @@ mes-backend/
 
 ### Phase 1. 기준정보(Master)
 - 우선 테이블: `MST_COMPANY`, `MST_PLANT`, `MST_ITEM`, `MST_WORKCENTER`
-- 기능: 조회/등록/수정/사용여부 변경
+- 기능: 조회/등록/수정/사용여부 변경 (완료: Company, Plant, Item)
+- 특징: 
+    - `MST_ITEM` 페이징 처리 및 검색 기능 구현 완료
+    - 사용여부(Y/N) Select Box 전환 및 UI 최적화 완료
 - Thymeleaf 목록/상세 + REST 조회 API 동시 제공
 
 ### Phase 2. 작업지시/생산계획

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>재고 조정</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('stock')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('재고 조정', '로케이션 재고 수량을 강제로 증감시킵니다.')}"></header>
+
+        <section class="card">
+            <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #e9ecef;">
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; color: var(--text-color);">선택한 재고 정보</h4>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">
+                    <strong>품목:</strong> <span th:text="|${stock.itemCd} (${stock.itemNm})|"></span><br>
+                    <strong>로케이션:</strong> <span th:text="|${stock.warehouseNm} > ${stock.zoneNm} > ${stock.locationCd}|"></span><br>
+                    <strong>현재 재고량:</strong> <span th:text="${stock.stockQty}" style="font-weight:bold; color:var(--primary-color);"></span>
+                </p>
+            </div>
+
+            <form th:action="@{'/inventory/stock/' + ${stock.locStockId} + '/adjust'}" method="post" class="form-grid">
+                <div class="field">
+                    <label for="adjustType">조정 유형</label>
+                    <select id="adjustType" name="adjustType" required>
+                        <option value="ADJ_PLUS">조정 증가 (입고)</option>
+                        <option value="ADJ_MINUS">조정 감소 (출고)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="adjustQty">조정 수량 (절대값 입력)</label>
+                    <input id="adjustQty" type="number" name="adjustQty" step="0.001" min="0.001" required placeholder="예: 10.5">
+                </div>
+                <div class="field field-span-2">
+                    <label for="transRmk">조정 사유</label>
+                    <input id="transRmk" type="text" name="transRmk" placeholder="실사 조정, 파손, 기타 등 사유 입력" required>
+                </div>
+                
+                <div class="actions field-span-2" style="justify-content: flex-start; gap: 0.5rem;">
+                    <button class="btn btn-primary" type="submit" onclick="return confirm('재고 조정을 실행하시겠습니까?');">조정 실행</button>
+                    <a class="btn btn-secondary" href="/inventory/stock">취소</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

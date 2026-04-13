@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: mcs_backserver
+  profiles:
+    active: local
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.mcs
+  configuration:
+    map-underscore-to-camel-case: true

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이동 관리 - MCS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('transfers')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('이동 관리', '로케이션 간의 자재 이동 오더를 관리하고 처리합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/transfers" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd">
+                        <option value="">전체</option>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${search.plantCd == p.plantCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="transferStatus">상태</label>
+                    <select id="transferStatus" name="transferStatus">
+                        <option value="">전체</option>
+                        <option th:each="s : ${tfStatuses}" th:value="${s.comCd}" th:text="${s.comNm}" th:selected="${search.transferStatus == s.comCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="transferNo">이동번호</label>
+                    <input id="transferNo" type="text" name="transferNo" th:value="${search.transferNo}" placeholder="이동번호">
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                    <a class="btn btn-secondary" href="/transfers/new">이동 등록</a>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}" style="color: var(--primary-color); margin-top: 1rem; font-weight: 500;"></p>
+            <p class="error" th:if="${error}" th:text="${error}" style="color: red; margin-top: 1rem; font-weight: 500;"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>공장</th>
+                        <th>이동번호</th>
+                        <th>상태</th>
+                        <th>출발 로케이션</th>
+                        <th>도착 로케이션</th>
+                        <th>등록일시</th>
+                        <th>이동사유</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="order : ${transfersList}" th:onclick="|location.href='@{/transfers/{id}/edit(id=${order.transferId})}'|" style="cursor: pointer;" class="hover-row">
+                        <td th:text="${order.plantNm}"></td>
+                        <td th:text="${order.transferNo}" style="font-weight: bold; color: var(--primary-color);"></td>
+                        <td>
+                            <span class="badge" th:classappend="${order.transferStatus == 'COMPLETED'} ? 'badge-success' : (${order.transferStatus == 'CANCELLED'} ? 'badge-danger' : 'badge-outline')" th:text="${order.transferStatusNm}"></span>
+                        </td>
+                        <td th:text="${order.fromLocationCd}"></td>
+                        <td th:text="${order.toLocationCd}"></td>
+                        <td th:text="${order.regDtm != null ? #temporals.format(order.regDtm, 'yyyy-MM-dd HH:mm:ss') : '-'}"></td>
+                        <td th:text="${order.transferReason ?: '-'}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(transfersList)}">
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 이동 오더가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/transfers(page=1, plantCd=${search.plantCd}, transferStatus=${search.transferStatus}, transferNo=${search.transferNo})}" aria-label="First">&laquo;</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/transfers(page=${page.currentPage - 1}, plantCd=${search.plantCd}, transferStatus=${search.transferStatus}, transferNo=${search.transferNo})}" aria-label="Previous">&lsaquo;</a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/transfers(page=${p}, plantCd=${search.plantCd}, transferStatus=${search.transferStatus}, transferNo=${search.transferNo})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/transfers(page=${page.currentPage + 1}, plantCd=${search.plantCd}, transferStatus=${search.transferStatus}, transferNo=${search.transferNo})}" aria-label="Next">&rsaquo;</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/transfers(page=${page.totalPages}, plantCd=${search.plantCd}, transferStatus=${search.transferStatus}, transferNo=${search.transferNo})}" aria-label="Last">&raquo;</a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

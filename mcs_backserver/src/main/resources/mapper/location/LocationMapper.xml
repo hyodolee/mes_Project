@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.location.LocationMapper">
+
+    <select id="selectLocationList" resultType="com.mcs.domain.location.dto.LocationDto">
+        SELECT
+            l.LOCATION_ID,
+            l.ZONE_ID,
+            l.LOCATION_CD,
+            l.LOCATION_NM,
+            l.MAX_CAPACITY,
+            l.CURRENT_USAGE,
+            l.LOCATION_STATUS,
+            l.USE_YN,
+            l.REG_USER_ID,
+            l.REG_DTM,
+            l.UPD_USER_ID,
+            l.UPD_DTM,
+            z.PLANT_CD,
+            p.PLANT_NM,
+            z.WAREHOUSE_CD,
+            w.WAREHOUSE_NM,
+            z.ZONE_CD,
+            z.ZONE_NM,
+            c.COM_NM AS LOCATION_STATUS_NM
+        FROM MCS_LOCATION l
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        INNER JOIN MST_PLANT p ON z.PLANT_CD = p.PLANT_CD
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_LOC_STATUS' AND l.LOCATION_STATUS = c.COM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND z.PLANT_CD = #{plantCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND z.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="zoneId != null">AND l.ZONE_ID = #{zoneId}</if>
+            <if test="locationCd != null and locationCd != ''">AND l.LOCATION_CD LIKE CONCAT('%', #{locationCd}, '%')</if>
+            <if test="locationNm != null and locationNm != ''">AND l.LOCATION_NM LIKE CONCAT('%', #{locationNm}, '%')</if>
+            <if test="locationStatus != null and locationStatus != ''">AND l.LOCATION_STATUS = #{locationStatus}</if>
+        </where>
+        ORDER BY z.PLANT_CD, z.WAREHOUSE_CD, z.ZONE_CD, l.LOCATION_CD
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectLocationCount" resultType="long">
+        SELECT COUNT(*)
+        FROM MCS_LOCATION l
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND z.PLANT_CD = #{plantCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND z.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="zoneId != null">AND l.ZONE_ID = #{zoneId}</if>
+            <if test="locationCd != null and locationCd != ''">AND l.LOCATION_CD LIKE CONCAT('%', #{locationCd}, '%')</if>
+            <if test="locationNm != null and locationNm != ''">AND l.LOCATION_NM LIKE CONCAT('%', #{locationNm}, '%')</if>
+            <if test="locationStatus != null and locationStatus != ''">AND l.LOCATION_STATUS = #{locationStatus}</if>
+        </where>
+    </select>
+
+    <select id="selectLocationById" resultType="com.mcs.domain.location.dto.LocationDto">
+        SELECT
+            l.LOCATION_ID,
+            l.ZONE_ID,
+            l.LOCATION_CD,
+            l.LOCATION_NM,
+            l.MAX_CAPACITY,
+            l.CURRENT_USAGE,
+            l.LOCATION_STATUS,
+            l.USE_YN,
+            l.REG_USER_ID,
+            l.REG_DTM,
+            l.UPD_USER_ID,
+            l.UPD_DTM,
+            z.PLANT_CD,
+            p.PLANT_NM,
+            z.WAREHOUSE_CD,
+            w.WAREHOUSE_NM,
+            z.ZONE_CD,
+            z.ZONE_NM,
+            c.COM_NM AS LOCATION_STATUS_NM
+        FROM MCS_LOCATION l
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        INNER JOIN MST_PLANT p ON z.PLANT_CD = p.PLANT_CD
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_LOC_STATUS' AND l.LOCATION_STATUS = c.COM_CD
+        WHERE l.LOCATION_ID = #{locationId}
+    </select>
+
+    <select id="selectLocationByCd" resultType="com.mcs.domain.location.dto.LocationDto">
+        SELECT * FROM MCS_LOCATION
+        WHERE ZONE_ID = #{zoneId} AND LOCATION_CD = #{locationCd}
+    </select>
+
+    <insert id="insertLocation" parameterType="com.mcs.domain.location.dto.LocationDto">
+        INSERT INTO MCS_LOCATION (
+            ZONE_ID, LOCATION_CD, LOCATION_NM, MAX_CAPACITY, LOCATION_STATUS, USE_YN, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{zoneId}, #{locationCd}, #{locationNm}, #{maxCapacity}, #{locationStatus}, #{useYn}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <update id="updateLocation" parameterType="com.mcs.domain.location.dto.LocationDto">
+        UPDATE MCS_LOCATION
+        SET LOCATION_NM = #{locationNm},
+            MAX_CAPACITY = #{maxCapacity},
+            LOCATION_STATUS = #{locationStatus},
+            USE_YN = #{useYn},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE LOCATION_ID = #{locationId}
+    </update>
+
+    <delete id="deleteLocation">
+        DELETE FROM MCS_LOCATION WHERE LOCATION_ID = #{locationId}
+    </delete>
+
+</mapper>

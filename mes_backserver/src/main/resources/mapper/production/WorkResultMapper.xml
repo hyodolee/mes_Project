@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.production.WorkResultMapper">
+
+    <select id="selectWorkResults" resultType="com.mes.domain.production.workresult.dto.WorkResultDto">
+        SELECT
+            wr.RESULT_ID AS resultId,
+            wr.PLANT_CD AS plantCd,
+            wr.RESULT_NO AS resultNo,
+            wr.WO_ID AS woId,
+            wr.RESULT_DT AS resultDt,
+            wr.SHIFT AS shift,
+            wr.WORKER_ID AS workerId,
+            wr.WORKCENTER_CD AS workcenterCd,
+            wr.EQUIPMENT_CD AS equipmentCd,
+            wr.ITEM_CD AS itemCd,
+            wr.PROD_QTY AS prodQty,
+            wr.GOOD_QTY AS goodQty,
+            wr.DEFECT_QTY AS defectQty,
+            wr.START_DTM AS startDtm,
+            wr.END_DTM AS endDtm,
+            wr.WORK_TIME AS workTime,
+            wr.SETUP_TIME AS setupTime,
+            wr.DOWN_TIME AS downTime,
+            wr.LOT_NO AS lotNo,
+            wr.RESULT_STATUS AS resultStatus,
+            wr.RESULT_RMK AS resultRmk,
+            wr.REG_USER_ID AS regUserId,
+            wr.REG_DTM AS regDtm
+        FROM PRD_WORK_RESULT wr
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND wr.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND wr.ITEM_CD = #{itemCd}
+        </if>
+        <if test="resultFromDt != null">
+            AND wr.RESULT_DT &gt;= #{resultFromDt}
+        </if>
+        <if test="resultToDt != null">
+            AND wr.RESULT_DT &lt;= #{resultToDt}
+        </if>
+        ORDER BY wr.RESULT_DT DESC, wr.RESULT_ID DESC
+    </select>
+
+    <select id="selectWorkResultList" resultType="com.mes.domain.production.workresult.dto.WorkResultDto">
+        SELECT
+            wr.RESULT_ID AS resultId,
+            wr.PLANT_CD AS plantCd,
+            wr.RESULT_NO AS resultNo,
+            wr.WO_ID AS woId,
+            wr.RESULT_DT AS resultDt,
+            wr.SHIFT AS shift,
+            wr.WORKER_ID AS workerId,
+            wr.WORKCENTER_CD AS workcenterCd,
+            wr.EQUIPMENT_CD AS equipmentCd,
+            wr.ITEM_CD AS itemCd,
+            wr.PROD_QTY AS prodQty,
+            wr.GOOD_QTY AS goodQty,
+            wr.DEFECT_QTY AS defectQty,
+            wr.START_DTM AS startDtm,
+            wr.END_DTM AS endDtm,
+            wr.WORK_TIME AS workTime,
+            wr.SETUP_TIME AS setupTime,
+            wr.DOWN_TIME AS downTime,
+            wr.LOT_NO AS lotNo,
+            wr.RESULT_STATUS AS resultStatus,
+            wr.RESULT_RMK AS resultRmk,
+            wr.REG_USER_ID AS regUserId,
+            wr.REG_DTM AS regDtm
+        FROM PRD_WORK_RESULT wr
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND wr.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND wr.ITEM_CD = #{itemCd}
+        </if>
+        <if test="resultFromDt != null">
+            AND wr.RESULT_DT &gt;= #{resultFromDt}
+        </if>
+        <if test="resultToDt != null">
+            AND wr.RESULT_DT &lt;= #{resultToDt}
+        </if>
+        ORDER BY wr.RESULT_DT DESC, wr.RESULT_ID DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countWorkResults" resultType="int">
+        SELECT COUNT(*)
+        FROM PRD_WORK_RESULT wr
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND wr.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND wr.ITEM_CD = #{itemCd}
+        </if>
+        <if test="resultFromDt != null">
+            AND wr.RESULT_DT &gt;= #{resultFromDt}
+        </if>
+        <if test="resultToDt != null">
+            AND wr.RESULT_DT &lt;= #{resultToDt}
+        </if>
+    </select>
+
+    <insert id="insertWorkResult" useGeneratedKeys="true" keyProperty="request.resultId" keyColumn="RESULT_ID">
+        INSERT INTO PRD_WORK_RESULT (
+            PLANT_CD, RESULT_NO, WO_ID, RESULT_DT, SHIFT, WORKER_ID,
+            WORKCENTER_CD, EQUIPMENT_CD, ITEM_CD, PROD_QTY, GOOD_QTY, DEFECT_QTY,
+            START_DTM, END_DTM, WORK_TIME, SETUP_TIME, DOWN_TIME,
+            LOT_NO, RESULT_STATUS, RESULT_RMK, REG_USER_ID
+        ) VALUES (
+            #{request.plantCd}, #{resultNo}, #{request.woId}, #{request.resultDt}, #{request.shift}, #{request.workerId},
+            #{request.workcenterCd}, #{request.equipmentCd}, #{request.itemCd}, #{request.prodQty}, #{request.goodQty}, COALESCE(#{request.defectQty}, 0),
+            #{request.startDtm}, #{request.endDtm}, #{request.workTime}, #{request.setupTime}, #{request.downTime},
+            #{request.lotNo}, COALESCE(#{request.resultStatus}, '완료'), #{request.resultRmk}, #{regUserId}
+        )
+    </insert>
+
+    <select id="selectWorkResultCountByDate" resultType="int">
+        SELECT COUNT(*)
+        FROM PRD_WORK_RESULT
+        WHERE RESULT_DT = #{resultDt}
+    </select>
+
+</mapper>

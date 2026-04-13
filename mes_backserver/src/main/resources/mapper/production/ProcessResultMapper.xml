@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.production.ProcessResultMapper">
+
+    <select id="selectProcessResults" resultType="com.mes.domain.production.processresult.dto.ProcessResultDto">
+        SELECT
+            pr.PROC_RESULT_ID AS procResultId,
+            pr.RESULT_ID AS resultId,
+            pr.ROUTING_ID AS routingId,
+            pr.PROCESS_SEQ AS processSeq,
+            pr.PROCESS_CD AS processCd,
+            pr.PROCESS_NM AS processNm,
+            pr.START_DTM AS startDtm,
+            pr.END_DTM AS endDtm,
+            pr.INPUT_QTY AS inputQty,
+            pr.OUTPUT_QTY AS outputQty,
+            pr.GOOD_QTY AS goodQty,
+            pr.DEFECT_QTY AS defectQty,
+            pr.WORKER_ID AS workerId,
+            pr.EQUIPMENT_CD AS equipmentCd,
+            pr.WORK_TIME AS workTime,
+            pr.PROCESS_STATUS AS processStatus,
+            pr.LOT_NO AS lotNo,
+            pr.PROC_RMK AS procRmk,
+            pr.REG_USER_ID AS regUserId,
+            pr.REG_DTM AS regDtm
+        FROM PRD_PROCESS_RESULT pr
+        WHERE pr.RESULT_ID = #{resultId}
+        ORDER BY pr.PROCESS_SEQ ASC
+    </select>
+
+    <insert id="insertProcessResult" useGeneratedKeys="true" keyProperty="request.procResultId" keyColumn="PROC_RESULT_ID">
+        INSERT INTO PRD_PROCESS_RESULT (
+            RESULT_ID, ROUTING_ID, PROCESS_SEQ, PROCESS_CD, PROCESS_NM,
+            START_DTM, END_DTM, INPUT_QTY, OUTPUT_QTY, GOOD_QTY, DEFECT_QTY,
+            WORKER_ID, EQUIPMENT_CD, WORK_TIME, PROCESS_STATUS, LOT_NO,
+            PROC_RMK, REG_USER_ID
+        ) VALUES (
+            #{request.resultId}, #{request.routingId}, #{request.processSeq}, #{request.processCd}, #{request.processNm},
+            #{request.startDtm}, #{request.endDtm}, #{request.inputQty}, #{request.outputQty}, #{request.goodQty}, COALESCE(#{request.defectQty}, 0),
+            #{request.workerId}, #{request.equipmentCd}, #{request.workTime}, COALESCE(#{request.processStatus}, '대기'), #{request.lotNo},
+            #{request.procRmk}, #{regUserId}
+        )
+    </insert>
+
+</mapper>

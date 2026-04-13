@@ -8,6 +8,14 @@
 
 USE MES_DB;
 
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE PRD_DEFECT_HIS;
+TRUNCATE TABLE PRD_WORK_RESULT;
+TRUNCATE TABLE PLN_WORK_ORDER;
+TRUNCATE TABLE PLN_PROD_PLAN;
+TRUNCATE TABLE COM_SEQ_NO;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ------------------------------------------------------------
 -- 1. 채번 데이터 초기화
 -- ------------------------------------------------------------

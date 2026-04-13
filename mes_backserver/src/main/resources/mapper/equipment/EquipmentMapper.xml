@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.equipment.EquipmentMapper">
+
+    <!-- Operation Status -->
+    <select id="selectOperStatuses" resultType="com.mes.domain.equipment.oper.dto.OperStatusDto">
+        SELECT
+            eos.OPER_ID AS operId,
+            eos.PLANT_CD AS plantCd,
+            eos.EQUIPMENT_CD AS equipmentCd,
+            eos.OPER_DT AS operDt,
+            eos.SHIFT AS shift,
+            eos.OPER_STATUS AS operStatus,
+            eos.START_DTM AS startDtm,
+            eos.END_DTM AS endDtm,
+            eos.OPER_TIME AS operTime,
+            eos.WO_ID AS woId,
+            eos.ITEM_CD AS itemCd,
+            eos.PROD_QTY AS prodQty,
+            eos.WORKER_ID AS workerId,
+            eos.OPER_RMK AS operRmk,
+            eos.REG_DTM AS regDtm
+        FROM EQP_OPER_STATUS eos
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND eos.PLANT_CD = #{plantCd}
+        </if>
+        <if test="equipmentCd != null and equipmentCd != ''">
+            AND eos.EQUIPMENT_CD = #{equipmentCd}
+        </if>
+        <if test="fromDt != null">
+            AND eos.OPER_DT &gt;= #{fromDt}
+        </if>
+        <if test="toDt != null">
+            AND eos.OPER_DT &lt;= #{toDt}
+        </if>
+        ORDER BY eos.OPER_DT DESC, eos.OPER_ID DESC
+    </select>
+
+    <select id="selectOperStatusList" resultType="com.mes.domain.equipment.oper.dto.OperStatusDto">
+        SELECT
+            eos.OPER_ID AS operId,
+            eos.PLANT_CD AS plantCd,
+            eos.EQUIPMENT_CD AS equipmentCd,
+            eos.OPER_DT AS operDt,
+            eos.SHIFT AS shift,
+            eos.OPER_STATUS AS operStatus,
+            eos.START_DTM AS startDtm,
+            eos.END_DTM AS endDtm,
+            eos.OPER_TIME AS operTime,
+            eos.WO_ID AS woId,
+            eos.ITEM_CD AS itemCd,
+            eos.PROD_QTY AS prodQty,
+            eos.WORKER_ID AS workerId,
+            eos.OPER_RMK AS operRmk,
+            eos.REG_DTM AS regDtm
+        FROM EQP_OPER_STATUS eos
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND eos.PLANT_CD = #{plantCd}
+        </if>
+        <if test="equipmentCd != null and equipmentCd != ''">
+            AND eos.EQUIPMENT_CD = #{equipmentCd}
+        </if>
+        <if test="fromDt != null">
+            AND eos.OPER_DT &gt;= #{fromDt}
+        </if>
+        <if test="toDt != null">
+            AND eos.OPER_DT &lt;= #{toDt}
+        </if>
+        ORDER BY eos.OPER_DT DESC, eos.OPER_ID DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countOperStatuses" resultType="int">
+        SELECT COUNT(*)
+        FROM EQP_OPER_STATUS eos
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND eos.PLANT_CD = #{plantCd}
+        </if>
+        <if test="equipmentCd != null and equipmentCd != ''">
+            AND eos.EQUIPMENT_CD = #{equipmentCd}
+        </if>
+        <if test="fromDt != null">
+            AND eos.OPER_DT &gt;= #{fromDt}
+        </if>
+        <if test="toDt != null">
+            AND eos.OPER_DT &lt;= #{toDt}
+        </if>
+    </select>
+
+    <insert id="insertOperStatus" useGeneratedKeys="true" keyProperty="request.operId" keyColumn="OPER_ID">
+        INSERT INTO EQP_OPER_STATUS (
+            PLANT_CD, EQUIPMENT_CD, OPER_DT, SHIFT, OPER_STATUS,
+            START_DTM, END_DTM, OPER_TIME, WO_ID, ITEM_CD,
+            PROD_QTY, WORKER_ID, OPER_RMK, REG_USER_ID
+        ) VALUES (
+            #{request.plantCd}, #{request.equipmentCd}, #{request.operDt}, #{request.shift}, #{request.operStatus},
+            #{request.startDtm}, #{request.endDtm}, #{request.operTime}, #{request.woId}, #{request.itemCd},
+            #{request.prodQty}, #{request.workerId}, #{request.operRmk}, #{request.regUserId}
+        )
+    </insert>
+
+    <!-- Downtime -->
+    <select id="selectDowntimes" resultType="com.mes.domain.equipment.downtime.dto.DowntimeDto">
+        SELECT
+            ed.DOWNTIME_ID AS downtimeId,
+            ed.PLANT_CD AS plantCd,
+            ed.EQUIPMENT_CD AS equipmentCd,
+            ed.DOWNTIME_DT AS downtimeDt,
+            ed.DOWNTIME_TYPE AS downtimeType,
+            ed.DOWNTIME_CD AS downtimeCd,
+            ed.DOWNTIME_REASON AS downtimeReason,
+            ed.START_DTM AS startDtm,
+            ed.END_DTM AS endDtm,
+            ed.DOWNTIME_MIN AS downtimeMin,
+            ed.WO_ID AS woId,
+            ed.ACTION_CONTENT AS actionContent,
+            ed.REG_DTM AS regDtm
+        FROM EQP_DOWNTIME ed
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND ed.PLANT_CD = #{plantCd}
+        </if>
+        <if test="equipmentCd != null and equipmentCd != ''">
+            AND ed.EQUIPMENT_CD = #{equipmentCd}
+        </if>
+        <if test="fromDt != null">
+            AND ed.DOWNTIME_DT &gt;= #{fromDt}
+        </if>
+        <if test="toDt != null">
+            AND ed.DOWNTIME_DT &lt;= #{toDt}
+        </if>
+        ORDER BY ed.DOWNTIME_DT DESC, ed.DOWNTIME_ID DESC
+    </select>
+
+    <insert id="insertDowntime" useGeneratedKeys="true" keyProperty="request.downtimeId" keyColumn="DOWNTIME_ID">
+        INSERT INTO EQP_DOWNTIME (
+            PLANT_CD, EQUIPMENT_CD, DOWNTIME_DT, DOWNTIME_TYPE, DOWNTIME_CD,
+            DOWNTIME_REASON, START_DTM, END_DTM, DOWNTIME_MIN, WO_ID,
+            OPER_ID, ACTION_CONTENT, ACTION_USER_ID, ACTION_DTM, REPORTER_ID,
+            DOWNTIME_RMK, REG_USER_ID
+        ) VALUES (
+            #{request.plantCd}, #{request.equipmentCd}, #{request.downtimeDt}, #{request.downtimeType}, #{request.downtimeCd},
+            #{request.downtimeReason}, #{request.startDtm}, #{request.endDtm}, #{request.downtimeMin}, #{request.woId},
+            #{request.operId}, #{request.actionContent}, #{request.actionUserId}, #{request.actionDtm}, #{request.reporterId},
+            #{request.downtimeRmk}, #{request.regUserId}
+        )
+    </insert>
+
+    <!-- Maintenance -->
+    <select id="selectMaintHistories" resultType="com.mes.domain.equipment.maint.dto.MaintHisDto">
+        SELECT
+            emh.MAINT_ID AS maintId,
+            emh.PLANT_CD AS plantCd,
+            emh.EQUIPMENT_CD AS equipmentCd,
+            emh.MAINT_NO AS maintNo,
+            emh.MAINT_TYPE AS maintType,
+            emh.MAINT_DT AS maintDt,
+            emh.START_DTM AS startDtm,
+            emh.END_DTM AS endDtm,
+            emh.MAINT_TIME AS maintTime,
+            emh.MAINT_WORKER_ID AS maintWorkerId,
+            emh.MAINT_RESULT AS maintResult,
+            emh.MAINT_COST AS maintCost,
+            emh.REG_DTM AS regDtm
+        FROM EQP_MAINT_HIS emh
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND emh.PLANT_CD = #{plantCd}
+        </if>
+        <if test="equipmentCd != null and equipmentCd != ''">
+            AND emh.EQUIPMENT_CD = #{equipmentCd}
+        </if>
+        <if test="fromDt != null">
+            AND emh.MAINT_DT &gt;= #{fromDt}
+        </if>
+        <if test="toDt != null">
+            AND emh.MAINT_DT &lt;= #{toDt}
+        </if>
+        ORDER BY emh.MAINT_DT DESC, emh.MAINT_ID DESC
+    </select>
+
+    <insert id="insertMaintHistory" useGeneratedKeys="true" keyProperty="request.maintId" keyColumn="MAINT_ID">
+        INSERT INTO EQP_MAINT_HIS (
+            PLANT_CD, EQUIPMENT_CD, MAINT_NO, MAINT_TYPE, MAINT_DT,
+            MAINT_PLAN_ID, DOWNTIME_ID, START_DTM, END_DTM, MAINT_TIME,
+            MAINT_WORKER_ID, MAINT_TEAM, MAINT_CONTENT, SYMPTOM, CAUSE,
+            ACTION, PART_REPLACED, PART_COST, LABOR_COST, OTHER_COST,
+            MAINT_RESULT, NEXT_MAINT_DT, MAINT_RMK, REG_USER_ID
+        ) VALUES (
+            #{request.plantCd}, #{request.equipmentCd}, #{maintNo}, #{request.maintType}, #{request.maintDt},
+            #{request.maintPlanId}, #{request.downtimeId}, #{request.startDtm}, #{request.endDtm}, #{request.maintTime},
+            #{request.maintWorkerId}, #{request.maintTeam}, #{request.maintContent}, #{request.symptom}, #{request.cause},
+            #{request.action}, #{request.partReplaced}, #{request.partCost}, #{request.laborCost}, #{request.otherCost},
+            #{request.maintResult}, #{request.nextMaintDt}, #{request.maintRmk}, #{request.regUserId}
+        )
+    </insert>
+
+    <select id="selectMaintCountByDate" resultType="int">
+        SELECT COUNT(*)
+        FROM EQP_MAINT_HIS
+        WHERE MAINT_DT = #{maintDt}
+    </select>
+
+</mapper>

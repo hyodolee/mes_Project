@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.inventory.StockMapper">
+
+    <select id="selectStocks" resultType="com.mes.domain.inventory.stock.dto.StockDto">
+        SELECT
+            s.STOCK_ID AS stockId,
+            s.PLANT_CD AS plantCd,
+            s.WAREHOUSE_CD AS warehouseCd,
+            s.LOCATION_CD AS locationCd,
+            s.ITEM_CD AS itemCd,
+            i.ITEM_NM AS itemNm,
+            s.LOT_NO AS lotNo,
+            s.STOCK_QTY AS stockQty,
+            s.RESERVED_QTY AS reservedQty,
+            s.AVAILABLE_QTY AS availableQty,
+            s.UNIT AS unit,
+            s.STOCK_STATUS AS stockStatus,
+            s.EXPIRE_DT AS expireDt,
+            s.REG_DTM AS regDtm
+        FROM INV_STOCK s
+        LEFT JOIN MST_ITEM i ON s.ITEM_CD = i.ITEM_CD
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND s.PLANT_CD = #{plantCd}
+        </if>
+        <if test="warehouseCd != null and warehouseCd != ''">
+            AND s.WAREHOUSE_CD = #{warehouseCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND s.ITEM_CD = #{itemCd}
+        </if>
+        <if test="lotNo != null and lotNo != ''">
+            AND s.LOT_NO = #{lotNo}
+        </if>
+        <if test="stockStatus != null and stockStatus != ''">
+            AND s.STOCK_STATUS = #{stockStatus}
+        </if>
+        ORDER BY s.ITEM_CD ASC, s.LOT_NO ASC
+    </select>
+
+    <select id="selectStockList" resultType="com.mes.domain.inventory.stock.dto.StockDto">
+        SELECT
+            s.STOCK_ID AS stockId,
+            s.PLANT_CD AS plantCd,
+            s.WAREHOUSE_CD AS warehouseCd,
+            s.LOCATION_CD AS locationCd,
+            s.ITEM_CD AS itemCd,
+            i.ITEM_NM AS itemNm,
+            s.LOT_NO AS lotNo,
+            s.STOCK_QTY AS stockQty,
+            s.RESERVED_QTY AS reservedQty,
+            s.AVAILABLE_QTY AS availableQty,
+            s.UNIT AS unit,
+            s.STOCK_STATUS AS stockStatus,
+            s.EXPIRE_DT AS expireDt,
+            s.REG_DTM AS regDtm
+        FROM INV_STOCK s
+        LEFT JOIN MST_ITEM i ON s.ITEM_CD = i.ITEM_CD
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND s.PLANT_CD = #{plantCd}
+        </if>
+        <if test="warehouseCd != null and warehouseCd != ''">
+            AND s.WAREHOUSE_CD = #{warehouseCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND s.ITEM_CD = #{itemCd}
+        </if>
+        <if test="lotNo != null and lotNo != ''">
+            AND s.LOT_NO = #{lotNo}
+        </if>
+        <if test="stockStatus != null and stockStatus != ''">
+            AND s.STOCK_STATUS = #{stockStatus}
+        </if>
+        ORDER BY s.ITEM_CD ASC, s.LOT_NO ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countStocks" resultType="int">
+        SELECT COUNT(*)
+        FROM INV_STOCK s
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND s.PLANT_CD = #{plantCd}
+        </if>
+        <if test="warehouseCd != null and warehouseCd != ''">
+            AND s.WAREHOUSE_CD = #{warehouseCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND s.ITEM_CD = #{itemCd}
+        </if>
+        <if test="lotNo != null and lotNo != ''">
+            AND s.LOT_NO = #{lotNo}
+        </if>
+        <if test="stockStatus != null and stockStatus != ''">
+            AND s.STOCK_STATUS = #{stockStatus}
+        </if>
+    </select>
+
+    <insert id="upsertStock">
+        INSERT INTO INV_STOCK (
+            PLANT_CD, WAREHOUSE_CD, LOCATION_CD, ITEM_CD, LOT_NO,
+            STOCK_QTY, UNIT, STOCK_STATUS, EXPIRE_DT, MFG_DT,
+            REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{request.plantCd}, #{request.warehouseCd}, #{request.locationCd}, #{request.itemCd}, #{request.lotNo},
+            #{request.qty}, #{request.unit}, #{request.stockStatus}, #{request.expireDt}, #{request.mfgDt},
+            #{request.regUserId}, NOW()
+        )
+        ON DUPLICATE KEY UPDATE
+            STOCK_QTY = STOCK_QTY + #{request.qty},
+            UPD_USER_ID = #{request.regUserId},
+            UPD_DTM = NOW()
+    </insert>
+
+    <update id="updateReservedQty">
+        UPDATE INV_STOCK
+        SET RESERVED_QTY = COALESCE(RESERVED_QTY, 0) + #{qty},
+            UPD_DTM = NOW()
+        WHERE STOCK_ID = #{stockId}
+    </update>
+
+</mapper>

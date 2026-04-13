@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>검사실적 목록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('inspectResults')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('검사실적 목록', '검사실적을 조회합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/quality/inspect-results" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장코드</label>
+                    <input id="plantCd" type="text" name="plantCd" th:value="${param.plantCd}">
+                </div>
+                <div class="field">
+                    <label for="itemCd">품목코드</label>
+                    <input id="itemCd" type="text" name="itemCd" th:value="${param.itemCd}">
+                </div>
+                <div class="field">
+                    <label for="inspectFromDt">검사일자(시작)</label>
+                    <input id="inspectFromDt" type="date" name="inspectFromDt" th:value="${param.inspectFromDt}">
+                </div>
+                <div class="field">
+                    <label for="inspectToDt">검사일자(종료)</label>
+                    <input id="inspectToDt" type="date" name="inspectToDt" th:value="${param.inspectToDt}">
+                </div>
+                <div class="actions">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>검사일자</th>
+                        <th>검사번호</th>
+                        <th>공장코드</th>
+                        <th>품목코드</th>
+                        <th>검사수량</th>
+                        <th>합격수량</th>
+                        <th>불합격수량</th>
+                        <th>판정</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="res : ${results}">
+                        <td th:text="${res.inspectDt}"></td>
+                        <td th:text="${res.inspectNo}"></td>
+                        <td th:text="${res.plantCd}"></td>
+                        <td th:text="${res.itemCd}"></td>
+                        <td th:text="${res.inspectQty}"></td>
+                        <td th:text="${res.passQty}"></td>
+                        <td th:text="${res.failQty}"></td>
+                        <td th:text="${res.judgeResult}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(results)}">
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">조회된 검사실적이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/quality/inspect-results(page=1, plantCd=${param.plantCd}, itemCd=${param.itemCd}, inspectFromDt=${param.inspectFromDt}, inspectToDt=${param.inspectToDt})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/quality/inspect-results(page=${page.currentPage - 1}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, inspectFromDt=${param.inspectFromDt}, inspectToDt=${param.inspectToDt})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/quality/inspect-results(page=${p}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, inspectFromDt=${param.inspectFromDt}, inspectToDt=${param.inspectToDt})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/quality/inspect-results(page=${page.currentPage + 1}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, inspectFromDt=${param.inspectFromDt}, inspectToDt=${param.inspectToDt})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/quality/inspect-results(page=${page.totalPages}, plantCd=${param.plantCd}, itemCd=${param.itemCd}, inspectFromDt=${param.inspectFromDt}, inspectToDt=${param.inspectToDt})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

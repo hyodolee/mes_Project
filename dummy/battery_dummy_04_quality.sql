@@ -8,6 +8,17 @@
 
 USE MES_DB;
 
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE QC_CALIBRATION_HIS;
+TRUNCATE TABLE QC_MEASURE_EQUIP;
+TRUNCATE TABLE QC_DEFECT_HIS;
+TRUNCATE TABLE QC_INSPECT_DETAIL;
+TRUNCATE TABLE QC_COA;
+TRUNCATE TABLE QC_INSPECT_RESULT;
+TRUNCATE TABLE QC_INSPECT_STD;
+TRUNCATE TABLE QC_DEFECT_CODE;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ------------------------------------------------------------
 -- 1. 불량코드
 -- ------------------------------------------------------------
@@ -146,20 +157,20 @@ INSERT INTO QC_INSPECT_DETAIL (INSPECT_ID, INSPECT_STD_ID, SAMPLE_NO, INSPECT_IT
 (4, 12, 3, '고형분', 'NUMBER', 72.3, 70, 74, 72, '합격', 'SYSTEM'),
 
 -- QC202501200004 (FG-CEL-001 최종검사) 상세 → INSPECT_ID=7
-(7, 23, 1, '방전용량', 'NUMBER', 60.5, 58, 64, 60, '합격', 'SYSTEM'),
-(7, 24, 1, 'OCV', 'NUMBER', 3.72, 3.6, 3.8, 3.7, '합격', 'SYSTEM'),
-(7, 25, 1, 'IR(내부저항)', 'NUMBER', 0.85, 0, 1.5, 0.8, '합격', 'SYSTEM'),
-(7, 27, 1, '두께/치수', 'NUMBER', 10.1, 9.5, 10.5, 10, '합격', 'SYSTEM'),
+(7, 22, 1, '방전용량', 'NUMBER', 60.5, 58, 64, 60, '합격', 'SYSTEM'),
+(7, 23, 1, 'OCV', 'NUMBER', 3.72, 3.6, 3.8, 3.7, '합격', 'SYSTEM'),
+(7, 24, 1, 'IR(내부저항)', 'NUMBER', 0.85, 0, 1.5, 0.8, '합격', 'SYSTEM'),
+(7, 26, 1, '두께/치수', 'NUMBER', 10.1, 9.5, 10.5, 10, '합격', 'SYSTEM'),
 
 -- QC202501200006 (FG-PCK-001 최종검사) 상세 → INSPECT_ID=9
-(9, 33, 1, '팩전압', 'NUMBER', 355.8, 345.6, 364.8, 355.2, '합격', 'SYSTEM'),
-(9, 34, 1, '절연저항', 'NUMBER', 1250, 500, 99999, 1000, '합격', 'SYSTEM'),
-(9, 36, 1, '냉각성능', 'NUMBER', 10.5, 5, 15, 10, '합격', 'SYSTEM'),
-(9, 37, 1, '체결토크', 'NUMBER', 10.2, 8, 12, 10, '합격', 'SYSTEM'),
-(9, 37, 2, '체결토크', 'NUMBER', 9.8, 8, 12, 10, '합격', 'SYSTEM'),
-(9, 37, 3, '체결토크', 'NUMBER', 10.1, 8, 12, 10, '합격', 'SYSTEM'),
-(9, 37, 4, '체결토크', 'NUMBER', 10.0, 8, 12, 10, '합격', 'SYSTEM'),
-(9, 37, 5, '체결토크', 'NUMBER', 9.9, 8, 12, 10, '합격', 'SYSTEM');
+(9, 31, 1, '팩전압', 'NUMBER', 355.8, 345.6, 364.8, 355.2, '합격', 'SYSTEM'),
+(9, 32, 1, '절연저항', 'NUMBER', 1250, 500, 99999, 1000, '합격', 'SYSTEM'),
+(9, 34, 1, '냉각성능', 'NUMBER', 10.5, 5, 15, 10, '합격', 'SYSTEM'),
+(9, 35, 1, '체결토크', 'NUMBER', 10.2, 8, 12, 10, '합격', 'SYSTEM'),
+(9, 35, 2, '체결토크', 'NUMBER', 9.8, 8, 12, 10, '합격', 'SYSTEM'),
+(9, 35, 3, '체결토크', 'NUMBER', 10.1, 8, 12, 10, '합격', 'SYSTEM'),
+(9, 35, 4, '체결토크', 'NUMBER', 10.0, 8, 12, 10, '합격', 'SYSTEM'),
+(9, 35, 5, '체결토크', 'NUMBER', 9.9, 8, 12, 10, '합격', 'SYSTEM');
 
 -- ------------------------------------------------------------
 -- 5. 품질불량이력

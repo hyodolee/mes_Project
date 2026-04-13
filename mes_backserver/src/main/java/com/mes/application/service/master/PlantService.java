@@ -1,15 +1,19 @@
 package com.mes.application.service.master;
 
 import com.mes.domain.master.plant.dto.PlantDto;
+import com.mes.domain.master.plant.dto.PlantSearchDto;
 import com.mes.domain.master.plant.dto.PlantUpsertRequest;
+import com.mes.global.common.dto.PageResponse;
 import com.mes.global.exception.BusinessException;
 import com.mes.global.exception.ErrorCode;
 import com.mes.infra.persistence.mybatis.mapper.master.PlantMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class PlantService {
 
     private static final String SYSTEM_USER = "SYSTEM";
@@ -24,6 +28,13 @@ public class PlantService {
         return plantMapper.selectPlants(companyCd, plantNm, useYn);
     }
 
+    public PageResponse<PlantDto> getPlantList(PlantSearchDto searchDto) {
+        List<PlantDto> plants = plantMapper.selectPlantList(searchDto);
+        int totalCount = plantMapper.countPlants(searchDto);
+        
+        return PageResponse.createPagedResponse(plants, totalCount, searchDto);
+    }
+
     public PlantDto getPlant(String plantCd) {
         PlantDto plant = plantMapper.selectPlantById(plantCd);
         if (plant == null) {
@@ -32,6 +43,7 @@ public class PlantService {
         return plant;
     }
 
+    @Transactional
     public void createPlant(PlantUpsertRequest request) {
         int inserted = plantMapper.insertPlant(request, SYSTEM_USER);
         if (inserted != 1) {
@@ -39,6 +51,7 @@ public class PlantService {
         }
     }
 
+    @Transactional
     public void updatePlant(PlantUpsertRequest request) {
         int updated = plantMapper.updatePlant(request, SYSTEM_USER);
         if (updated != 1) {

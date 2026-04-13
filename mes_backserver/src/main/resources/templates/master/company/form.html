@@ -41,7 +41,7 @@
                     <label for="telNo">전화번호</label>
                     <input id="telNo" type="text" name="telNo" th:value="${request.telNo}">
                 </div>
-                <div class="field">
+                <div class="field field-use-yn">
                     <label for="useYn">사용여부</label>
                     <select id="useYn" name="useYn">
                         <option value="Y" th:selected="${request.useYn == 'Y' ?: true}">사용 (Y)</option>

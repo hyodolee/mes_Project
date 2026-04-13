@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.quality.InspectStdMapper">
+
+    <select id="selectInspectStds" resultType="com.mes.domain.quality.inspectstd.dto.InspectStdDto">
+        SELECT
+            std.INSPECT_STD_ID AS inspectStdId,
+            std.PLANT_CD AS plantCd,
+            std.ITEM_CD AS itemCd,
+            std.INSPECT_TYPE AS inspectType,
+            std.INSPECT_ITEM_SEQ AS inspectItemSeq,
+            std.INSPECT_ITEM AS inspectItem,
+            std.INSPECT_METHOD AS inspectMethod,
+            std.DATA_TYPE AS dataType,
+            std.SPEC_VALUE AS specValue,
+            std.LSL AS lsl,
+            std.USL AS usl,
+            std.TARGET_VALUE AS targetValue,
+            std.UNIT AS unit,
+            std.SAMPLE_SIZE AS sampleSize,
+            std.SAMPLE_METHOD AS sampleMethod,
+            std.INSPECT_TOOL AS inspectTool,
+            std.MANDATORY_YN AS mandatoryYn,
+            std.PROCESS_CD AS processCd,
+            std.VALID_START_DT AS validStartDt,
+            std.VALID_END_DT AS validEndDt,
+            std.STD_RMK AS stdRmk,
+            std.USE_YN AS useYn,
+            std.REG_USER_ID AS regUserId,
+            std.REG_DTM AS regDtm
+        FROM QC_INSPECT_STD std
+        WHERE std.USE_YN = 'Y'
+        <if test="plantCd != null and plantCd != ''">
+            AND std.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND std.ITEM_CD = #{itemCd}
+        </if>
+        <if test="inspectType != null and inspectType != ''">
+            AND std.INSPECT_TYPE = #{inspectType}
+        </if>
+        ORDER BY std.INSPECT_ITEM_SEQ ASC
+    </select>
+
+</mapper>

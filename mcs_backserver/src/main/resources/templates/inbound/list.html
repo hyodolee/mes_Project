@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>입고 관리 - MCS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('inbounds')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('입고 관리', '자재 입고 오더를 관리하고 확정 처리합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/inbounds" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd">
+                        <option value="">전체</option>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${search.plantCd == p.plantCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="inboundStatus">상태</label>
+                    <select id="inboundStatus" name="inboundStatus">
+                        <option value="">전체</option>
+                        <option th:each="s : ${ibStatuses}" th:value="${s.comCd}" th:text="${s.comNm}" th:selected="${search.inboundStatus == s.comCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="inboundNo">입고번호</label>
+                    <input id="inboundNo" type="text" name="inboundNo" th:value="${search.inboundNo}" placeholder="입고번호">
+                </div>
+                <div class="field" style="display:flex; gap:0.5rem;">
+                    <div style="flex:1;">
+                        <label for="fromDate">예정일 (From)</label>
+                        <input id="fromDate" type="date" name="fromDate" th:value="${search.fromDate}">
+                    </div>
+                    <div style="flex:1;">
+                        <label for="toDate">예정일 (To)</label>
+                        <input id="toDate" type="date" name="toDate" th:value="${search.toDate}">
+                    </div>
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                    <a class="btn btn-secondary" href="/inbounds/new">입고 등록</a>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}" style="color: var(--primary-color); margin-top: 1rem; font-weight: 500;"></p>
+            <p class="error" th:if="${error}" th:text="${error}" style="color: red; margin-top: 1rem; font-weight: 500;"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>공장</th>
+                        <th>입고번호</th>
+                        <th>상태</th>
+                        <th>거래처</th>
+                        <th>대상창고</th>
+                        <th>예정일</th>
+                        <th>실제입고일시</th>
+                        <th>비고</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="order : ${inboundsList}" th:onclick="|location.href='@{/inbounds/{id}/edit(id=${order.inboundId})}'|" style="cursor: pointer;" class="hover-row">
+                        <td th:text="${order.plantNm}"></td>
+                        <td th:text="${order.inboundNo}" style="font-weight: bold; color: var(--primary-color);"></td>
+                        <td>
+                            <span class="badge" th:classappend="${order.inboundStatus == 'COMPLETED'} ? 'badge-success' : (${order.inboundStatus == 'CANCELLED'} ? 'badge-danger' : 'badge-outline')" th:text="${order.inboundStatusNm}"></span>
+                        </td>
+                        <td th:text="${order.vendorNm ?: '-'}"></td>
+                        <td th:text="${order.warehouseNm ?: '-'}"></td>
+                        <td th:text="${order.expectedDt}"></td>
+                        <td th:text="${order.actualDt != null ? #temporals.format(order.actualDt, 'yyyy-MM-dd HH:mm:ss') : '-'}"></td>
+                        <td th:text="${order.inboundRmk ?: '-'}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(inboundsList)}">
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 입고 오더가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/inbounds(page=1, plantCd=${search.plantCd}, inboundStatus=${search.inboundStatus}, inboundNo=${search.inboundNo}, fromDate=${search.fromDate}, toDate=${search.toDate})}" aria-label="First">&laquo;</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/inbounds(page=${page.currentPage - 1}, plantCd=${search.plantCd}, inboundStatus=${search.inboundStatus}, inboundNo=${search.inboundNo}, fromDate=${search.fromDate}, toDate=${search.toDate})}" aria-label="Previous">&lsaquo;</a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/inbounds(page=${p}, plantCd=${search.plantCd}, inboundStatus=${search.inboundStatus}, inboundNo=${search.inboundNo}, fromDate=${search.fromDate}, toDate=${search.toDate})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/inbounds(page=${page.currentPage + 1}, plantCd=${search.plantCd}, inboundStatus=${search.inboundStatus}, inboundNo=${search.inboundNo}, fromDate=${search.fromDate}, toDate=${search.toDate})}" aria-label="Next">&rsaquo;</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/inbounds(page=${page.totalPages}, plantCd=${search.plantCd}, inboundStatus=${search.inboundStatus}, inboundNo=${search.inboundNo}, fromDate=${search.fromDate}, toDate=${search.toDate})}" aria-label="Last">&raquo;</a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

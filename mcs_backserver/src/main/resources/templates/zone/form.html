@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구역 정보 등록/수정</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('zones')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar(${mode == 'create'} ? '구역 등록' : '구역 수정', '구역 정보를 입력하고 저장합니다.')}"></header>
+
+        <section class="card">
+            <form th:action="${mode == 'create'} ? @{/zones} : @{'/zones/' + ${request.zoneId} + '/edit'}" method="post" class="form-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd" th:disabled="${mode == 'edit'}" required>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${request.plantCd == p.plantCd}"></option>
+                    </select>
+                    <!-- disabled 시 폼 제출 안 되므로 hidden 추가 -->
+                    <input type="hidden" name="plantCd" th:value="${request.plantCd}" th:if="${mode == 'edit'}">
+                </div>
+                <div class="field">
+                    <label for="warehouseCd">창고</label>
+                    <select id="warehouseCd" name="warehouseCd" th:disabled="${mode == 'edit'}" required>
+                        <option th:each="w : ${warehouses}" th:value="${w.warehouseCd}" th:text="${w.warehouseNm}" th:selected="${request.warehouseCd == w.warehouseCd}"></option>
+                    </select>
+                    <input type="hidden" name="warehouseCd" th:value="${request.warehouseCd}" th:if="${mode == 'edit'}">
+                </div>
+                <div class="field">
+                    <label for="zoneCd">구역코드</label>
+                    <input id="zoneCd" type="text" name="zoneCd" th:value="${request.zoneCd}" th:readonly="${mode == 'edit'}" required>
+                </div>
+                <div class="field">
+                    <label for="zoneNm">구역명</label>
+                    <input id="zoneNm" type="text" name="zoneNm" th:value="${request.zoneNm}" required>
+                </div>
+                <div class="field">
+                    <label for="zoneType">구역유형</label>
+                    <select id="zoneType" name="zoneType">
+                        <option th:each="t : ${zoneTypes}" th:value="${t.comCd}" th:text="${t.comNm}" th:selected="${request.zoneType == t.comCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="sortSeq">정렬순서</label>
+                    <input id="sortSeq" type="number" name="sortSeq" th:value="${request.sortSeq ?: 0}">
+                </div>
+                <div class="field field-use-yn">
+                    <label for="useYn">사용여부</label>
+                    <select id="useYn" name="useYn">
+                        <option value="Y" th:selected="${request.useYn == 'Y' ?: true}">사용 (Y)</option>
+                        <option value="N" th:selected="${request.useYn == 'N'}">미사용 (N)</option>
+                    </select>
+                </div>
+                <div class="actions field-span-2" style="justify-content: flex-start; gap: 0.5rem;">
+                    <button type="button" class="btn btn-danger" th:if="${mode == 'edit'}" th:onclick="|if(confirm('정말 삭제하시겠습니까?')) document.getElementById('deleteForm').submit();|">삭제</button>
+                    <button class="btn btn-primary" type="submit">저장</button>
+                    <a class="btn btn-secondary" href="/zones">취소</a>
+                </div>
+            </form>
+            <!-- 삭제용 숨김 폼 -->
+            <form id="deleteForm" th:if="${mode == 'edit'}" th:action="@{'/zones/' + ${request.zoneId} + '/delete'}" method="post" style="display:none;"></form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

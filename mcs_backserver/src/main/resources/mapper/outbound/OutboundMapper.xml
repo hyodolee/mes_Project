@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.outbound.OutboundMapper">
+
+    <select id="selectOutboundList" resultType="com.mcs.domain.outbound.dto.OutboundOrderDto">
+        SELECT
+            o.OUTBOUND_ID,
+            o.PLANT_CD,
+            o.OUTBOUND_NO,
+            o.OUTBOUND_STATUS,
+            o.CUSTOMER_CD,
+            o.WAREHOUSE_CD,
+            o.REQUEST_DT,
+            o.SHIPPED_DT,
+            o.DESTINATION,
+            o.ISSUE_PLAN_ID,
+            o.WO_ID,
+            o.OUTBOUND_RMK,
+            o.REG_USER_ID,
+            o.REG_DTM,
+            o.UPD_USER_ID,
+            o.UPD_DTM,
+            p.PLANT_NM,
+            w.WAREHOUSE_NM,
+            c.COM_NM AS OUTBOUND_STATUS_NM
+        FROM MCS_OUTBOUND_ORDER o
+        INNER JOIN MST_PLANT p ON o.PLANT_CD = p.PLANT_CD
+        LEFT JOIN MST_WAREHOUSE w ON o.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_OB_STATUS' AND o.OUTBOUND_STATUS = c.COM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND o.PLANT_CD = #{plantCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND o.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="outboundStatus != null and outboundStatus != ''">AND o.OUTBOUND_STATUS = #{outboundStatus}</if>
+            <if test="outboundNo != null and outboundNo != ''">AND o.OUTBOUND_NO LIKE CONCAT('%', #{outboundNo}, '%')</if>
+            <if test="fromDate != null and fromDate != ''">AND o.REQUEST_DT <![CDATA[>=]]> CONCAT(#{fromDate}, ' 00:00:00')</if>
+            <if test="toDate != null and toDate != ''">AND o.REQUEST_DT <![CDATA[<=]]> CONCAT(#{toDate}, ' 23:59:59')</if>
+        </where>
+        ORDER BY o.REQUEST_DT DESC, o.OUTBOUND_NO DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectOutboundCount" resultType="long">
+        SELECT COUNT(*)
+        FROM MCS_OUTBOUND_ORDER o
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND o.PLANT_CD = #{plantCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND o.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="outboundStatus != null and outboundStatus != ''">AND o.OUTBOUND_STATUS = #{outboundStatus}</if>
+            <if test="outboundNo != null and outboundNo != ''">AND o.OUTBOUND_NO LIKE CONCAT('%', #{outboundNo}, '%')</if>
+            <if test="fromDate != null and fromDate != ''">AND o.REQUEST_DT <![CDATA[>=]]> CONCAT(#{fromDate}, ' 00:00:00')</if>
+            <if test="toDate != null and toDate != ''">AND o.REQUEST_DT <![CDATA[<=]]> CONCAT(#{toDate}, ' 23:59:59')</if>
+        </where>
+    </select>
+
+    <select id="selectOutboundById" resultType="com.mcs.domain.outbound.dto.OutboundOrderDto">
+        SELECT
+            o.OUTBOUND_ID,
+            o.PLANT_CD,
+            o.OUTBOUND_NO,
+            o.OUTBOUND_STATUS,
+            o.CUSTOMER_CD,
+            o.WAREHOUSE_CD,
+            o.REQUEST_DT,
+            o.SHIPPED_DT,
+            o.DESTINATION,
+            o.ISSUE_PLAN_ID,
+            o.WO_ID,
+            o.OUTBOUND_RMK,
+            o.REG_USER_ID,
+            o.REG_DTM,
+            o.UPD_USER_ID,
+            o.UPD_DTM,
+            p.PLANT_NM,
+            w.WAREHOUSE_NM,
+            c.COM_NM AS OUTBOUND_STATUS_NM
+        FROM MCS_OUTBOUND_ORDER o
+        INNER JOIN MST_PLANT p ON o.PLANT_CD = p.PLANT_CD
+        LEFT JOIN MST_WAREHOUSE w ON o.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_OB_STATUS' AND o.OUTBOUND_STATUS = c.COM_CD
+        WHERE o.OUTBOUND_ID = #{outboundId}
+    </select>
+
+    <insert id="insertOutboundOrder" parameterType="com.mcs.domain.outbound.dto.OutboundOrderDto">
+        INSERT INTO MCS_OUTBOUND_ORDER (
+            PLANT_CD, OUTBOUND_NO, OUTBOUND_STATUS, CUSTOMER_CD, WAREHOUSE_CD, 
+            REQUEST_DT, SHIPPED_DT, DESTINATION, ISSUE_PLAN_ID, WO_ID, OUTBOUND_RMK, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{plantCd}, #{outboundNo}, #{outboundStatus}, #{customerCd}, #{warehouseCd},
+            #{requestDt}, #{shippedDt}, #{destination}, #{issuePlanId}, #{woId}, #{outboundRmk}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <update id="updateOutboundOrder" parameterType="com.mcs.domain.outbound.dto.OutboundOrderDto">
+        UPDATE MCS_OUTBOUND_ORDER
+        SET CUSTOMER_CD = #{customerCd},
+            WAREHOUSE_CD = #{warehouseCd},
+            REQUEST_DT = #{requestDt},
+            DESTINATION = #{destination},
+            OUTBOUND_RMK = #{outboundRmk},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE OUTBOUND_ID = #{outboundId}
+    </update>
+
+    <update id="updateOutboundStatus">
+        UPDATE MCS_OUTBOUND_ORDER
+        SET OUTBOUND_STATUS = #{status},
+            SHIPPED_DT = IF(#{status} = 'SHIPPED', NOW(), SHIPPED_DT),
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE OUTBOUND_ID = #{outboundId}
+    </update>
+
+    <delete id="deleteOutboundOrder">
+        DELETE FROM MCS_OUTBOUND_ORDER WHERE OUTBOUND_ID = #{outboundId} AND OUTBOUND_STATUS = 'REQUESTED'
+    </delete>
+
+    <!-- ITEM 매핑 -->
+    <select id="selectOutboundItems" resultType="com.mcs.domain.outbound.dto.OutboundItemDto">
+        SELECT
+            i.OUTBOUND_ITEM_ID,
+            i.OUTBOUND_ID,
+            i.ITEM_CD,
+            i.LOT_NO,
+            i.LOCATION_ID,
+            i.REQUESTED_QTY,
+            i.ALLOCATED_QTY,
+            i.PICKED_QTY,
+            i.SHIPPED_QTY,
+            i.ITEM_STATUS,
+            i.ITEM_RMK,
+            i.REG_USER_ID,
+            i.REG_DTM,
+            i.UPD_USER_ID,
+            i.UPD_DTM,
+            mi.ITEM_NM,
+            mi.ITEM_SPEC,
+            mi.UNIT,
+            l.LOCATION_CD,
+            c.COM_NM AS ITEM_STATUS_NM
+        FROM MCS_OUTBOUND_ITEM i
+        INNER JOIN MST_ITEM mi ON i.ITEM_CD = mi.ITEM_CD
+        LEFT JOIN MCS_LOCATION l ON i.LOCATION_ID = l.LOCATION_ID
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_OB_ITEM_STATUS' AND i.ITEM_STATUS = c.COM_CD
+        WHERE i.OUTBOUND_ID = #{outboundId}
+        ORDER BY i.OUTBOUND_ITEM_ID
+    </select>
+
+    <insert id="insertOutboundItem" parameterType="com.mcs.domain.outbound.dto.OutboundItemDto">
+        INSERT INTO MCS_OUTBOUND_ITEM (
+            OUTBOUND_ID, ITEM_CD, LOT_NO, LOCATION_ID, REQUESTED_QTY, ALLOCATED_QTY, PICKED_QTY, SHIPPED_QTY,
+            ITEM_STATUS, ITEM_RMK, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{outboundId}, #{itemCd}, #{lotNo}, #{locationId}, #{requestedQty}, #{allocatedQty}, #{pickedQty}, #{shippedQty},
+            #{itemStatus}, #{itemRmk}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <update id="updateOutboundItem" parameterType="com.mcs.domain.outbound.dto.OutboundItemDto">
+        UPDATE MCS_OUTBOUND_ITEM
+        SET ITEM_CD = #{itemCd},
+            LOT_NO = #{lotNo},
+            LOCATION_ID = #{locationId},
+            REQUESTED_QTY = #{requestedQty},
+            ALLOCATED_QTY = #{allocatedQty},
+            PICKED_QTY = #{pickedQty},
+            SHIPPED_QTY = #{shippedQty},
+            ITEM_RMK = #{itemRmk},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE OUTBOUND_ITEM_ID = #{outboundItemId}
+    </update>
+
+    <update id="updateOutboundItemStatus">
+        UPDATE MCS_OUTBOUND_ITEM
+        SET ITEM_STATUS = #{status},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE OUTBOUND_ITEM_ID = #{outboundItemId}
+    </update>
+
+    <delete id="deleteOutboundItems">
+        DELETE FROM MCS_OUTBOUND_ITEM WHERE OUTBOUND_ID = #{outboundId}
+    </delete>
+
+</mapper>

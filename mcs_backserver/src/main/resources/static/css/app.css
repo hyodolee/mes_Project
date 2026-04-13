@@ -1,0 +1,6 @@
+/*
+  Global Entry CSS
+  - 각 도메인별 스타일을 모듈화하여 가져옵니다.
+*/
+@import url("layout.css");
+@import url("components.css");

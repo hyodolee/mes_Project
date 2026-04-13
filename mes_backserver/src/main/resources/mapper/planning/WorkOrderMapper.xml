@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.planning.WorkOrderMapper">
+
+    <select id="selectWorkOrders" resultType="com.mes.domain.planning.workorder.dto.WorkOrderDto">
+        SELECT
+            wo.WO_ID AS woId,
+            wo.PLANT_CD AS plantCd,
+            p.PLANT_NM AS plantNm,
+            wo.WO_NO AS woNo,
+            wo.PLAN_ID AS planId,
+            wo.WO_DT AS woDt,
+            wo.ITEM_CD AS itemCd,
+            i.ITEM_NM AS itemNm,
+            wo.WO_QTY AS woQty,
+            wo.WORKCENTER_CD AS workcenterCd,
+            wo.EQUIPMENT_CD AS equipmentCd,
+            wo.WORKER_ID AS workerId,
+            wo.PLAN_START_DTM AS planStartDtm,
+            wo.PLAN_END_DTM AS planEndDtm,
+            wo.ACTUAL_START_DTM AS actualStartDtm,
+            wo.ACTUAL_END_DTM AS actualEndDtm,
+            wo.GOOD_QTY AS goodQty,
+            wo.DEFECT_QTY AS defectQty,
+            wo.WO_STATUS AS woStatus,
+            wo.PRIORITY AS priority,
+            wo.LOT_NO AS lotNo,
+            wo.PARENT_WO_ID AS parentWoId,
+            wo.ORDER_NO AS orderNo,
+            wo.DELIVERY_DT AS deliveryDt,
+            wo.WO_RMK AS woRmk
+        FROM PLN_WORK_ORDER wo
+        JOIN MST_PLANT p ON p.PLANT_CD = wo.PLANT_CD
+        LEFT JOIN MST_ITEM i ON i.ITEM_CD = wo.ITEM_CD
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND wo.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND wo.ITEM_CD = #{itemCd}
+        </if>
+        <if test="woStatus != null and woStatus != ''">
+            AND wo.WO_STATUS = #{woStatus}
+        </if>
+        <if test="woFromDt != null">
+            AND wo.WO_DT &gt;= #{woFromDt}
+        </if>
+        <if test="woToDt != null">
+            AND wo.WO_DT &lt;= #{woToDt}
+        </if>
+        ORDER BY wo.WO_DT DESC, wo.PRIORITY ASC, wo.WO_ID DESC
+    </select>
+
+    <select id="selectWorkOrderById" resultType="com.mes.domain.planning.workorder.dto.WorkOrderDto">
+        SELECT
+            wo.WO_ID AS woId,
+            wo.PLANT_CD AS plantCd,
+            p.PLANT_NM AS plantNm,
+            wo.WO_NO AS woNo,
+            wo.PLAN_ID AS planId,
+            wo.WO_DT AS woDt,
+            wo.ITEM_CD AS itemCd,
+            i.ITEM_NM AS itemNm,
+            wo.WO_QTY AS woQty,
+            wo.WORKCENTER_CD AS workcenterCd,
+            wo.EQUIPMENT_CD AS equipmentCd,
+            wo.WORKER_ID AS workerId,
+            wo.PLAN_START_DTM AS planStartDtm,
+            wo.PLAN_END_DTM AS planEndDtm,
+            wo.ACTUAL_START_DTM AS actualStartDtm,
+            wo.ACTUAL_END_DTM AS actualEndDtm,
+            wo.GOOD_QTY AS goodQty,
+            wo.DEFECT_QTY AS defectQty,
+            wo.WO_STATUS AS woStatus,
+            wo.PRIORITY AS priority,
+            wo.LOT_NO AS lotNo,
+            wo.PARENT_WO_ID AS parentWoId,
+            wo.ORDER_NO AS orderNo,
+            wo.DELIVERY_DT AS deliveryDt,
+            wo.WO_RMK AS woRmk
+        FROM PLN_WORK_ORDER wo
+        JOIN MST_PLANT p ON p.PLANT_CD = wo.PLANT_CD
+        LEFT JOIN MST_ITEM i ON i.ITEM_CD = wo.ITEM_CD
+        WHERE wo.WO_ID = #{woId}
+    </select>
+
+    <insert id="insertWorkOrder">
+        INSERT INTO PLN_WORK_ORDER (
+            PLANT_CD, WO_NO, PLAN_ID, WO_DT, ITEM_CD, WO_QTY,
+            WORKCENTER_CD, EQUIPMENT_CD, WORKER_ID,
+            PLAN_START_DTM, PLAN_END_DTM,
+            PRIORITY, LOT_NO, ORDER_NO, DELIVERY_DT,
+            WO_STATUS, WO_RMK, REG_USER_ID
+        ) VALUES (
+            #{request.plantCd}, #{woNo}, #{request.planId}, #{request.woDt}, #{request.itemCd}, #{request.woQty},
+            #{request.workcenterCd}, #{request.equipmentCd}, #{request.workerId},
+            #{request.planStartDtm}, #{request.planEndDtm},
+            COALESCE(#{request.priority}, 5), #{request.lotNo}, #{request.orderNo}, #{request.deliveryDt},
+            '대기', #{request.woRmk}, #{regUserId}
+        )
+    </insert>
+
+    <update id="updateWorkOrderStatus">
+        UPDATE PLN_WORK_ORDER
+        SET WO_STATUS = #{woStatus},
+            ACTUAL_START_DTM = COALESCE(ACTUAL_START_DTM, #{actualStartDtm}),
+            ACTUAL_END_DTM = #{actualEndDtm},
+            UPD_USER_ID = #{updUserId}
+        WHERE WO_ID = #{woId}
+    </update>
+
+    <update id="updateWorkOrderQty">
+        UPDATE PLN_WORK_ORDER
+        SET GOOD_QTY = COALESCE(GOOD_QTY, 0) + #{goodQty},
+            DEFECT_QTY = COALESCE(DEFECT_QTY, 0) + #{defectQty},
+            UPD_USER_ID = #{updUserId}
+        WHERE WO_ID = #{woId}
+    </update>
+
+    <select id="selectWorkOrderList" resultType="com.mes.domain.planning.workorder.dto.WorkOrderDto">
+        SELECT
+            wo.WO_ID AS woId,
+            wo.PLANT_CD AS plantCd,
+            p.PLANT_NM AS plantNm,
+            wo.WO_NO AS woNo,
+            wo.PLAN_ID AS planId,
+            wo.WO_DT AS woDt,
+            wo.ITEM_CD AS itemCd,
+            i.ITEM_NM AS itemNm,
+            wo.WO_QTY AS woQty,
+            wo.WORKCENTER_CD AS workcenterCd,
+            wo.EQUIPMENT_CD AS equipmentCd,
+            wo.WORKER_ID AS workerId,
+            wo.PLAN_START_DTM AS planStartDtm,
+            wo.PLAN_END_DTM AS planEndDtm,
+            wo.ACTUAL_START_DTM AS actualStartDtm,
+            wo.ACTUAL_END_DTM AS actualEndDtm,
+            wo.GOOD_QTY AS goodQty,
+            wo.DEFECT_QTY AS defectQty,
+            wo.WO_STATUS AS woStatus,
+            wo.PRIORITY AS priority,
+            wo.LOT_NO AS lotNo,
+            wo.PARENT_WO_ID AS parentWoId,
+            wo.ORDER_NO AS orderNo,
+            wo.DELIVERY_DT AS deliveryDt,
+            wo.WO_RMK AS woRmk
+        FROM PLN_WORK_ORDER wo
+        JOIN MST_PLANT p ON p.PLANT_CD = wo.PLANT_CD
+        LEFT JOIN MST_ITEM i ON i.ITEM_CD = wo.ITEM_CD
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND wo.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND wo.ITEM_CD = #{itemCd}
+        </if>
+        <if test="woStatus != null and woStatus != ''">
+            AND wo.WO_STATUS = #{woStatus}
+        </if>
+        <if test="woFromDt != null">
+            AND wo.WO_DT &gt;= #{woFromDt}
+        </if>
+        <if test="woToDt != null">
+            AND wo.WO_DT &lt;= #{woToDt}
+        </if>
+        ORDER BY wo.WO_DT DESC, wo.PRIORITY ASC, wo.WO_ID DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countWorkOrders" resultType="int">
+        SELECT COUNT(*)
+        FROM PLN_WORK_ORDER wo
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND wo.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND wo.ITEM_CD = #{itemCd}
+        </if>
+        <if test="woStatus != null and woStatus != ''">
+            AND wo.WO_STATUS = #{woStatus}
+        </if>
+        <if test="woFromDt != null">
+            AND wo.WO_DT &gt;= #{woFromDt}
+        </if>
+        <if test="woToDt != null">
+            AND wo.WO_DT &lt;= #{woToDt}
+        </if>
+    </select>
+
+    <select id="selectWorkOrderCountByDate" resultType="int">
+        SELECT COUNT(*)
+        FROM PLN_WORK_ORDER
+        WHERE WO_DT = #{woDt}
+    </select>
+
+</mapper>

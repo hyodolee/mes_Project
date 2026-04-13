@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>작업지시 목록</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('workOrders')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('작업지시 목록', '작업지시를 조회하고 관리합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/planning/work-orders" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd">
+                        <option value="">전체</option>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${plantCd == p.plantCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="itemCd">품목코드</label>
+                    <input id="itemCd" type="text" name="itemCd" th:value="${itemCd}">
+                </div>
+                <div class="field">
+                    <label for="woStatus">작업상태</label>
+                    <select id="woStatus" name="woStatus">
+                        <option value="">전체</option>
+                        <option value="대기" th:selected="${woStatus == '대기'}">대기</option>
+                        <option value="진행" th:selected="${woStatus == '진행'}">진행</option>
+                        <option value="완료" th:selected="${woStatus == '완료'}">완료</option>
+                        <option value="취소" th:selected="${woStatus == '취소'}">취소</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="woFromDt">작업지시일(시작)</label>
+                    <input id="woFromDt" type="date" name="woFromDt" th:value="${woFromDt}">
+                </div>
+                <div class="field">
+                    <label for="woToDt">작업지시일(종료)</label>
+                    <input id="woToDt" type="date" name="woToDt" th:value="${woToDt}">
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                    <a class="btn btn-secondary" href="/planning/work-orders/new">작업지시 등록</a>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>작업지시번호</th>
+                        <th>공장</th>
+                        <th>품목</th>
+                        <th>지시일</th>
+                        <th>지시수량</th>
+                        <th>우선순위</th>
+                        <th>상태</th>
+                        <th>상태변경</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="wo : ${workOrders}">
+                        <td th:text="${wo.woNo}"></td>
+                        <td th:text="${wo.plantNm}"></td>
+                        <td th:text="|${wo.itemCd} / ${wo.itemNm}|"></td>
+                        <td th:text="${wo.woDt}"></td>
+                        <td th:text="${wo.woQty}"></td>
+                        <td th:text="${wo.priority}"></td>
+                        <td>
+                            <span th:text="${wo.woStatus}"
+                                  th:classappend="${wo.woStatus == '대기' ? 'status-wait' : (wo.woStatus == '진행' ? 'status-progress' : (wo.woStatus == '완료' ? 'status-done' : 'status-cancel'))}"></span>
+                        </td>
+                        <td>
+                            <button th:if="${wo.woStatus == '대기'}" class="btn btn-sm btn-primary"
+                                    th:attr="onclick=|changeStatus(${wo.woId}, '진행')|">시작</button>
+                            <button th:if="${wo.woStatus == '대기'}" class="btn btn-sm btn-secondary"
+                                    th:attr="onclick=|changeStatus(${wo.woId}, '취소')|">취소</button>
+                            <button th:if="${wo.woStatus == '진행'}" class="btn btn-sm btn-primary"
+                                    th:attr="onclick=|changeStatus(${wo.woId}, '완료')|">완료</button>
+                            <button th:if="${wo.woStatus == '진행'}" class="btn btn-sm btn-secondary"
+                                    th:attr="onclick=|changeStatus(${wo.woId}, '취소')|">취소</button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(workOrders)}">
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 작업지시가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/planning/work-orders(page=1, plantCd=${plantCd}, itemCd=${itemCd}, woStatus=${woStatus}, woFromDt=${woFromDt}, woToDt=${woToDt})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/planning/work-orders(page=${page.currentPage - 1}, plantCd=${plantCd}, itemCd=${itemCd}, woStatus=${woStatus}, woFromDt=${woFromDt}, woToDt=${woToDt})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/planning/work-orders(page=${p}, plantCd=${plantCd}, itemCd=${itemCd}, woStatus=${woStatus}, woFromDt=${woFromDt}, woToDt=${woToDt})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/planning/work-orders(page=${page.currentPage + 1}, plantCd=${plantCd}, itemCd=${itemCd}, woStatus=${woStatus}, woFromDt=${woFromDt}, woToDt=${woToDt})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/planning/work-orders(page=${page.totalPages}, plantCd=${plantCd}, itemCd=${itemCd}, woStatus=${woStatus}, woFromDt=${woFromDt}, woToDt=${woToDt})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+function changeStatus(woId, newStatus) {
+    if (!confirm('작업지시 상태를 "' + newStatus + '"(으)로 변경하시겠습니까?')) return;
+    fetch('/api/v1/planning/work-orders/' + woId + '/status', {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({woStatus: newStatus})
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('상태 변경 실패: ' + data.message);
+        }
+    })
+    .catch(function(err) { alert('오류가 발생했습니다: ' + err); });
+}
+</script>
+</body>
+</html>

@@ -2,7 +2,21 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:inside.lgensol.com)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(python:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(.gradlew.bat build:*)",
+      "Bash(./gradlew.bat build:*)",
+      "Bash(findstr:*)",
+      "WebFetch(domain:open-vsx.org)",
+      "WebSearch",
+      "Bash(curl:*)",
+      "Bash(python3 -c \"import zipfile; zipfile.ZipFile\\(''vscode-lombok.vsix''\\)\")",
+      "Bash(\"C:/Program Files/Java/jdk-21.0.10/bin/java.exe\" -version)",
+      "Bash(cmd.exe:*)",
+      "Bash(cmd /c \"cd /d C:\\\\dev\\\\mes_project\\\\mes_backserver & gradlew.bat build -x test\")",
+      "Bash(powershell.exe:*)"
     ]
   }
 }

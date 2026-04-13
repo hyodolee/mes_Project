@@ -55,15 +55,15 @@
 
 | 구분 | 기술 | 버전 | 선정 이유 |
 |------|------|------|----------|
-| **언어** | Java | 17+ | LTS 버전, 최신 기능 지원 |
-| **프레임워크** | Spring Boot | 3.2.x | 빠른 개발, Auto Configuration |
+| **언어** | Java | 21 | LTS 버전, 최신 기능 지원 |
+| **프레임워크** | Spring Boot | 3.3.5 | 빠른 개발, Auto Configuration |
 | **데이터 접근** | MyBatis | 3.0.x | 복잡한 SQL 직접 제어, XML 매핑 |
 | **데이터베이스** | MariaDB | 10.11+ | 오픈소스, MySQL 호환 |
-| **빌드 도구** | Gradle | 8.x | Kotlin DSL, 의존성 관리 편리 |
-| **문서화** | Springdoc OpenAPI | 2.3.x | Swagger UI 자동 생성 |
-| **유틸리티** | Lombok | - | 보일러플레이트 코드 자동 생성 |
+| **빌드 도구** | Gradle | 8.10.2 | 의존성 관리 편리, Java 21 완벽 지원 |
+| **문서화** | Springdoc OpenAPI | 2.6.0 | Swagger UI 자동 생성 |
+| **유틸리티** | Lombok | 1.18.34 | 보일러플레이트 자동 생성 (Java 21 호환성 확보) |
 | **매핑** | MapStruct | 1.5.x | DTO ↔ Entity 변환 자동화 |
-| **보안** | Spring Security | 3.2.x | 인증/인가 처리 |
+| **보안** | Spring Security | 6.x | 최신 보안 표준 적용 |
 
 ### 2.2 프론트엔드 기술 (향후)
 | 구분 | 기술 | 비고 |
@@ -73,10 +73,10 @@
 | **UI 라이브러리** | Ant Design / Vuetify | - |
 
 ### 2.3 개발 환경
-- **IDE**: IntelliJ IDEA / Eclipse
-- **JDK**: OpenJDK 17 이상
+- **IDE**: IntelliJ IDEA / VS Code
+- **JDK**: OpenJDK 21
 - **DB 클라이언트**: DBeaver / HeidiSQL
-- **API 테스트**: Postman / Insomnia
+- **API 테스트**: Postman / Swagger UI
 - **버전 관리**: Git
 
 ---
@@ -87,141 +87,36 @@
 
 ```
 mes-backend/
-├── build.gradle.kts                 # Gradle 빌드 설정
-├── settings.gradle.kts
+├── build.gradle                     # Gradle 빌드 설정
+├── settings.gradle
 ├── src/
 │   ├── main/
 │   │   ├── java/com/mes/
-│   │   │   ├── MesApplication.java              # 메인 애플리케이션
+│   │   │   ├── MesBackserverApplication.java    # 메인 애플리케이션
 │   │   │   │
 │   │   │   ├── global/                          # 전역 설정 및 공통 모듈
 │   │   │   │   ├── config/                      # 설정 클래스
-│   │   │   │   │   ├── MyBatisConfig.java       # MyBatis 설정
-│   │   │   │   │   ├── WebConfig.java           # Web MVC 설정
-│   │   │   │   │   ├── SwaggerConfig.java       # API 문서 설정
-│   │   │   │   │   └── SecurityConfig.java      # 보안 설정
-│   │   │   │   │
-│   │   │   │   ├── common/                      # 공통 유틸/DTO
-│   │   │   │   │   ├── dto/
-│   │   │   │   │   │   ├── ApiResponse.java     # 통일된 API 응답 형식
-│   │   │   │   │   │   ├── PageRequest.java     # 페이징 요청
-│   │   │   │   │   │   └── PageResponse.java    # 페이징 응답
-│   │   │   │   │   │
-│   │   │   │   │   └── util/
-│   │   │   │   │       ├── DateUtil.java        # 날짜 유틸
-│   │   │   │   │       ├── SeqNoUtil.java       # 채번 유틸
-│   │   │   │   │       └── ValidationUtil.java  # 검증 유틸
-│   │   │   │   │
-│   │   │   │   └── exception/                   # 예외 처리
-│   │   │   │       ├── ErrorCode.java           # 에러 코드 정의
-│   │   │   │       ├── BusinessException.java   # 비즈니스 예외
-│   │   │   │       └── GlobalExceptionHandler.java  # 전역 예외 핸들러
+│   │   │   │   ├── exception/                   # 예외 처리
+│   │   │   │   ├── response/                    # 응답 포맷
+│   │   │   │   └── common/dto/                  # 공통 DTO (PageRequest, PageResponse)
 │   │   │   │
-│   │   │   └── domain/                          # 도메인별 기능 모듈
-│   │   │       │
-│   │   │       ├── common/                      # 공통코드 관리
-│   │   │       │   ├── controller/
-│   │   │       │   │   └── CommonCodeController.java
-│   │   │       │   ├── service/
-│   │   │       │   │   ├── CommonCodeService.java
-│   │   │       │   │   └── CommonCodeServiceImpl.java
-│   │   │       │   ├── mapper/
-│   │   │       │   │   └── CommonCodeMapper.java
-│   │   │       │   └── dto/
-│   │   │       │       ├── CodeGroupDto.java
-│   │   │       │       └── CodeDto.java
-│   │   │       │
-│   │   │       ├── master/                      # 기준정보 관리
-│   │   │       │   ├── item/                    # 품목 관리
-│   │   │       │   │   ├── controller/
-│   │   │       │   │   │   └── ItemController.java
-│   │   │       │   │   ├── service/
-│   │   │       │   │   │   ├── ItemService.java
-│   │   │       │   │   │   └── ItemServiceImpl.java
-│   │   │       │   │   ├── mapper/
-│   │   │       │   │   │   └── ItemMapper.java
-│   │   │       │   │   └── dto/
-│   │   │       │   │       ├── ItemDto.java
-│   │   │       │   │       ├── ItemSearchDto.java
-│   │   │       │   │       └── ItemCreateDto.java
-│   │   │       │   │
-│   │   │       │   ├── bom/                     # BOM 관리
-│   │   │       │   ├── routing/                 # 공정 관리
-│   │   │       │   ├── equipment/               # 설비 관리
-│   │   │       │   ├── worker/                  # 작업자 관리
-│   │   │       │   └── vendor/                  # 거래처 관리
-│   │   │       │
-│   │   │       ├── planning/                    # 생산계획 관리
-│   │   │       │   ├── plan/                    # 생산계획
-│   │   │       │   │   ├── controller/
-│   │   │       │   │   ├── service/
-│   │   │       │   │   ├── mapper/
-│   │   │       │   │   └── dto/
-│   │   │       │   │
-│   │   │       │   └── workorder/               # 작업지시
-│   │   │       │       ├── controller/
-│   │   │       │       ├── service/
-│   │   │       │       ├── mapper/
-│   │   │       │       └── dto/
-│   │   │       │
-│   │   │       ├── production/                  # 생산실적 관리
-│   │   │       │   ├── result/                  # 작업실적
-│   │   │       │   ├── process/                 # 공정실적
-│   │   │       │   └── defect/                  # 불량이력
-│   │   │       │
-│   │   │       ├── quality/                     # 품질관리
-│   │   │       │   ├── inspect/                 # 검사관리
-│   │   │       │   ├── standard/                # 검사기준
-│   │   │       │   └── defect/                  # 불량관리
-│   │   │       │
-│   │   │       ├── inventory/                   # 재고관리
-│   │   │       │   ├── stock/                   # 재고현황
-│   │   │       │   ├── transaction/             # 입출고이력
-│   │   │       │   └── lot/                     # LOT관리
-│   │   │       │
-│   │   │       └── equipment/                   # 설비관리
-│   │   │           ├── operation/               # 가동현황
-│   │   │           ├── downtime/                # 비가동관리
-│   │   │           └── maintenance/             # 정비관리
+│   │   │   ├── domain/                          # 도메인 모델 및 DTO
+│   │   │   │   ├── master/                      # 기준정보
+│   │   │   │   └── planning/                    # 생산계획
+│   │   │   │
+│   │   │   ├── application/service/             # 비즈니스 로직
+│   │   │   │
+│   │   │   ├── interfaces/                      # 인터페이스 계층
+│   │   │   │   ├── web/                         # Thymeleaf Controller
+│   │   │   │   └── api/                         # REST Controller
+│   │   │   │
+│   │   │   └── infra/persistence/mybatis/mapper # MyBatis Mapper 인터페이스
 │   │   │
 │   │   └── resources/
-│   │       ├── application.yml                  # 메인 설정 파일
-│   │       ├── application-dev.yml              # 개발 환경 설정
-│   │       ├── application-prod.yml             # 운영 환경 설정
-│   │       │
-│   │       ├── mybatis/
-│   │       │   ├── mybatis-config.xml           # MyBatis 전역 설정
-│   │       │   │
-│   │       │   └── mapper/                      # SQL 매퍼 XML
-│   │       │       ├── common/
-│   │       │       │   └── CommonCodeMapper.xml
-│   │       │       ├── master/
-│   │       │       │   ├── ItemMapper.xml
-│   │       │       │   ├── BomMapper.xml
-│   │       │       │   └── ...
-│   │       │       ├── planning/
-│   │       │       ├── production/
-│   │       │       ├── quality/
-│   │       │       ├── inventory/
-│   │       │       └── equipment/
-│   │       │
-│   │       ├── static/                          # 정적 리소스
-│   │       └── templates/                       # 템플릿 (필요시)
-│   │
-│   └── test/
-│       └── java/com/mes/
-│           ├── domain/
-│           │   ├── master/
-│           │   │   └── item/
-│           │   │       └── ItemServiceTest.java
-│           │   └── ...
-│           └── integration/
-│               └── ...
-│
-└── docs/                                        # 프로젝트 문서
-    ├── api/                                     # API 명세서
-    ├── db/                                      # DB 설계 문서
-    └── guide/                                   # 개발 가이드
+│   │       ├── mapper/                          # SQL 매퍼 XML
+│   │       ├── static/                          # 정적 리소스 (CSS, JS)
+│   │       ├── templates/                       # Thymeleaf 템플릿
+│   │       └── application.yml                  # 설정 파일
 ```
 
 ### 3.2 패키지 구조 설명
@@ -410,29 +305,14 @@ package com.mes.global.common.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * 페이징 요청 DTO
- * - MyBatis에서 LIMIT, OFFSET 계산에 사용
- */
 @Getter
 @Setter
 public class PageRequest {
+    private int page = 1;
+    private int size = 10;
 
-    private int page = 1;           // 현재 페이지 (1부터 시작)
-    private int size = 20;          // 페이지당 개수
-
-    /**
-     * MyBatis용 offset 계산
-     */
     public int getOffset() {
         return (page - 1) * size;
-    }
-
-    /**
-     * MyBatis용 limit
-     */
-    public int getLimit() {
-        return size;
     }
 }
 ```
@@ -444,25 +324,20 @@ package com.mes.global.common.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.util.List;
 
-/**
- * 페이징 응답 DTO
- */
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageResponse<T> {
+    private List<T> content;
+    private int totalElements;
+    private int totalPages;
+    private int currentPage;
+    private int size;
 
-    private List<T> content;        // 실제 데이터 목록
-    private int totalElements;      // 전체 데이터 개수
-    private int totalPages;         // 전체 페이지 수
-    private int currentPage;        // 현재 페이지
-    private int size;               // 페이지 크기
-
-    /**
-     * 정적 팩토리 메서드
-     */
     public static <T> PageResponse<T> of(List<T> content, int totalElements, PageRequest pageRequest) {
         int totalPages = (int) Math.ceil((double) totalElements / pageRequest.getSize());
         return new PageResponse<>(
@@ -721,20 +596,14 @@ public class ItemDto {
 package com.mes.domain.master.item.dto;
 
 import com.mes.global.common.dto.PageRequest;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
-/**
- * 품목 검색 조건 DTO
- * - PageRequest를 상속받아 페이징 기능 포함
- */
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 public class ItemSearchDto extends PageRequest {
-    private String plantCd;         // 공장코드
-    private String itemType;        // 품목유형
-    private String itemNm;          // 품목명 (LIKE 검색)
-    private String useYn;           // 사용여부
+    private String itemNm;
+    private String useYn;
 }
 ```
 
@@ -876,99 +745,37 @@ public interface ItemService {
 
 #### 📄 `ItemServiceImpl.java` (구현체)
 ```java
-package com.mes.domain.master.item.service;
+package com.mes.application.service.master;
 
 import com.mes.domain.master.item.dto.*;
-import com.mes.domain.master.item.mapper.ItemMapper;
+import com.mes.infra.persistence.mybatis.mapper.master.ItemMapper;
 import com.mes.global.common.dto.PageResponse;
-import com.mes.global.exception.BusinessException;
-import com.mes.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * 품목 서비스 구현체
- */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ItemServiceImpl implements ItemService {
+public class ItemService {
 
     private final ItemMapper itemMapper;
 
-    @Override
     public PageResponse<ItemDto> getItemList(ItemSearchDto searchDto) {
-        log.debug("품목 목록 조회: {}", searchDto);
-
-        // 목록 조회
         List<ItemDto> items = itemMapper.selectItemList(searchDto);
-
-        // 전체 개수 조회
         int totalCount = itemMapper.countItems(searchDto);
-
         return PageResponse.of(items, totalCount, searchDto);
     }
-
-    @Override
-    public ItemDto getItem(String itemCd) {
-        log.debug("품목 상세 조회: {}", itemCd);
-
-        ItemDto item = itemMapper.selectItemByCode(itemCd);
-        if (item == null) {
-            throw new BusinessException(ErrorCode.ITEM_NOT_FOUND,
-                "품목을 찾을 수 없습니다: " + itemCd);
-        }
-        return item;
-    }
-
-    @Override
-    @Transactional
-    public void createItem(ItemCreateDto dto) {
-        log.debug("품목 등록: {}", dto);
-
-        // 중복 체크
-        if (itemMapper.existsByItemCd(dto.getItemCd()) > 0) {
-            throw new BusinessException(ErrorCode.ITEM_CODE_DUPLICATED);
-        }
-
-        // 등록
-        itemMapper.insertItem(dto);
-        log.info("품목 등록 완료: {}", dto.getItemCd());
-    }
-
-    @Override
-    @Transactional
-    public void updateItem(String itemCd, ItemUpdateDto dto) {
-        log.debug("품목 수정: {}", itemCd);
-
-        // 존재 여부 확인
-        getItem(itemCd);
-
-        // 수정
-        dto.setItemCd(itemCd);
-        itemMapper.updateItem(dto);
-        log.info("품목 수정 완료: {}", itemCd);
-    }
-
-    @Override
-    @Transactional
-    public void deleteItem(String itemCd) {
-        log.debug("품목 삭제: {}", itemCd);
-
-        // 존재 여부 확인
-        getItem(itemCd);
-
-        // 논리 삭제
-        itemMapper.deleteItem(itemCd);
-        log.info("품목 삭제 완료: {}", itemCd);
-    }
+    
+    // ... CRUD 메서드 생략
 }
 ```
+
+### 6.3 UI/UX 개선 사항
+- **사용여부 선택 방식**: 기존 텍스트 입력에서 Select Box(사용/미사용) 선택 방식으로 변경하여 데이터 무결성 및 편의성 향상.
+- **레이아웃 최적화**: 사용여부 등 짧은 입력 필드에 대해 `.field-use-yn` 클래스를 적용하여 고정 너비(120px)로 최적화.
+- **페이징 네비게이션**: 목록 하단에 직관적인 숫자형 페이지 이동 버튼 구현.
 
 #### 📄 `ItemController.java` (REST API)
 ```java
@@ -1566,24 +1373,20 @@ public class WebConfig implements WebMvcConfigurer {
 
 ### 10.1 Gradle 빌드 설정
 
-#### 📄 `build.gradle.kts`
-```kotlin
+#### 📄 `build.gradle`
+```groovy
 plugins {
-    java
-    id("org.springframework.boot") version "3.2.2"
-    id("io.spring.dependency-management") version "1.1.4"
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
 }
 
-group = "com.mes"
-version = "0.0.1-SNAPSHOT"
+group = 'com.mes'
+version = '0.0.1-SNAPSHOT'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-}
-
-configurations {
-    compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -1592,35 +1395,18 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot Starter
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-
-    // MyBatis
-    implementation("org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3")
-
-    // MariaDB
-    runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
-
-    // Lombok
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-
-    // MapStruct
-    implementation("org.mapstruct:mapstruct:1.5.5.Final")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
-
-    // Swagger (Springdoc OpenAPI)
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
-
-    // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+    
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 ```
 
@@ -1629,14 +1415,14 @@ tasks.withType<Test> {
 #### Step 1: Spring Initializr
 1. https://start.spring.io/ 접속
 2. 설정:
-   - Project: Gradle - Kotlin
+   - Project: Gradle - Groovy
    - Language: Java
-   - Spring Boot: 3.2.x
-   - Java: 17
-   - Dependencies: Spring Web, Validation, Security, Lombok
+   - Spring Boot: 3.3.x
+   - Java: 21
+   - Dependencies: Spring Web, Validation, Thymeleaf, Lombok
 
 #### Step 2: 의존성 추가
-- `build.gradle.kts`에 MyBatis, MariaDB, Swagger 추가
+- `build.gradle`에 MyBatis, MariaDB, Swagger 추가 (Lombok 버전 고정)
 
 #### Step 3: 패키지 구조 생성
 ```bash
@@ -1724,16 +1510,16 @@ mkdir -p src/main/resources/mybatis/mapper
 ## ✅ 체크리스트
 
 프로젝트 생성 시 확인 사항:
-- [ ] JDK 17 이상 설치
-- [ ] MariaDB 설치 및 DB 생성
-- [ ] Gradle 빌드 성공
-- [ ] application.yml DB 연결 정보 설정
-- [ ] MyBatis 설정 완료
+- [x] JDK 21 설치
+- [x] MariaDB 설치 및 DB 생성
+- [x] Gradle 빌드 성공 (Lombok 1.18.34 적용)
+- [x] application.yml DB 연결 정보 설정
+- [x] MyBatis 설정 완료
 - [ ] Swagger UI 접속 확인 (http://localhost:8080/swagger-ui.html)
-- [ ] 품목 관리 API 테스트 성공
+- [x] 품목 관리 CRUD/검색/페이징 테스트 성공
 
 ---
 
-**문서 버전**: 1.0
-**작성일**: 2025-02-13
-**작성자**: MES 개발팀
+**문서 버전**: 1.1
+**작성일**: 2026-03-31
+**작성자**: Gemini CLI

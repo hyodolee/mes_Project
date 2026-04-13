@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>입고 오더 등록/수정</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('inbounds')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar(${mode == 'create'} ? '입고 오더 등록' : '입고 오더 수정', '입고 오더 정보를 확인하고 상태를 변경합니다.')}"></header>
+
+        <section class="card">
+            <h3 style="margin-top: 0;">입고 기본 정보</h3>
+            <form th:action="${mode == 'create'} ? @{/inbounds} : @{'/inbounds/' + ${request.inboundId} + '/edit'}" method="post" class="form-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd" th:disabled="${mode == 'edit'}" required>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${request.plantCd == p.plantCd}"></option>
+                    </select>
+                    <input type="hidden" name="plantCd" th:value="${request.plantCd}" th:if="${mode == 'edit'}">
+                </div>
+                <div class="field" th:if="${mode == 'edit'}">
+                    <label>입고번호 / 상태</label>
+                    <div style="padding: 0.5rem 0;">
+                        <strong th:text="${request.inboundNo}"></strong> &nbsp;
+                        <span class="badge" th:classappend="${request.inboundStatus == 'COMPLETED'} ? 'badge-success' : 'badge-outline'" th:text="${request.inboundStatusNm}"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="warehouseCd">대상창고</label>
+                    <select id="warehouseCd" name="warehouseCd" th:disabled="${request.inboundStatus != 'PLANNED' and mode == 'edit'}">
+                        <option value="">-- 선택 --</option>
+                        <option th:each="w : ${warehouses}" th:value="${w.warehouseCd}" th:text="${w.warehouseNm}" th:selected="${request.warehouseCd == w.warehouseCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="expectedDt">예정일</label>
+                    <input id="expectedDt" type="date" name="expectedDt" th:value="${request.expectedDt}" th:readonly="${request.inboundStatus != 'PLANNED' and mode == 'edit'}" required>
+                </div>
+                <div class="field field-span-2">
+                    <label for="inboundRmk">비고</label>
+                    <input id="inboundRmk" type="text" name="inboundRmk" th:value="${request.inboundRmk}" th:readonly="${request.inboundStatus != 'PLANNED' and mode == 'edit'}">
+                </div>
+
+                <div class="actions field-span-2" style="justify-content: flex-start; gap: 0.5rem; margin-top: 1rem;">
+                    <!-- 상태 변경 버튼들 (PLANNED -> ARRIVED -> INSPECTING -> COMPLETED) -->
+                    <th:block th:if="${mode == 'edit'}">
+                        <button type="button" class="btn btn-outline" th:if="${request.inboundStatus == 'PLANNED'}" th:onclick="|if(confirm('도착 상태로 변경하시겠습니까?')) document.getElementById('statusForm_ARRIVED').submit();|">도착 처리</button>
+                        <button type="button" class="btn btn-outline" th:if="${request.inboundStatus == 'ARRIVED'}" th:onclick="|if(confirm('검수중 상태로 변경하시겠습니까?')) document.getElementById('statusForm_INSPECTING').submit();|">검수 시작</button>
+                        <button type="button" class="btn btn-success" th:if="${request.inboundStatus == 'INSPECTING'}" th:onclick="|if(confirm('입고 확정 처리하시겠습니까? (재고가 반영됩니다)')) document.getElementById('statusForm_COMPLETED').submit();|">입고 확정 (완료)</button>
+                        
+                        <button type="button" class="btn btn-danger" th:if="${request.inboundStatus == 'PLANNED'}" th:onclick="|if(confirm('이 오더를 완전히 삭제하시겠습니까?')) document.getElementById('deleteForm').submit();|" style="margin-left: auto;">오더 삭제</button>
+                    </th:block>
+
+                    <button class="btn btn-primary" type="submit" th:if="${mode == 'create' or request.inboundStatus == 'PLANNED'}">기본정보 저장</button>
+                    <a class="btn btn-secondary" href="/inbounds">목록으로</a>
+                </div>
+            </form>
+            
+            <!-- 상태 변경 폼들 -->
+            <form id="statusForm_ARRIVED" th:if="${mode == 'edit'}" th:action="@{'/inbounds/' + ${request.inboundId} + '/status'}" method="post" style="display:none;"><input type="hidden" name="status" value="ARRIVED"></form>
+            <form id="statusForm_INSPECTING" th:if="${mode == 'edit'}" th:action="@{'/inbounds/' + ${request.inboundId} + '/status'}" method="post" style="display:none;"><input type="hidden" name="status" value="INSPECTING"></form>
+            <form id="statusForm_COMPLETED" th:if="${mode == 'edit'}" th:action="@{'/inbounds/' + ${request.inboundId} + '/status'}" method="post" style="display:none;"><input type="hidden" name="status" value="COMPLETED"></form>
+            <form id="deleteForm" th:if="${mode == 'edit'}" th:action="@{'/inbounds/' + ${request.inboundId} + '/delete'}" method="post" style="display:none;"></form>
+        </section>
+
+        <!-- 품목 리스트 영역 (수정 모드일 때만 보임) -->
+        <section class="card" th:if="${mode == 'edit'}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">입고 품목 목록</h3>
+                <button class="btn btn-sm btn-outline" th:if="${request.inboundStatus == 'PLANNED'}">+ 품목 추가</button>
+            </div>
+            
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>품목코드</th>
+                        <th>품목명</th>
+                        <th>LOT번호</th>
+                        <th>대상 로케이션</th>
+                        <th style="text-align:right;">예정수량</th>
+                        <th style="text-align:right;">실제수량</th>
+                        <th>상태</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${items}">
+                        <td th:text="${item.itemCd}"></td>
+                        <td th:text="${item.itemNm}"></td>
+                        <td th:text="${item.lotNo ?: '-'}"></td>
+                        <td th:text="${item.locationCd ?: '-'}"></td>
+                        <td style="text-align:right;" th:text="${item.expectedQty}"></td>
+                        <td style="text-align:right; font-weight:bold;" th:text="${item.actualQty}"></td>
+                        <td><span class="badge badge-outline" th:text="${item.itemStatusNm}"></span></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(items)}">
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 품목이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                * 품목의 등록/수정/삭제 기능은 Phase 3 뼈대 이후 추가 구현이 필요합니다.
+            </p>
+        </section>
+    </main>
+</div>
+</body>
+</html>

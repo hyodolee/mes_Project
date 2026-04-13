@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구역 관리 - MCS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('zones')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('구역 관리', '창고 내 구역(Zone) 정보를 관리합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/zones" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd">
+                        <option value="">전체</option>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${search.plantCd == p.plantCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="warehouseCd">창고</label>
+                    <select id="warehouseCd" name="warehouseCd">
+                        <option value="">전체</option>
+                        <option th:each="w : ${warehouses}" th:value="${w.warehouseCd}" th:text="${w.warehouseNm}" th:selected="${search.warehouseCd == w.warehouseCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="zoneCd">구역코드/명</label>
+                    <input id="zoneCd" type="text" name="zoneCd" th:value="${search.zoneCd}" placeholder="구역코드 또는 명">
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">조회</button>
+                    <a class="btn btn-secondary" href="/zones/new">구역 등록</a>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}" style="color: var(--primary-color); margin-top: 1rem; font-weight: 500;"></p>
+            <p class="error" th:if="${error}" th:text="${error}" style="color: red; margin-top: 1rem; font-weight: 500;"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>공장</th>
+                        <th>창고</th>
+                        <th>구역코드</th>
+                        <th>구역명</th>
+                        <th>구역유형</th>
+                        <th>정렬</th>
+                        <th>사용여부</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="z : ${zonesList}" th:onclick="|location.href='@{/zones/{id}/edit(id=${z.zoneId})}'|" style="cursor: pointer;" class="hover-row">
+                        <td th:text="${z.plantNm}"></td>
+                        <td th:text="${z.warehouseNm}"></td>
+                        <td th:text="${z.zoneCd}"></td>
+                        <td th:text="${z.zoneNm}"></td>
+                        <td th:text="${z.zoneTypeNm}"></td>
+                        <td th:text="${z.sortSeq}"></td>
+                        <td th:text="${z.useYn}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(zonesList)}">
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">등록된 구역 정보가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/zones(page=1, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneCd=${search.zoneCd})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/zones(page=${page.currentPage - 1}, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneCd=${search.zoneCd})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/zones(page=${p}, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneCd=${search.zoneCd})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/zones(page=${page.currentPage + 1}, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneCd=${search.zoneCd})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/zones(page=${page.totalPages}, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneCd=${search.zoneCd})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

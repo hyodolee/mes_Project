@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로케이션 재고 현황 - MCS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('stock')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar('로케이션 재고 현황', '로케이션별 실시간 재고 정보를 조회합니다.')}"></header>
+
+        <section class="card">
+            <form method="get" action="/inventory/stock" class="search-grid">
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd">
+                        <option value="">전체</option>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${search.plantCd == p.plantCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="warehouseCd">창고</label>
+                    <select id="warehouseCd" name="warehouseCd">
+                        <option value="">전체</option>
+                        <option th:each="w : ${warehouses}" th:value="${w.warehouseCd}" th:text="${w.warehouseNm}" th:selected="${search.warehouseCd == w.warehouseCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="zoneId">구역</label>
+                    <select id="zoneId" name="zoneId">
+                        <option value="">전체</option>
+                        <option th:each="z : ${zones}" th:value="${z.zoneId}" th:text="${z.zoneNm}" th:selected="${search.zoneId == z.zoneId}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="locationCd">로케이션</label>
+                    <input id="locationCd" type="text" name="locationCd" th:value="${search.locationCd}" placeholder="코드">
+                </div>
+                <div class="field">
+                    <label for="itemCd">품목코드/명</label>
+                    <input id="itemCd" type="text" name="itemCd" th:value="${search.itemCd}" placeholder="코드 또는 명">
+                </div>
+                <div class="field">
+                    <label for="lotNo">LOT번호</label>
+                    <input id="lotNo" type="text" name="lotNo" th:value="${search.lotNo}" placeholder="LOT번호">
+                </div>
+                <div class="field field-span-2" style="display: flex; align-items: center; gap: 0.5rem; justify-content: flex-end;">
+                    <label for="excludeZeroStock" style="margin: 0; cursor: pointer;">
+                        <input type="checkbox" id="excludeZeroStock" name="excludeZeroStock" value="true" th:checked="${search.excludeZeroStock}" style="width: auto; margin-right: 4px;">
+                        재고 0 제외
+                    </label>
+                    <button class="btn btn-primary" type="submit" style="margin-left: 1rem;">조회</button>
+                </div>
+            </form>
+            <p class="message" th:if="${message}" th:text="${message}" style="color: var(--primary-color); margin-top: 1rem; font-weight: 500;"></p>
+            <p class="error" th:if="${error}" th:text="${error}" style="color: red; margin-top: 1rem; font-weight: 500;"></p>
+        </section>
+
+        <section class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>공장/창고</th>
+                        <th>구역/로케이션</th>
+                        <th>품목코드</th>
+                        <th>품목명</th>
+                        <th>LOT번호</th>
+                        <th style="text-align: right;">재고수량</th>
+                        <th style="text-align: right;">가용수량</th>
+                        <th>조정</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="stock : ${stockList}" class="hover-row">
+                        <td><span th:text="${stock.plantNm}"></span><br><small th:text="${stock.warehouseNm}"></small></td>
+                        <td><span th:text="${stock.zoneNm}"></span><br><small th:text="${stock.locationCd}"></small></td>
+                        <td th:text="${stock.itemCd}"></td>
+                        <td th:text="${stock.itemNm}"></td>
+                        <td th:text="${stock.lotNo ?: '-'}"></td>
+                        <td style="text-align: right; font-weight: 600;" th:text="${#numbers.formatDecimal(stock.stockQty, 1, 'COMMA', 3, 'POINT')}"></td>
+                        <td style="text-align: right; color: var(--primary-color); font-weight: 600;" th:text="${#numbers.formatDecimal(stock.availableQty, 1, 'COMMA', 3, 'POINT')}"></td>
+                        <td>
+                            <a class="table-link" th:href="@{'/inventory/stock/' + ${stock.locStockId} + '/adjust'}">재고조정</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(stockList)}">
+                        <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">조회된 재고 정보가 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이징 -->
+            <div class="pagination" th:if="${page.totalPages > 0}">
+                <ul class="page-list">
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/inventory/stock(page=1, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd}, itemCd=${search.itemCd}, lotNo=${search.lotNo}, excludeZeroStock=${search.excludeZeroStock})}" aria-label="First" title="맨 처음">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == 1} ? 'disabled'">
+                        <a th:href="@{/inventory/stock(page=${page.currentPage - 1}, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd}, itemCd=${search.itemCd}, lotNo=${search.lotNo}, excludeZeroStock=${search.excludeZeroStock})}" aria-label="Previous" title="이전">
+                            &lsaquo;
+                        </a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, page.totalPages)}"
+                        th:classappend="${page.currentPage == p} ? 'active'">
+                        <a th:href="@{/inventory/stock(page=${p}, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd}, itemCd=${search.itemCd}, lotNo=${search.lotNo}, excludeZeroStock=${search.excludeZeroStock})}" th:text="${p}">1</a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/inventory/stock(page=${page.currentPage + 1}, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd}, itemCd=${search.itemCd}, lotNo=${search.lotNo}, excludeZeroStock=${search.excludeZeroStock})}" aria-label="Next" title="다음">
+                            &rsaquo;
+                        </a>
+                    </li>
+                    <li th:classappend="${page.currentPage == page.totalPages} ? 'disabled'">
+                        <a th:href="@{/inventory/stock(page=${page.totalPages}, plantCd=${search.plantCd}, warehouseCd=${search.warehouseCd}, zoneId=${search.zoneId}, locationCd=${search.locationCd}, itemCd=${search.itemCd}, lotNo=${search.lotNo}, excludeZeroStock=${search.excludeZeroStock})}" aria-label="Last" title="맨 마지막">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

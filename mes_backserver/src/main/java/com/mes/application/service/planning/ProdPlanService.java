@@ -2,6 +2,8 @@ package com.mes.application.service.planning;
 
 import com.mes.domain.planning.prodplan.dto.ProdPlanCreateRequest;
 import com.mes.domain.planning.prodplan.dto.ProdPlanDto;
+import com.mes.domain.planning.prodplan.dto.ProdPlanSearchDto;
+import com.mes.global.common.dto.PageResponse;
 import com.mes.global.exception.BusinessException;
 import com.mes.global.exception.ErrorCode;
 import com.mes.infra.persistence.mybatis.mapper.planning.ProdPlanMapper;
@@ -24,6 +26,12 @@ public class ProdPlanService {
     public List<ProdPlanDto> getProdPlans(String plantCd, String itemCd, String planStatus, LocalDate planFromDt,
             LocalDate planToDt) {
         return prodPlanMapper.selectProdPlans(plantCd, itemCd, planStatus, planFromDt, planToDt);
+    }
+
+    public PageResponse<ProdPlanDto> getProdPlanList(ProdPlanSearchDto searchDto) {
+        List<ProdPlanDto> plans = prodPlanMapper.selectProdPlanList(searchDto);
+        int totalCount = prodPlanMapper.countProdPlans(searchDto);
+        return PageResponse.createPagedResponse(plans, totalCount, searchDto);
     }
 
     public ProdPlanDto getProdPlan(Long planId) {

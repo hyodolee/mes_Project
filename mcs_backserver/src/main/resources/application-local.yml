@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://mysql-hd-mes.j.aivencloud.com:10483/MES_DB?allowPublicKeyRetrieval=true&useSSL=true&trustServerCertificate=true&sslMode=trust
+    username: avnadmin
+    password: YOUR_DB_PASSWORD
+
+logging:
+  level:
+    root: INFO
+    com.mcs: DEBUG
+    org.springframework.web: INFO
+    com.mcs.infra.persistence.mybatis.mapper: DEBUG

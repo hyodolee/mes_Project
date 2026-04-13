@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.inventory.InventoryMapper">
+
+    <select id="selectLocStockList" resultType="com.mcs.domain.inventory.dto.LocStockDto">
+        SELECT
+            ls.LOC_STOCK_ID,
+            ls.PLANT_CD,
+            ls.LOCATION_ID,
+            ls.ITEM_CD,
+            ls.LOT_NO,
+            ls.STOCK_QTY,
+            ls.RESERVED_QTY,
+            ls.AVAILABLE_QTY,
+            ls.REG_USER_ID,
+            ls.REG_DTM,
+            ls.UPD_USER_ID,
+            ls.UPD_DTM,
+            p.PLANT_NM,
+            w.WAREHOUSE_NM,
+            z.ZONE_NM,
+            l.LOCATION_CD,
+            l.LOCATION_NM,
+            i.ITEM_NM,
+            i.ITEM_SPEC,
+            i.UNIT
+        FROM MCS_LOCATION_STOCK ls
+        INNER JOIN MST_PLANT p ON ls.PLANT_CD = p.PLANT_CD
+        INNER JOIN MCS_LOCATION l ON ls.LOCATION_ID = l.LOCATION_ID
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        INNER JOIN MST_ITEM i ON ls.ITEM_CD = i.ITEM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND ls.PLANT_CD = #{plantCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND w.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="zoneId != null">AND z.ZONE_ID = #{zoneId}</if>
+            <if test="locationCd != null and locationCd != ''">AND l.LOCATION_CD LIKE CONCAT('%', #{locationCd}, '%')</if>
+            <if test="itemCd != null and itemCd != ''">AND (ls.ITEM_CD LIKE CONCAT('%', #{itemCd}, '%') OR i.ITEM_NM LIKE CONCAT('%', #{itemCd}, '%'))</if>
+            <if test="lotNo != null and lotNo != ''">AND ls.LOT_NO LIKE CONCAT('%', #{lotNo}, '%')</if>
+            <if test="excludeZeroStock != null and excludeZeroStock == true">AND ls.STOCK_QTY > 0</if>
+        </where>
+        ORDER BY w.WAREHOUSE_CD, z.SORT_SEQ, l.LOCATION_CD, ls.ITEM_CD, ls.LOT_NO
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectLocStockCount" resultType="long">
+        SELECT COUNT(*)
+        FROM MCS_LOCATION_STOCK ls
+        INNER JOIN MCS_LOCATION l ON ls.LOCATION_ID = l.LOCATION_ID
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        INNER JOIN MST_ITEM i ON ls.ITEM_CD = i.ITEM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND ls.PLANT_CD = #{plantCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND w.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="zoneId != null">AND z.ZONE_ID = #{zoneId}</if>
+            <if test="locationCd != null and locationCd != ''">AND l.LOCATION_CD LIKE CONCAT('%', #{locationCd}, '%')</if>
+            <if test="itemCd != null and itemCd != ''">AND (ls.ITEM_CD LIKE CONCAT('%', #{itemCd}, '%') OR i.ITEM_NM LIKE CONCAT('%', #{itemCd}, '%'))</if>
+            <if test="lotNo != null and lotNo != ''">AND ls.LOT_NO LIKE CONCAT('%', #{lotNo}, '%')</if>
+            <if test="excludeZeroStock != null and excludeZeroStock == true">AND ls.STOCK_QTY > 0</if>
+        </where>
+    </select>
+
+    <select id="selectLocStockById" resultType="com.mcs.domain.inventory.dto.LocStockDto">
+        SELECT
+            ls.LOC_STOCK_ID,
+            ls.PLANT_CD,
+            ls.LOCATION_ID,
+            ls.ITEM_CD,
+            ls.LOT_NO,
+            ls.STOCK_QTY,
+            ls.RESERVED_QTY,
+            ls.AVAILABLE_QTY,
+            ls.REG_USER_ID,
+            ls.REG_DTM,
+            ls.UPD_USER_ID,
+            ls.UPD_DTM,
+            p.PLANT_NM,
+            w.WAREHOUSE_NM,
+            z.ZONE_NM,
+            l.LOCATION_CD,
+            l.LOCATION_NM,
+            i.ITEM_NM,
+            i.ITEM_SPEC,
+            i.UNIT
+        FROM MCS_LOCATION_STOCK ls
+        INNER JOIN MST_PLANT p ON ls.PLANT_CD = p.PLANT_CD
+        INNER JOIN MCS_LOCATION l ON ls.LOCATION_ID = l.LOCATION_ID
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        INNER JOIN MST_ITEM i ON ls.ITEM_CD = i.ITEM_CD
+        WHERE ls.LOC_STOCK_ID = #{locStockId}
+    </select>
+
+    <update id="updateLocStockQty">
+        UPDATE MCS_LOCATION_STOCK
+        SET STOCK_QTY = STOCK_QTY + #{adjustQty},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE LOC_STOCK_ID = #{locStockId}
+    </update>
+
+    <!-- 이력 조회 -->
+    <select id="selectLocTransHisList" resultType="com.mcs.domain.inventory.dto.LocTransHisDto">
+        SELECT
+            h.LOC_TRANS_ID,
+            h.PLANT_CD,
+            h.LOC_STOCK_ID,
+            h.TRANS_TYPE,
+            h.TRANS_QTY,
+            h.BEFORE_QTY,
+            h.AFTER_QTY,
+            h.REF_TYPE,
+            h.REF_NO,
+            h.REF_ID,
+            h.TRANS_RMK,
+            h.REG_USER_ID,
+            h.REG_DTM,
+            p.PLANT_NM,
+            c.COM_NM AS TRANS_TYPE_NM,
+            w.WAREHOUSE_NM,
+            z.ZONE_NM,
+            l.LOCATION_CD,
+            ls.ITEM_CD,
+            i.ITEM_NM,
+            ls.LOT_NO
+        FROM MCS_LOC_TRANS_HIS h
+        INNER JOIN MST_PLANT p ON h.PLANT_CD = p.PLANT_CD
+        INNER JOIN MCS_LOCATION_STOCK ls ON h.LOC_STOCK_ID = ls.LOC_STOCK_ID
+        INNER JOIN MCS_LOCATION l ON ls.LOCATION_ID = l.LOCATION_ID
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        INNER JOIN MST_ITEM i ON ls.ITEM_CD = i.ITEM_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_INV_TX_TYPE' AND h.TRANS_TYPE = c.COM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND h.PLANT_CD = #{plantCd}</if>
+            <if test="fromDate != null and fromDate != ''">AND h.REG_DTM <![CDATA[>=]]> CONCAT(#{fromDate}, ' 00:00:00')</if>
+            <if test="toDate != null and toDate != ''">AND h.REG_DTM <![CDATA[<=]]> CONCAT(#{toDate}, ' 23:59:59')</if>
+            <if test="transType != null and transType != ''">AND h.TRANS_TYPE = #{transType}</if>
+            <if test="itemCd != null and itemCd != ''">AND (ls.ITEM_CD LIKE CONCAT('%', #{itemCd}, '%') OR i.ITEM_NM LIKE CONCAT('%', #{itemCd}, '%'))</if>
+            <if test="locationCd != null and locationCd != ''">AND l.LOCATION_CD LIKE CONCAT('%', #{locationCd}, '%')</if>
+        </where>
+        ORDER BY h.REG_DTM DESC, h.LOC_TRANS_ID DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectLocTransHisCount" resultType="long">
+        SELECT COUNT(*)
+        FROM MCS_LOC_TRANS_HIS h
+        INNER JOIN MCS_LOCATION_STOCK ls ON h.LOC_STOCK_ID = ls.LOC_STOCK_ID
+        INNER JOIN MCS_LOCATION l ON ls.LOCATION_ID = l.LOCATION_ID
+        INNER JOIN MST_ITEM i ON ls.ITEM_CD = i.ITEM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND h.PLANT_CD = #{plantCd}</if>
+            <if test="fromDate != null and fromDate != ''">AND h.REG_DTM <![CDATA[>=]]> CONCAT(#{fromDate}, ' 00:00:00')</if>
+            <if test="toDate != null and toDate != ''">AND h.REG_DTM <![CDATA[<=]]> CONCAT(#{toDate}, ' 23:59:59')</if>
+            <if test="transType != null and transType != ''">AND h.TRANS_TYPE = #{transType}</if>
+            <if test="itemCd != null and itemCd != ''">AND (ls.ITEM_CD LIKE CONCAT('%', #{itemCd}, '%') OR i.ITEM_NM LIKE CONCAT('%', #{itemCd}, '%'))</if>
+            <if test="locationCd != null and locationCd != ''">AND l.LOCATION_CD LIKE CONCAT('%', #{locationCd}, '%')</if>
+        </where>
+    </select>
+
+    <insert id="insertLocTransHis" parameterType="com.mcs.domain.inventory.dto.LocTransHisDto">
+        INSERT INTO MCS_LOC_TRANS_HIS (
+            PLANT_CD, LOC_STOCK_ID, TRANS_TYPE, TRANS_QTY, BEFORE_QTY, AFTER_QTY,
+            REF_TYPE, REF_NO, REF_ID, TRANS_RMK, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{plantCd}, #{locStockId}, #{transType}, #{transQty}, #{beforeQty}, #{afterQty},
+            #{refType}, #{refNo}, #{refId}, #{transRmk}, #{regUserId}, NOW()
+        )
+    </insert>
+
+</mapper>

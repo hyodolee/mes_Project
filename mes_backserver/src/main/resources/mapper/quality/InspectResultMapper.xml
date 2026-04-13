@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.quality.InspectResultMapper">
+
+    <resultMap id="InspectResultMap" type="com.mes.domain.quality.inspectresult.dto.InspectResultDto">
+        <id property="inspectId" column="inspectId"/>
+        <result property="plantCd" column="plantCd"/>
+        <result property="inspectNo" column="inspectNo"/>
+        <result property="inspectType" column="inspectType"/>
+        <result property="inspectDt" column="inspectDt"/>
+        <result property="itemCd" column="itemCd"/>
+        <result property="lotNo" column="lotNo"/>
+        <result property="inspectQty" column="inspectQty"/>
+        <result property="sampleQty" column="sampleQty"/>
+        <result property="passQty" column="passQty"/>
+        <result property="failQty" column="failQty"/>
+        <result property="inspectorId" column="inspectorId"/>
+        <result property="woId" column="woId"/>
+        <result property="resultId" column="resultId"/>
+        <result property="receiveId" column="receiveId"/>
+        <result property="vendorCd" column="vendorCd"/>
+        <result property="judgeResult" column="judgeResult"/>
+        <result property="judgeUserId" column="judgeUserId"/>
+        <result property="judgeDtm" column="judgeDtm"/>
+        <result property="processCd" column="processCd"/>
+        <result property="inspectRmk" column="inspectRmk"/>
+        <result property="regUserId" column="regUserId"/>
+        <result property="regDtm" column="regDtm"/>
+        <collection property="details" javaType="java.util.ArrayList" ofType="com.mes.domain.quality.inspectresult.dto.InspectDetailDto">
+            <id property="inspectDtlId" column="inspectDtlId"/>
+            <result property="inspectId" column="inspectId"/>
+            <result property="inspectStdId" column="inspectStdId"/>
+            <result property="sampleNo" column="sampleNo"/>
+            <result property="inspectItem" column="inspectItem"/>
+            <result property="dataType" column="dataType"/>
+            <result property="measureValue" column="measureValue"/>
+            <result property="measureText" column="measureText"/>
+            <result property="lsl" column="lsl"/>
+            <result property="usl" column="usl"/>
+            <result property="targetValue" column="targetValue"/>
+            <result property="judgeResult" column="dtlJudgeResult"/>
+            <result property="defectCd" column="defectCd"/>
+            <result property="detailRmk" column="detailRmk"/>
+            <result property="regUserId" column="dtlRegUserId"/>
+            <result property="regDtm" column="dtlRegDtm"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectInspectResults" resultType="com.mes.domain.quality.inspectresult.dto.InspectResultDto">
+        SELECT
+            ir.INSPECT_ID AS inspectId,
+            ir.PLANT_CD AS plantCd,
+            ir.INSPECT_NO AS inspectNo,
+            ir.INSPECT_TYPE AS inspectType,
+            ir.INSPECT_DT AS inspectDt,
+            ir.ITEM_CD AS itemCd,
+            ir.LOT_NO AS lotNo,
+            ir.INSPECT_QTY AS inspectQty,
+            ir.SAMPLE_QTY AS sampleQty,
+            ir.PASS_QTY AS passQty,
+            ir.FAIL_QTY AS failQty,
+            ir.INSPECTOR_ID AS inspectorId,
+            ir.WO_ID AS woId,
+            ir.RESULT_ID AS resultId,
+            ir.RECEIVE_ID AS receiveId,
+            ir.VENDOR_CD AS vendorCd,
+            ir.JUDGE_RESULT AS judgeResult,
+            ir.JUDGE_USER_ID AS judgeUserId,
+            ir.JUDGE_DTM AS judgeDtm,
+            ir.PROCESS_CD AS processCd,
+            ir.INSPECT_RMK AS inspectRmk,
+            ir.REG_USER_ID AS regUserId,
+            ir.REG_DTM AS regDtm
+        FROM QC_INSPECT_RESULT ir
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND ir.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND ir.ITEM_CD = #{itemCd}
+        </if>
+        <if test="inspectFromDt != null">
+            AND ir.INSPECT_DT &gt;= #{inspectFromDt}
+        </if>
+        <if test="inspectToDt != null">
+            AND ir.INSPECT_DT &lt;= #{inspectToDt}
+        </if>
+        ORDER BY ir.INSPECT_DT DESC, ir.INSPECT_ID DESC
+    </select>
+
+    <select id="selectInspectResultList" resultType="com.mes.domain.quality.inspectresult.dto.InspectResultDto">
+        SELECT
+            ir.INSPECT_ID AS inspectId,
+            ir.PLANT_CD AS plantCd,
+            ir.INSPECT_NO AS inspectNo,
+            ir.INSPECT_TYPE AS inspectType,
+            ir.INSPECT_DT AS inspectDt,
+            ir.ITEM_CD AS itemCd,
+            ir.LOT_NO AS lotNo,
+            ir.INSPECT_QTY AS inspectQty,
+            ir.SAMPLE_QTY AS sampleQty,
+            ir.PASS_QTY AS passQty,
+            ir.FAIL_QTY AS failQty,
+            ir.INSPECTOR_ID AS inspectorId,
+            ir.WO_ID AS woId,
+            ir.RESULT_ID AS resultId,
+            ir.RECEIVE_ID AS receiveId,
+            ir.VENDOR_CD AS vendorCd,
+            ir.JUDGE_RESULT AS judgeResult,
+            ir.JUDGE_USER_ID AS judgeUserId,
+            ir.JUDGE_DTM AS judgeDtm,
+            ir.PROCESS_CD AS processCd,
+            ir.INSPECT_RMK AS inspectRmk,
+            ir.REG_USER_ID AS regUserId,
+            ir.REG_DTM AS regDtm
+        FROM QC_INSPECT_RESULT ir
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND ir.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND ir.ITEM_CD = #{itemCd}
+        </if>
+        <if test="inspectFromDt != null">
+            AND ir.INSPECT_DT &gt;= #{inspectFromDt}
+        </if>
+        <if test="inspectToDt != null">
+            AND ir.INSPECT_DT &lt;= #{inspectToDt}
+        </if>
+        ORDER BY ir.INSPECT_DT DESC, ir.INSPECT_ID DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countInspectResults" resultType="int">
+        SELECT COUNT(*)
+        FROM QC_INSPECT_RESULT ir
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND ir.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND ir.ITEM_CD = #{itemCd}
+        </if>
+        <if test="inspectFromDt != null">
+            AND ir.INSPECT_DT &gt;= #{inspectFromDt}
+        </if>
+        <if test="inspectToDt != null">
+            AND ir.INSPECT_DT &lt;= #{inspectToDt}
+        </if>
+    </select>
+
+    <select id="selectInspectResultById" resultMap="InspectResultMap">
+        SELECT
+            ir.INSPECT_ID AS inspectId,
+            ir.PLANT_CD AS plantCd,
+            ir.INSPECT_NO AS inspectNo,
+            ir.INSPECT_TYPE AS inspectType,
+            ir.INSPECT_DT AS inspectDt,
+            ir.ITEM_CD AS itemCd,
+            ir.LOT_NO AS lotNo,
+            ir.INSPECT_QTY AS inspectQty,
+            ir.SAMPLE_QTY AS sampleQty,
+            ir.PASS_QTY AS passQty,
+            ir.FAIL_QTY AS failQty,
+            ir.INSPECTOR_ID AS inspectorId,
+            ir.WO_ID AS woId,
+            ir.RESULT_ID AS resultId,
+            ir.RECEIVE_ID AS receiveId,
+            ir.VENDOR_CD AS vendorCd,
+            ir.JUDGE_RESULT AS judgeResult,
+            ir.JUDGE_USER_ID AS judgeUserId,
+            ir.JUDGE_DTM AS judgeDtm,
+            ir.PROCESS_CD AS processCd,
+            ir.INSPECT_RMK AS inspectRmk,
+            ir.REG_USER_ID AS regUserId,
+            ir.REG_DTM AS regDtm,
+            id.INSPECT_DTL_ID AS inspectDtlId,
+            id.INSPECT_STD_ID AS inspectStdId,
+            id.SAMPLE_NO AS sampleNo,
+            id.INSPECT_ITEM AS inspectItem,
+            id.DATA_TYPE AS dataType,
+            id.MEASURE_VALUE AS measureValue,
+            id.MEASURE_TEXT AS measureText,
+            id.LSL AS lsl,
+            id.USL AS usl,
+            id.TARGET_VALUE AS targetValue,
+            id.JUDGE_RESULT AS dtlJudgeResult,
+            id.DEFECT_CD AS defectCd,
+            id.DETAIL_RMK AS detailRmk,
+            id.REG_USER_ID AS dtlRegUserId,
+            id.REG_DTM AS dtlRegDtm
+        FROM QC_INSPECT_RESULT ir
+        LEFT JOIN QC_INSPECT_DETAIL id ON ir.INSPECT_ID = id.INSPECT_ID
+        WHERE ir.INSPECT_ID = #{inspectId}
+    </select>
+
+    <insert id="insertInspectResult" useGeneratedKeys="true" keyProperty="request.inspectId" keyColumn="INSPECT_ID">
+        INSERT INTO QC_INSPECT_RESULT (
+            PLANT_CD, INSPECT_NO, INSPECT_TYPE, INSPECT_DT, ITEM_CD, LOT_NO,
+            INSPECT_QTY, SAMPLE_QTY, PASS_QTY, FAIL_QTY, INSPECTOR_ID,
+            WO_ID, RESULT_ID, RECEIVE_ID, VENDOR_CD, JUDGE_RESULT,
+            JUDGE_USER_ID, JUDGE_DTM, PROCESS_CD, INSPECT_RMK, REG_USER_ID
+        ) VALUES (
+            #{request.plantCd}, #{inspectNo}, #{request.inspectType}, #{request.inspectDt}, #{request.itemCd}, #{request.lotNo},
+            #{request.inspectQty}, #{request.sampleQty}, #{request.passQty}, #{request.failQty}, #{request.inspectorId},
+            #{request.woId}, #{request.resultId}, #{request.receiveId}, #{request.vendorCd}, #{request.judgeResult},
+            #{request.judgeUserId}, #{request.judgeDtm}, #{request.processCd}, #{request.inspectRmk}, #{regUserId}
+        )
+    </insert>
+
+    <insert id="insertInspectDetail">
+        INSERT INTO QC_INSPECT_DETAIL (
+            INSPECT_ID, INSPECT_STD_ID, SAMPLE_NO, INSPECT_ITEM, DATA_TYPE,
+            MEASURE_VALUE, MEASURE_TEXT, LSL, USL, TARGET_VALUE,
+            JUDGE_RESULT, DEFECT_CD, DETAIL_RMK, REG_USER_ID
+        ) VALUES (
+            #{inspectId}, #{detail.inspectStdId}, #{detail.sampleNo}, #{detail.inspectItem}, #{detail.dataType},
+            #{detail.measureValue}, #{detail.measureText}, #{detail.lsl}, #{detail.usl}, #{detail.targetValue},
+            #{detail.judgeResult}, #{detail.defectCd}, #{detail.detailRmk}, #{regUserId}
+        )
+    </insert>
+
+    <select id="selectInspectResultCountByDate" resultType="int">
+        SELECT COUNT(*)
+        FROM QC_INSPECT_RESULT
+        WHERE INSPECT_DT = #{inspectDt}
+    </select>
+
+</mapper>

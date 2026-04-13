@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.inbound.InboundMapper">
+
+    <select id="selectInboundList" resultType="com.mcs.domain.inbound.dto.InboundOrderDto">
+        SELECT
+            o.INBOUND_ID,
+            o.PLANT_CD,
+            o.INBOUND_NO,
+            o.INBOUND_STATUS,
+            o.VENDOR_CD,
+            o.WAREHOUSE_CD,
+            o.EXPECTED_DT,
+            o.ACTUAL_DT,
+            o.RECEIVE_PLAN_ID,
+            o.INBOUND_RMK,
+            o.REG_USER_ID,
+            o.REG_DTM,
+            o.UPD_USER_ID,
+            o.UPD_DTM,
+            p.PLANT_NM,
+            v.VENDOR_NM,
+            w.WAREHOUSE_NM,
+            c.COM_NM AS INBOUND_STATUS_NM
+        FROM MCS_INBOUND_ORDER o
+        INNER JOIN MST_PLANT p ON o.PLANT_CD = p.PLANT_CD
+        LEFT JOIN MST_VENDOR v ON o.VENDOR_CD = v.VENDOR_CD
+        LEFT JOIN MST_WAREHOUSE w ON o.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_IB_STATUS' AND o.INBOUND_STATUS = c.COM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND o.PLANT_CD = #{plantCd}</if>
+            <if test="vendorCd != null and vendorCd != ''">AND o.VENDOR_CD = #{vendorCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND o.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="inboundStatus != null and inboundStatus != ''">AND o.INBOUND_STATUS = #{inboundStatus}</if>
+            <if test="inboundNo != null and inboundNo != ''">AND o.INBOUND_NO LIKE CONCAT('%', #{inboundNo}, '%')</if>
+            <if test="fromDate != null and fromDate != ''">AND o.EXPECTED_DT <![CDATA[>=]]> #{fromDate}</if>
+            <if test="toDate != null and toDate != ''">AND o.EXPECTED_DT <![CDATA[<=]]> #{toDate}</if>
+        </where>
+        ORDER BY o.EXPECTED_DT DESC, o.INBOUND_NO DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectInboundCount" resultType="long">
+        SELECT COUNT(*)
+        FROM MCS_INBOUND_ORDER o
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND o.PLANT_CD = #{plantCd}</if>
+            <if test="vendorCd != null and vendorCd != ''">AND o.VENDOR_CD = #{vendorCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND o.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="inboundStatus != null and inboundStatus != ''">AND o.INBOUND_STATUS = #{inboundStatus}</if>
+            <if test="inboundNo != null and inboundNo != ''">AND o.INBOUND_NO LIKE CONCAT('%', #{inboundNo}, '%')</if>
+            <if test="fromDate != null and fromDate != ''">AND o.EXPECTED_DT <![CDATA[>=]]> #{fromDate}</if>
+            <if test="toDate != null and toDate != ''">AND o.EXPECTED_DT <![CDATA[<=]]> #{toDate}</if>
+        </where>
+    </select>
+
+    <select id="selectInboundById" resultType="com.mcs.domain.inbound.dto.InboundOrderDto">
+        SELECT
+            o.INBOUND_ID,
+            o.PLANT_CD,
+            o.INBOUND_NO,
+            o.INBOUND_STATUS,
+            o.VENDOR_CD,
+            o.WAREHOUSE_CD,
+            o.EXPECTED_DT,
+            o.ACTUAL_DT,
+            o.RECEIVE_PLAN_ID,
+            o.INBOUND_RMK,
+            o.REG_USER_ID,
+            o.REG_DTM,
+            o.UPD_USER_ID,
+            o.UPD_DTM,
+            p.PLANT_NM,
+            v.VENDOR_NM,
+            w.WAREHOUSE_NM,
+            c.COM_NM AS INBOUND_STATUS_NM
+        FROM MCS_INBOUND_ORDER o
+        INNER JOIN MST_PLANT p ON o.PLANT_CD = p.PLANT_CD
+        LEFT JOIN MST_VENDOR v ON o.VENDOR_CD = v.VENDOR_CD
+        LEFT JOIN MST_WAREHOUSE w ON o.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_IB_STATUS' AND o.INBOUND_STATUS = c.COM_CD
+        WHERE o.INBOUND_ID = #{inboundId}
+    </select>
+
+    <select id="selectInboundByNo" resultType="com.mcs.domain.inbound.dto.InboundOrderDto">
+        SELECT * FROM MCS_INBOUND_ORDER WHERE INBOUND_NO = #{inboundNo}
+    </select>
+
+    <insert id="insertInboundOrder" parameterType="com.mcs.domain.inbound.dto.InboundOrderDto">
+        INSERT INTO MCS_INBOUND_ORDER (
+            PLANT_CD, INBOUND_NO, INBOUND_STATUS, VENDOR_CD, WAREHOUSE_CD, 
+            EXPECTED_DT, ACTUAL_DT, RECEIVE_PLAN_ID, INBOUND_RMK, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{plantCd}, #{inboundNo}, #{inboundStatus}, #{vendorCd}, #{warehouseCd},
+            #{expectedDt}, #{actualDt}, #{receivePlanId}, #{inboundRmk}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <update id="updateInboundOrder" parameterType="com.mcs.domain.inbound.dto.InboundOrderDto">
+        UPDATE MCS_INBOUND_ORDER
+        SET VENDOR_CD = #{vendorCd},
+            WAREHOUSE_CD = #{warehouseCd},
+            EXPECTED_DT = #{expectedDt},
+            INBOUND_RMK = #{inboundRmk},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE INBOUND_ID = #{inboundId}
+    </update>
+
+    <update id="updateInboundStatus">
+        UPDATE MCS_INBOUND_ORDER
+        SET INBOUND_STATUS = #{status},
+            ACTUAL_DT = IF(#{status} = 'COMPLETED', NOW(), ACTUAL_DT),
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE INBOUND_ID = #{inboundId}
+    </update>
+
+    <delete id="deleteInboundOrder">
+        DELETE FROM MCS_INBOUND_ORDER WHERE INBOUND_ID = #{inboundId} AND INBOUND_STATUS = 'PLANNED'
+    </delete>
+
+    <!-- ITEM 매핑 -->
+    <select id="selectInboundItems" resultType="com.mcs.domain.inbound.dto.InboundItemDto">
+        SELECT
+            i.INBOUND_ITEM_ID,
+            i.INBOUND_ID,
+            i.ITEM_CD,
+            i.LOT_NO,
+            i.LOCATION_ID,
+            i.EXPECTED_QTY,
+            i.ACTUAL_QTY,
+            i.ITEM_STATUS,
+            i.ITEM_RMK,
+            i.REG_USER_ID,
+            i.REG_DTM,
+            i.UPD_USER_ID,
+            i.UPD_DTM,
+            mi.ITEM_NM,
+            mi.ITEM_SPEC,
+            mi.UNIT,
+            l.LOCATION_CD,
+            c.COM_NM AS ITEM_STATUS_NM
+        FROM MCS_INBOUND_ITEM i
+        INNER JOIN MST_ITEM mi ON i.ITEM_CD = mi.ITEM_CD
+        LEFT JOIN MCS_LOCATION l ON i.LOCATION_ID = l.LOCATION_ID
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_IB_ITEM_STATUS' AND i.ITEM_STATUS = c.COM_CD
+        WHERE i.INBOUND_ID = #{inboundId}
+        ORDER BY i.INBOUND_ITEM_ID
+    </select>
+
+    <insert id="insertInboundItem" parameterType="com.mcs.domain.inbound.dto.InboundItemDto">
+        INSERT INTO MCS_INBOUND_ITEM (
+            INBOUND_ID, ITEM_CD, LOT_NO, LOCATION_ID, EXPECTED_QTY, ACTUAL_QTY, 
+            ITEM_STATUS, ITEM_RMK, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{inboundId}, #{itemCd}, #{lotNo}, #{locationId}, #{expectedQty}, #{actualQty},
+            #{itemStatus}, #{itemRmk}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <update id="updateInboundItem" parameterType="com.mcs.domain.inbound.dto.InboundItemDto">
+        UPDATE MCS_INBOUND_ITEM
+        SET ITEM_CD = #{itemCd},
+            LOT_NO = #{lotNo},
+            LOCATION_ID = #{locationId},
+            EXPECTED_QTY = #{expectedQty},
+            ACTUAL_QTY = #{actualQty},
+            ITEM_RMK = #{itemRmk},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE INBOUND_ITEM_ID = #{inboundItemId}
+    </update>
+
+    <update id="updateInboundItemStatus">
+        UPDATE MCS_INBOUND_ITEM
+        SET ITEM_STATUS = #{status},
+            <if test="actualQty != null">ACTUAL_QTY = #{actualQty},</if>
+            <if test="locationId != null">LOCATION_ID = #{locationId},</if>
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE INBOUND_ITEM_ID = #{inboundItemId}
+    </update>
+
+    <delete id="deleteInboundItems">
+        DELETE FROM MCS_INBOUND_ITEM WHERE INBOUND_ID = #{inboundId}
+    </delete>
+
+</mapper>

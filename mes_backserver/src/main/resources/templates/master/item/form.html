@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>품목 정보 등록/수정</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/layout.js}" src="/js/layout.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" th:replace="~{fragments/layout :: sidebar('items')}"></aside>
+    <button type="button" class="sidebar-overlay" data-sidebar-close aria-label="Close menu"></button>
+
+    <main class="app-content">
+        <header th:replace="~{fragments/layout :: topbar(${mode == 'create'} ? '품목 등록' : '품목 수정', '품목 정보를 입력하고 저장합니다.')}"></header>
+
+        <section class="card">
+            <form th:action="${mode == 'create'} ? @{/master/items} : @{'/master/items/' + ${request.itemCd}}" method="post" class="form-grid">
+                <div class="field">
+                    <label for="itemCd">품목코드</label>
+                    <input id="itemCd" type="text" name="itemCd" th:value="${request.itemCd}" th:readonly="${mode == 'edit'}" required>
+                    <p class="error-text" th:if="${#fields.hasErrors('request.itemCd')}" th:errors="${request.itemCd}"></p>
+                </div>
+                <div class="field">
+                    <label for="plantCd">공장</label>
+                    <select id="plantCd" name="plantCd" required>
+                        <option value="">공장 선택</option>
+                        <option th:each="p : ${plants}" th:value="${p.plantCd}" th:text="${p.plantNm}" th:selected="${request.plantCd == p.plantCd}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="itemNm">품목명</label>
+                    <input id="itemNm" type="text" name="itemNm" th:value="${request.itemNm}" required>
+                </div>
+                <div class="field">
+                    <label for="itemSpec">규격</label>
+                    <input id="itemSpec" type="text" name="itemSpec" th:value="${request.itemSpec}">
+                </div>
+                <div class="field">
+                    <label for="unit">단위</label>
+                    <input id="unit" type="text" name="unit" th:value="${request.unit}" required placeholder="예: EA, KG, M">
+                </div>
+                <div class="field">
+                    <label for="itemType">품목유형</label>
+                    <select id="itemType" name="itemType" required>
+                        <option value="">유형 선택</option>
+                        <option value="RAW" th:selected="${request.itemType == 'RAW'}">원재료</option>
+                        <option value="SUB" th:selected="${request.itemType == 'SUB'}">부자재</option>
+                        <option value="HALF" th:selected="${request.itemType == 'HALF'}">반제품</option>
+                        <option value="FIN" th:selected="${request.itemType == 'FIN'}">완제품</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="itemGrp">품목그룹</label>
+                    <input id="itemGrp" type="text" name="itemGrp" th:value="${request.itemGrp}">
+                </div>
+                <div class="field field-use-yn">
+                    <label for="useYn">사용여부</label>
+                    <select id="useYn" name="useYn">
+                        <option value="Y" th:selected="${request.useYn == 'Y' ?: true}">사용 (Y)</option>
+                        <option value="N" th:selected="${request.useYn == 'N'}">미사용 (N)</option>
+                    </select>
+                </div>
+                <div class="actions field-span-2">
+                    <button class="btn btn-primary" type="submit">저장</button>
+                    <a class="btn btn-secondary" href="/master/items">취소</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

@@ -74,6 +74,71 @@
         WHERE pp.PLAN_ID = #{planId}
     </select>
 
+    <select id="selectProdPlanList" resultType="com.mes.domain.planning.prodplan.dto.ProdPlanDto">
+        SELECT
+            pp.PLAN_ID AS planId,
+            pp.PLANT_CD AS plantCd,
+            p.PLANT_NM AS plantNm,
+            pp.PLAN_NO AS planNo,
+            pp.PLAN_DT AS planDt,
+            pp.PLAN_TYPE AS planType,
+            pp.ITEM_CD AS itemCd,
+            i.ITEM_NM AS itemNm,
+            pp.PLAN_QTY AS planQty,
+            pp.PLAN_START_DT AS planStartDt,
+            pp.PLAN_END_DT AS planEndDt,
+            pp.PRIORITY AS priority,
+            pp.ORDER_NO AS orderNo,
+            pp.CUSTOMER_CD AS customerCd,
+            pp.CUSTOMER_NM AS customerNm,
+            pp.DELIVERY_DT AS deliveryDt,
+            pp.PLAN_STATUS AS planStatus,
+            pp.RESULT_QTY AS resultQty,
+            pp.PLAN_RMK AS planRmk
+        FROM PLN_PROD_PLAN pp
+        JOIN MST_PLANT p ON p.PLANT_CD = pp.PLANT_CD
+        LEFT JOIN MST_ITEM i ON i.ITEM_CD = pp.ITEM_CD
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND pp.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND pp.ITEM_CD = #{itemCd}
+        </if>
+        <if test="planStatus != null and planStatus != ''">
+            AND pp.PLAN_STATUS = #{planStatus}
+        </if>
+        <if test="planFromDt != null">
+            AND pp.PLAN_DT &gt;= #{planFromDt}
+        </if>
+        <if test="planToDt != null">
+            AND pp.PLAN_DT &lt;= #{planToDt}
+        </if>
+        ORDER BY pp.PLAN_DT DESC, pp.PLAN_ID DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countProdPlans" resultType="int">
+        SELECT COUNT(*)
+        FROM PLN_PROD_PLAN pp
+        WHERE 1 = 1
+        <if test="plantCd != null and plantCd != ''">
+            AND pp.PLANT_CD = #{plantCd}
+        </if>
+        <if test="itemCd != null and itemCd != ''">
+            AND pp.ITEM_CD = #{itemCd}
+        </if>
+        <if test="planStatus != null and planStatus != ''">
+            AND pp.PLAN_STATUS = #{planStatus}
+        </if>
+        <if test="planFromDt != null">
+            AND pp.PLAN_DT &gt;= #{planFromDt}
+        </if>
+        <if test="planToDt != null">
+            AND pp.PLAN_DT &lt;= #{planToDt}
+        </if>
+    </select>
+
     <insert id="insertProdPlan">
         INSERT INTO PLN_PROD_PLAN (
             PLANT_CD, PLAN_NO, PLAN_DT, PLAN_TYPE, ITEM_CD, PLAN_QTY, PLAN_START_DT, PLAN_END_DT,

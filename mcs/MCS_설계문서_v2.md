@@ -56,11 +56,11 @@ MCS가 확장하는 영역:
 
 | 구분 | 기술 |
 |------|------|
-| Language | Java 17+ |
+| Language | Java 21 (MES와 동일 LTS 버전) |
 | Framework | Spring Boot 3.x |
 | Data Access | **MyBatis 3 + mybatis-spring-boot-starter** |
 | DB | MariaDB 10.11+ (MES와 **동일 DB 인스턴스** 사용) |
-| Build | Gradle (Kotlin DSL) |
+| Build | Gradle (Groovy DSL, MES와 동일) |
 | API 문서 | Springdoc OpenAPI |
 | 기타 | Lombok, MapStruct |
 
@@ -70,7 +70,7 @@ MCS가 확장하는 영역:
 
 ```
 mcs/
-├── build.gradle.kts
+├── build.gradle
 ├── src/main/java/com/mcs/
 │   ├── McsApplication.java
 │   │
@@ -156,7 +156,7 @@ mcs/
 ```sql
 -- ============================================================
 -- MCS (Material Control System) DDL
--- MES DB(mes_backend_server)에 추가 생성
+-- MES DB(MES_DB)에 추가 생성
 -- ============================================================
 
 SET NAMES utf8mb4;
@@ -252,7 +252,9 @@ INSERT INTO COM_CODE (GRP_CD, COM_CD, COM_NM, SORT_SEQ, ATTR1, USE_YN, REG_USER_
 
 -- ============================================================
 -- 3. 채번 유형 추가 (COM_SEQ_NO용 - 실제 채번은 런타임)
---    MCS 채번: IB(입고), OB(출고), TF(이동)
+--    MCS 채번: MCS-IB(입고), MCS-OB(출고), MCS-TF(이동)
+--    ★ 접두어를 MCS- 로 시작하여 MES 채번(WO, PP 등)과 충돌 방지
+--    ★ INV_TRANS_HIS.TRANS_NO도 MCS-IB-, MCS-OB-, MCS-TF- 접두어 사용
 -- ============================================================
 
 -- ============================================================
@@ -369,7 +371,7 @@ CREATE TABLE MCS_LOC_TRANS_HIS (
 CREATE TABLE MCS_INBOUND_ORDER (
     INBOUND_ID      BIGINT          NOT NULL AUTO_INCREMENT COMMENT '입고ID',
     PLANT_CD        VARCHAR(20)     NOT NULL COMMENT '공장코드',
-    INBOUND_NO      VARCHAR(30)     NOT NULL COMMENT '입고번호 (채번: IB-yyyyMMdd-seq)',
+    INBOUND_NO      VARCHAR(30)     NOT NULL COMMENT '입고번호 (채번: MCS-IB-yyyyMMdd-seq)',
     INBOUND_STATUS  VARCHAR(20)     NOT NULL DEFAULT 'PLANNED'
                     COMMENT '입고상태 (COM_CODE: MCS_IB_STATUS)',
     VENDOR_CD       VARCHAR(50)     DEFAULT NULL COMMENT '거래처코드',
@@ -428,7 +430,7 @@ CREATE TABLE MCS_INBOUND_ITEM (
 CREATE TABLE MCS_OUTBOUND_ORDER (
     OUTBOUND_ID     BIGINT          NOT NULL AUTO_INCREMENT COMMENT '출고ID',
     PLANT_CD        VARCHAR(20)     NOT NULL COMMENT '공장코드',
-    OUTBOUND_NO     VARCHAR(30)     NOT NULL COMMENT '출고번호 (채번: OB-yyyyMMdd-seq)',
+    OUTBOUND_NO     VARCHAR(30)     NOT NULL COMMENT '출고번호 (채번: MCS-OB-yyyyMMdd-seq)',
     OUTBOUND_STATUS VARCHAR(20)     NOT NULL DEFAULT 'REQUESTED'
                     COMMENT '출고상태 (COM_CODE: MCS_OB_STATUS)',
     CUSTOMER_CD     VARCHAR(50)     DEFAULT NULL COMMENT '고객코드 (MST_VENDOR)',
@@ -490,7 +492,7 @@ CREATE TABLE MCS_OUTBOUND_ITEM (
 CREATE TABLE MCS_TRANSFER_ORDER (
     TRANSFER_ID     BIGINT          NOT NULL AUTO_INCREMENT COMMENT '이동ID',
     PLANT_CD        VARCHAR(20)     NOT NULL COMMENT '공장코드',
-    TRANSFER_NO     VARCHAR(30)     NOT NULL COMMENT '이동번호 (채번: TF-yyyyMMdd-seq)',
+    TRANSFER_NO     VARCHAR(30)     NOT NULL COMMENT '이동번호 (채번: MCS-TF-yyyyMMdd-seq)',
     TRANSFER_STATUS VARCHAR(20)     NOT NULL DEFAULT 'REQUESTED'
                     COMMENT '이동상태 (COM_CODE: MCS_TF_STATUS)',
     FROM_LOCATION_ID BIGINT         NOT NULL COMMENT '출발 로케이션',
@@ -581,7 +583,10 @@ SET FOREIGN_KEY_CHECKS = 1;
  * 2. MCS_LOCATION_STOCK → 재고 증가 (UPSERT)
  * 3. MCS_LOC_TRANS_HIS → 이력 기록
  * 4. INV_STOCK → MES 창고 레벨 재고 동기화 (증가)
+ *    ★ LOCATION_ID(BIGINT) → LOCATION_CD(VARCHAR) 변환 필요
+ *      MCS_LOCATION.LOCATION_CD를 조회하여 INV_STOCK.LOCATION_CD에 매핑
  * 5. INV_TRANS_HIS → MES 입출고 이력 기록
+ *    ★ TRANS_NO 채번 시 MCS-IB- 접두어 사용 (MES 채번과 충돌 방지)
  * 6. INV_LOT → LOT 미존재 시 신규 생성
  */
 @Transactional
@@ -599,7 +604,9 @@ public void completeInbound(Long inboundId) {
  * 2. MCS_LOCATION_STOCK → 재고 차감
  * 3. MCS_LOC_TRANS_HIS → 이력 기록
  * 4. INV_STOCK → MES 창고 레벨 재고 동기화 (차감)
+ *    ★ LOCATION_ID(BIGINT) → LOCATION_CD(VARCHAR) 변환 필요
  * 5. INV_TRANS_HIS → MES 입출고 이력 기록
+ *    ★ TRANS_NO 채번 시 MCS-OB- 접두어 사용 (MES 채번과 충돌 방지)
  */
 @Transactional
 public void shipOutbound(Long outboundId) {
@@ -612,9 +619,11 @@ public void shipOutbound(Long outboundId) {
 ```java
 /**
  * MES 작업지시(PLN_WORK_ORDER)에서 자재 투입 시:
+ * 0. ★ WO_ID 존재 여부를 PLN_WORK_ORDER 테이블에서 검증 (FK 미설정이므로 서비스 레벨 검증 필수)
  * 1. MCS_OUTBOUND_ORDER 자동 생성 (WO_ID 연동)
  * 2. MCS에서 로케이션 레벨 피킹 처리
  * 3. MES INV_STOCK / INV_TRANS_HIS 동기화
+ *    ★ TRANS_NO 채번 시 MCS-TF- 접두어 사용 (MES 채번과 충돌 방지)
  */
 ```
 
@@ -702,7 +711,12 @@ public void shipOutbound(Long outboundId) {
           AND (STOCK_QTY - COALESCE(RESERVED_QTY, 0)) >= #{qty}
     </update>
 
-    <!-- MES INV_STOCK 동기화 (입고 시) -->
+    <!--
+        MES INV_STOCK 동기화 (입고 시)
+        ★ locationCd는 MCS_LOCATION.LOCATION_CD(VARCHAR)를 서비스에서 조회하여 전달
+           (MCS 내부는 LOCATION_ID(BIGINT)로 관리하므로 변환 필요)
+        ★ UK_INV_STOCK = (PLANT_CD, WAREHOUSE_CD, ITEM_CD, LOT_NO, LOCATION_CD)
+    -->
     <insert id="syncMesStockIncrease">
         INSERT INTO INV_STOCK
             (PLANT_CD, WAREHOUSE_CD, LOCATION_CD, ITEM_CD, LOT_NO,
@@ -717,7 +731,11 @@ public void shipOutbound(Long outboundId) {
             UPD_DTM = NOW()
     </insert>
 
-    <!-- MES INV_TRANS_HIS 이력 기록 -->
+    <!--
+        MES INV_TRANS_HIS 이력 기록
+        ★ TRANS_NO는 MCS 전용 접두어 사용 (MCS-IB-, MCS-OB-, MCS-TF-)
+           MES 채번(WO, PP 등)과 충돌 방지
+    -->
     <insert id="insertMesTransHis"
             parameterType="com.mcs.domain.inventory.dto.MesTransHisDto">
         INSERT INTO INV_TRANS_HIS (
@@ -836,7 +854,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mariadb://localhost:3306/mes_backend_server  # ★ MES와 동일 DB
+    url: jdbc:mariadb://localhost:3306/MES_DB  # ★ MES와 동일 DB
     username: mcs_user
     password: mcs_password
     driver-class-name: org.mariadb.jdbc.Driver
@@ -867,3 +885,29 @@ logging:
 | **Phase 4** | 입고 워크플로 | PLANNED→COMPLETED + LOT 생성 + MES 연동 |
 | **Phase 5** | 출고 워크플로 | REQUESTED→SHIPPED + 예약/피킹 + MES 연동 |
 | **Phase 6** | 이동 관리 | 로케이션 간 이동 + 양쪽 재고 반영 |
+
+---
+
+## 11. MES 연동 주의사항
+
+### 11.1 채번 충돌 방지
+- MES는 `WO`, `PP`, `QC` 등의 접두어로 `COM_SEQ_NO` 채번 사용
+- MCS는 반드시 **MCS- 접두어**로 채번하여 `INV_TRANS_HIS.TRANS_NO`(UNIQUE KEY) 충돌 방지
+  - 입고: `MCS-IB-yyyyMMdd-seq`
+  - 출고: `MCS-OB-yyyyMMdd-seq`
+  - 이동: `MCS-TF-yyyyMMdd-seq`
+
+### 11.2 LOCATION_ID ↔ LOCATION_CD 매핑
+- MCS 내부: `LOCATION_ID`(BIGINT) 기반 관리
+- MES `INV_STOCK.LOCATION_CD`: `VARCHAR(50)` 문자열 코드
+- MCS 서비스에서 MES 재고 동기화 시 반드시 `MCS_LOCATION.LOCATION_CD`를 조회하여 변환 후 전달
+
+### 11.3 PLN_WORK_ORDER 참조 검증
+- `MCS_OUTBOUND_ORDER.WO_ID`는 FK 제약조건 미설정 (의도적 느슨 연동)
+- 서비스 레이어에서 `PLN_WORK_ORDER` 테이블의 `WO_ID` 존재 여부를 반드시 검증
+- 존재하지 않는 `WO_ID` 입력 시 `BusinessException` 발생 처리
+
+### 11.4 DB 환경
+- MES와 동일 DB 인스턴스 사용: `MES_DB`
+- MCS 전용 테이블은 모두 `MCS_` 접두어로 구분
+- MES 기존 테이블은 **읽기/동기화만** 수행하며 스키마 변경 금지

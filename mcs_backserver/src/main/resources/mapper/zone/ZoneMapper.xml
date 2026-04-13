@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.zone.ZoneMapper">
+
+    <select id="selectZoneList" resultType="com.mcs.domain.zone.dto.ZoneDto">
+        SELECT
+            z.ZONE_ID,
+            z.PLANT_CD,
+            z.WAREHOUSE_CD,
+            z.ZONE_CD,
+            z.ZONE_NM,
+            z.ZONE_TYPE,
+            z.SORT_SEQ,
+            z.USE_YN,
+            z.REG_USER_ID,
+            z.REG_DTM,
+            z.UPD_USER_ID,
+            z.UPD_DTM,
+            p.PLANT_NM,
+            w.WAREHOUSE_NM,
+            c.COM_NM AS ZONE_TYPE_NM
+        FROM MCS_ZONE z
+        INNER JOIN MST_PLANT p ON z.PLANT_CD = p.PLANT_CD
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_ZONE_TYPE' AND z.ZONE_TYPE = c.COM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND z.PLANT_CD = #{plantCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND z.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="zoneCd != null and zoneCd != ''">AND z.ZONE_CD LIKE CONCAT('%', #{zoneCd}, '%')</if>
+            <if test="zoneNm != null and zoneNm != ''">AND z.ZONE_NM LIKE CONCAT('%', #{zoneNm}, '%')</if>
+        </where>
+        ORDER BY z.PLANT_CD, z.WAREHOUSE_CD, z.SORT_SEQ, z.ZONE_CD
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectZoneCount" resultType="long">
+        SELECT COUNT(*)
+        FROM MCS_ZONE z
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND z.PLANT_CD = #{plantCd}</if>
+            <if test="warehouseCd != null and warehouseCd != ''">AND z.WAREHOUSE_CD = #{warehouseCd}</if>
+            <if test="zoneCd != null and zoneCd != ''">AND z.ZONE_CD LIKE CONCAT('%', #{zoneCd}, '%')</if>
+            <if test="zoneNm != null and zoneNm != ''">AND z.ZONE_NM LIKE CONCAT('%', #{zoneNm}, '%')</if>
+        </where>
+    </select>
+
+    <select id="selectZoneById" resultType="com.mcs.domain.zone.dto.ZoneDto">
+        SELECT
+            z.*,
+            p.PLANT_NM,
+            w.WAREHOUSE_NM,
+            c.COM_NM AS ZONE_TYPE_NM
+        FROM MCS_ZONE z
+        INNER JOIN MST_PLANT p ON z.PLANT_CD = p.PLANT_CD
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_ZONE_TYPE' AND z.ZONE_TYPE = c.COM_CD
+        WHERE z.ZONE_ID = #{zoneId}
+    </select>
+
+    <select id="selectZoneByCd" resultType="com.mcs.domain.zone.dto.ZoneDto">
+        SELECT * FROM MCS_ZONE
+        WHERE WAREHOUSE_CD = #{warehouseCd} AND ZONE_CD = #{zoneCd}
+    </select>
+
+    <insert id="insertZone" parameterType="com.mcs.domain.zone.dto.ZoneDto">
+        INSERT INTO MCS_ZONE (
+            PLANT_CD, WAREHOUSE_CD, ZONE_CD, ZONE_NM, ZONE_TYPE, SORT_SEQ, USE_YN, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{plantCd}, #{warehouseCd}, #{zoneCd}, #{zoneNm}, #{zoneType}, #{sortSeq}, #{useYn}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <update id="updateZone" parameterType="com.mcs.domain.zone.dto.ZoneDto">
+        UPDATE MCS_ZONE
+        SET ZONE_NM = #{zoneNm},
+            ZONE_TYPE = #{zoneType},
+            SORT_SEQ = #{sortSeq},
+            USE_YN = #{useYn},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE ZONE_ID = #{zoneId}
+    </update>
+
+    <delete id="deleteZone">
+        DELETE FROM MCS_ZONE WHERE ZONE_ID = #{zoneId}
+    </delete>
+
+</mapper>

@@ -3,8 +3,10 @@ package com.mes.interfaces.web.planning;
 import com.mes.application.service.master.PlantService;
 import com.mes.application.service.planning.ProdPlanService;
 import com.mes.domain.planning.prodplan.dto.ProdPlanCreateRequest;
+import com.mes.domain.planning.prodplan.dto.ProdPlanDto;
+import com.mes.domain.planning.prodplan.dto.ProdPlanSearchDto;
+import com.mes.global.common.dto.PageResponse;
 import jakarta.validation.Valid;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -12,7 +14,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -31,19 +32,16 @@ public class ProdPlanWebController {
     }
 
     @GetMapping
-    public String list(@RequestParam(name = "plantCd", required = false) String plantCd,
-                       @RequestParam(name = "itemCd", required = false) String itemCd,
-                       @RequestParam(name = "planStatus", required = false) String planStatus,
-                       @RequestParam(name = "planFromDt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate planFromDt,
-                       @RequestParam(name = "planToDt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate planToDt,
-                       Model model) {
-        model.addAttribute("plans", prodPlanService.getProdPlans(plantCd, itemCd, planStatus, planFromDt, planToDt));
+    public String list(@ModelAttribute ProdPlanSearchDto searchDto, Model model) {
+        PageResponse<ProdPlanDto> pageResponse = prodPlanService.getProdPlanList(searchDto);
+        model.addAttribute("plans", pageResponse.getContent());
+        model.addAttribute("page", pageResponse);
         model.addAttribute("plants", plantService.getPlants(null, null, "Y"));
-        model.addAttribute("plantCd", plantCd);
-        model.addAttribute("itemCd", itemCd);
-        model.addAttribute("planStatus", planStatus);
-        model.addAttribute("planFromDt", planFromDt);
-        model.addAttribute("planToDt", planToDt);
+        model.addAttribute("plantCd", searchDto.getPlantCd());
+        model.addAttribute("itemCd", searchDto.getItemCd());
+        model.addAttribute("planStatus", searchDto.getPlanStatus());
+        model.addAttribute("planFromDt", searchDto.getPlanFromDt());
+        model.addAttribute("planToDt", searchDto.getPlanToDt());
         return "planning/prod-plan/list";
     }
 
