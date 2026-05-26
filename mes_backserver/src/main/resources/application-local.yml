@@ -5,17 +5,12 @@ spring:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://mysql-hd-mes.j.aivencloud.com:10483/MES_DB?allowPublicKeyRetrieval=true&useSSL=true&trustServerCertificate=true&sslMode=trust
     username: avnadmin
-    password: YOUR_DB_PASSWORD
+    password: ${MES_DB_PASSWORD:YOUR_DB_PASSWORD}
 
 logging:
   level:
-    # 전체적인 애플리케이션 레벨
     root: INFO
-    # 내 프로젝트 패키지 로그
     com.mes: DEBUG
-    # 스프링 웹 요청 로그 (어떤 API가 호출되었는지)
     org.springframework.web: INFO
-    # MyBatis 쿼리 로그 (SQL 문 및 파라미터 확인)
     com.mes.infra.persistence.mybatis.mapper: DEBUG
-    # SQL 쿼리 결과(Result Set) 표 형태로 출력 (개발 시 유용, 필요 시 주석 처리)
     # jdbc.resultsettable: DEBUG

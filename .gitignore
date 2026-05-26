@@ -9,4 +9,10 @@ build/
 .gradle/
 .vscode/
 *.md
+!README.md
+!AGENTS.md
+!CLAUDE.md
+!docs/**/*.md
+!mcs/**/*.md
+!mes_backserver/README.md
 nul
