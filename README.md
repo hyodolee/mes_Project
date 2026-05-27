@@ -56,7 +56,9 @@ MES(Manufacturing Execution System)와 MCS(Material Control System)를 같은 DB
 
 | 문서 | 용도 |
 |---|---|
+| [docs/PROJECT_ROADMAP.md](docs/PROJECT_ROADMAP.md) | 현재 상태와 다음 작업 우선순위 |
 | [docs/MCS_DEVELOPMENT_PROGRESS.md](docs/MCS_DEVELOPMENT_PROGRESS.md) | MCS 현재 개발 진행 상황 |
+| [docs/DB_FILES.md](docs/DB_FILES.md) | SQL 덤프/DDL/더미데이터 파일 정리 |
 | [mcs/MCS_설계문서_v2.md](mcs/MCS_설계문서_v2.md) | MCS 테이블, ERD, API, 연동 설계 |
 | [mcs/MCS_더미데이터_업무흐름.md](mcs/MCS_더미데이터_업무흐름.md) | MCS 더미데이터 기반 업무 시나리오 |
 | [AGENTS.md](AGENTS.md) | Codex/에이전트 작업 가이드 |
@@ -96,3 +98,7 @@ PLC 시뮬레이터
 ```
 
 최종 목표는 단순 CRUD가 아니라, 제조 현장의 생산 실행과 물류 실행, 설비 이벤트, 운영 모니터링, AI 보조 분석이 하나의 흐름으로 보이는 시스템입니다.
+
+## React Frontend Migration
+
+- [docs/REACT_FRONTEND_MIGRATION_PLAN.md](docs/REACT_FRONTEND_MIGRATION_PLAN.md): React + Mantis 프론트엔드 전환 계획

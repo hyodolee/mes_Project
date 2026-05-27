@@ -154,4 +154,10 @@
         DELETE FROM MCS_TRANSFER_ITEM WHERE TRANSFER_ID = #{transferId}
     </delete>
 
+    <delete id="deleteTransferItem">
+        DELETE FROM MCS_TRANSFER_ITEM
+        WHERE TRANSFER_ITEM_ID = #{transferItemId}
+          AND TRANSFER_ID = #{transferId}
+    </delete>
+
 </mapper>

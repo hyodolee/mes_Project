@@ -1,11 +1,13 @@
 package com.mcs.interfaces.web.transfer;
 
 import com.mcs.application.service.transfer.TransferService;
+import com.mcs.application.service.inventory.InventoryService;
 import com.mcs.domain.transfer.dto.TransferItemDto;
 import com.mcs.domain.transfer.dto.TransferOrderDto;
 import com.mcs.domain.transfer.dto.TransferSearchDto;
 import com.mcs.global.common.dto.PageResponse;
 import com.mcs.infra.persistence.mybatis.mapper.mes.MesComCodeMapper;
+import com.mcs.infra.persistence.mybatis.mapper.mes.MesItemMapper;
 import com.mcs.infra.persistence.mybatis.mapper.mes.MesPlantMapper;
 import com.mcs.application.service.location.LocationService;
 import com.mcs.domain.location.dto.LocationSearchDto;
@@ -23,9 +25,11 @@ import java.util.List;
 public class TransferWebController {
 
     private final TransferService transferService;
+    private final InventoryService inventoryService;
     private final LocationService locationService;
     private final MesPlantMapper mesPlantMapper;
     private final MesComCodeMapper mesComCodeMapper;
+    private final MesItemMapper mesItemMapper;
 
     @GetMapping
     public String transferList(TransferSearchDto searchDto, Model model) {
@@ -85,6 +89,8 @@ public class TransferWebController {
         List<TransferItemDto> items = transferService.getTransferItems(id);
         model.addAttribute("request", order);
         model.addAttribute("items", items);
+        model.addAttribute("itemList", mesItemMapper.selectItemList(order.plantCd(), null, null, null));
+        model.addAttribute("transferHistories", inventoryService.getTransferHistories(order.transferNo(), order.transferId()));
         
         return "transfer/form";
     }
@@ -110,7 +116,29 @@ public class TransferWebController {
             transferService.changeOrderStatus(id, status, "SYSTEM");
             redirectAttributes.addFlashAttribute("message", "상태가 변경되었습니다.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "상태 변경 실패: " + e.toString());
+            redirectAttributes.addFlashAttribute("error", "상태 변경 실패: " + e.getMessage());
+        }
+        return "redirect:/transfers/" + id + "/edit";
+    }
+
+    @PostMapping("/{id}/items")
+    public String createTransferItem(@PathVariable Long id, @ModelAttribute TransferItemDto itemDto, RedirectAttributes redirectAttributes) {
+        try {
+            transferService.createTransferItem(id, itemDto);
+            redirectAttributes.addFlashAttribute("message", "이동 품목이 등록되었습니다.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "품목 등록 실패: " + e.toString());
+        }
+        return "redirect:/transfers/" + id + "/edit";
+    }
+
+    @PostMapping("/{id}/items/{itemId}/delete")
+    public String deleteTransferItem(@PathVariable Long id, @PathVariable Long itemId, RedirectAttributes redirectAttributes) {
+        try {
+            transferService.deleteTransferItem(id, itemId);
+            redirectAttributes.addFlashAttribute("message", "이동 품목이 삭제되었습니다.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "품목 삭제 실패: " + e.toString());
         }
         return "redirect:/transfers/" + id + "/edit";
     }

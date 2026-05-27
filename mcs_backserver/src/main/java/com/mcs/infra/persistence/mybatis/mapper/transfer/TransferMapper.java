@@ -25,5 +25,6 @@ public interface TransferMapper {
     void insertTransferItem(TransferItemDto itemDto);
     void updateTransferItem(TransferItemDto itemDto);
     void updateTransferItemStatus(@Param("transferItemId") Long transferItemId, @Param("status") String status, @Param("updUserId") String updUserId);
+    void deleteTransferItem(@Param("transferItemId") Long transferItemId, @Param("transferId") Long transferId);
     void deleteTransferItems(Long transferId);
 }

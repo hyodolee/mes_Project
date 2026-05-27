@@ -35,6 +35,10 @@ public class InventoryService {
         return PageResponse.createPagedResponse(list, total, searchDto);
     }
 
+    public List<LocTransHisDto> getTransferHistories(String transferNo, Long transferId) {
+        return inventoryMapper.selectLocTransHisByRef("TF", transferNo, transferId);
+    }
+
     @Transactional
     public void adjustStock(StockAdjustRequest request) {
         LocStockDto currentStock = getLocStock(request.locStockId());

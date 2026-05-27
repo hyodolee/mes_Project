@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.plc.PlcEventMapper">
+
+    <insert id="insertPlcEvent" parameterType="com.mcs.domain.plc.dto.PlcEventDto">
+        INSERT INTO MCS_PLC_EVENT_LOG (
+            EVENT_ID,
+            EQUIPMENT_CD,
+            EVENT_TYPE,
+            EVENT_STATUS,
+            TARGET_TYPE,
+            TARGET_ID,
+            LOCATION_CD,
+            ERROR_CODE,
+            EVENT_MESSAGE,
+            RAW_PAYLOAD,
+            EVENT_DTM,
+            PROCESSED_YN,
+            REG_USER_ID,
+            REG_DTM
+        ) VALUES (
+            #{eventId},
+            #{equipmentCd},
+            #{eventType},
+            #{eventStatus},
+            #{targetType},
+            #{targetId},
+            #{locationCd},
+            #{errorCode},
+            #{eventMessage},
+            #{rawPayload},
+            #{eventDtm},
+            'N',
+            #{regUserId},
+            NOW()
+        )
+    </insert>
+
+    <update id="updateProcessResult">
+        UPDATE MCS_PLC_EVENT_LOG
+        SET PROCESSED_YN = 'Y',
+            PROCESS_RESULT = #{processResult},
+            PROCESS_MESSAGE = #{processMessage},
+            PROCESSED_DTM = NOW()
+        WHERE EVENT_ID = #{eventId}
+    </update>
+
+</mapper>

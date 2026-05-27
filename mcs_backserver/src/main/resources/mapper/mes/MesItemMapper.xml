@@ -11,10 +11,9 @@
             i.ITEM_GRP,
             i.UNIT,
             i.SAFETY_STOCK_QTY,
-            i.MAIN_VENDOR_CD,
-            v.VENDOR_NM AS MAIN_VENDOR_NM
+            NULL AS MAIN_VENDOR_CD,
+            NULL AS MAIN_VENDOR_NM
         FROM MST_ITEM i
-        LEFT JOIN MST_VENDOR v ON i.MAIN_VENDOR_CD = v.VENDOR_CD
         <where>
             i.USE_YN = 'Y'
             <if test="plantCd != null and plantCd != ''">AND i.PLANT_CD = #{plantCd}</if>
