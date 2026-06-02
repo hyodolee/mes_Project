@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mcs.infra.persistence.mybatis.mapper.route.RouteMapper">
+
+    <select id="selectRouteNodes" resultType="com.mcs.domain.route.dto.RouteNodeDto">
+        SELECT
+            n.ROUTE_NODE_ID,
+            n.PLANT_CD,
+            n.NODE_CD,
+            n.NODE_NM,
+            n.NODE_TYPE,
+            n.LOCATION_ID,
+            n.USE_YN,
+            n.REG_USER_ID,
+            n.REG_DTM,
+            n.UPD_USER_ID,
+            n.UPD_DTM,
+            p.PLANT_NM,
+            l.LOCATION_CD,
+            l.LOCATION_NM,
+            c.COM_NM AS NODE_TYPE_NM
+        FROM MCS_ROUTE_NODE n
+        INNER JOIN MST_PLANT p ON n.PLANT_CD = p.PLANT_CD
+        LEFT JOIN MCS_LOCATION l ON n.LOCATION_ID = l.LOCATION_ID
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_NODE_TYPE' AND n.NODE_TYPE = c.COM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND n.PLANT_CD = #{plantCd}</if>
+            <if test="nodeCd != null and nodeCd != ''">AND n.NODE_CD LIKE CONCAT('%', #{nodeCd}, '%')</if>
+        </where>
+        ORDER BY n.PLANT_CD, n.NODE_CD
+    </select>
+
+    <select id="selectRouteEdges" resultType="com.mcs.domain.route.dto.RouteEdgeDto">
+        SELECT
+            e.ROUTE_EDGE_ID,
+            e.PLANT_CD,
+            e.EDGE_CD,
+            e.EDGE_NM,
+            e.FROM_NODE_ID,
+            e.TO_NODE_ID,
+            e.BIDIRECTIONAL_YN,
+            e.DISTANCE_M,
+            e.TRAVEL_TIME_SEC,
+            e.BASE_COST,
+            e.EDGE_STATUS,
+            e.USE_YN,
+            e.REG_USER_ID,
+            e.REG_DTM,
+            e.UPD_USER_ID,
+            e.UPD_DTM,
+            fn.NODE_CD AS FROM_NODE_CD,
+            fn.NODE_NM AS FROM_NODE_NM,
+            tn.NODE_CD AS TO_NODE_CD,
+            tn.NODE_NM AS TO_NODE_NM,
+            c.COM_NM AS EDGE_STATUS_NM
+        FROM MCS_ROUTE_EDGE e
+        INNER JOIN MCS_ROUTE_NODE fn ON e.FROM_NODE_ID = fn.ROUTE_NODE_ID
+        INNER JOIN MCS_ROUTE_NODE tn ON e.TO_NODE_ID = tn.ROUTE_NODE_ID
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_EDGE_STATUS' AND e.EDGE_STATUS = c.COM_CD
+        <where>
+            <if test="plantCd != null and plantCd != ''">AND e.PLANT_CD = #{plantCd}</if>
+            <if test="edgeCd != null and edgeCd != ''">AND e.EDGE_CD LIKE CONCAT('%', #{edgeCd}, '%')</if>
+            <if test="edgeStatus != null and edgeStatus != ''">AND e.EDGE_STATUS = #{edgeStatus}</if>
+        </where>
+        ORDER BY e.PLANT_CD, e.EDGE_CD
+    </select>
+
+    <select id="selectUsableRouteEdges" resultType="com.mcs.domain.route.dto.RouteEdgeDto">
+        SELECT
+            e.ROUTE_EDGE_ID,
+            e.PLANT_CD,
+            e.EDGE_CD,
+            e.EDGE_NM,
+            e.FROM_NODE_ID,
+            e.TO_NODE_ID,
+            e.BIDIRECTIONAL_YN,
+            e.DISTANCE_M,
+            e.TRAVEL_TIME_SEC,
+            e.BASE_COST,
+            e.EDGE_STATUS,
+            e.USE_YN,
+            e.REG_USER_ID,
+            e.REG_DTM,
+            e.UPD_USER_ID,
+            e.UPD_DTM,
+            fn.NODE_CD AS FROM_NODE_CD,
+            fn.NODE_NM AS FROM_NODE_NM,
+            tn.NODE_CD AS TO_NODE_CD,
+            tn.NODE_NM AS TO_NODE_NM,
+            NULL AS EDGE_STATUS_NM
+        FROM MCS_ROUTE_EDGE e
+        INNER JOIN MCS_ROUTE_NODE fn ON e.FROM_NODE_ID = fn.ROUTE_NODE_ID
+        INNER JOIN MCS_ROUTE_NODE tn ON e.TO_NODE_ID = tn.ROUTE_NODE_ID
+        WHERE e.PLANT_CD = #{plantCd}
+          AND e.USE_YN = 'Y'
+          AND fn.USE_YN = 'Y'
+          AND tn.USE_YN = 'Y'
+    </select>
+
+    <select id="selectRouteNodeByLocation" resultType="com.mcs.domain.route.dto.RouteNodeDto">
+        SELECT
+            n.ROUTE_NODE_ID,
+            n.PLANT_CD,
+            n.NODE_CD,
+            n.NODE_NM,
+            n.NODE_TYPE,
+            n.LOCATION_ID,
+            n.USE_YN,
+            n.REG_USER_ID,
+            n.REG_DTM,
+            n.UPD_USER_ID,
+            n.UPD_DTM,
+            NULL AS PLANT_NM,
+            l.LOCATION_CD,
+            l.LOCATION_NM,
+            NULL AS NODE_TYPE_NM
+        FROM MCS_ROUTE_NODE n
+        LEFT JOIN MCS_LOCATION l ON n.LOCATION_ID = l.LOCATION_ID
+        WHERE n.PLANT_CD = #{plantCd}
+          AND n.LOCATION_ID = #{locationId}
+          AND n.USE_YN = 'Y'
+    </select>
+
+    <select id="selectTransferRoute" resultType="com.mcs.domain.route.dto.TransferRouteDto">
+        SELECT
+            TRANSFER_ROUTE_ID,
+            TRANSFER_ID,
+            ROUTE_STATUS,
+            TOTAL_DISTANCE_M,
+            TOTAL_TIME_SEC,
+            TOTAL_COST,
+            OPTIMIZE_RULE,
+            REPLAN_COUNT,
+            REG_USER_ID,
+            REG_DTM,
+            UPD_USER_ID,
+            UPD_DTM,
+            NULL AS STEPS
+        FROM MCS_TRANSFER_ROUTE
+        WHERE TRANSFER_ID = #{transferId}
+    </select>
+
+    <select id="selectTransferRouteSteps" resultType="com.mcs.domain.route.dto.RouteStepDto">
+        SELECT
+            s.ROUTE_STEP_ID,
+            s.TRANSFER_ROUTE_ID,
+            s.STEP_SEQ,
+            s.ROUTE_EDGE_ID,
+            s.FROM_NODE_ID,
+            s.TO_NODE_ID,
+            s.STEP_STATUS,
+            s.EXPECTED_TIME_SEC,
+            e.EDGE_CD,
+            e.EDGE_NM,
+            fn.NODE_CD AS FROM_NODE_CD,
+            fn.NODE_NM AS FROM_NODE_NM,
+            tn.NODE_CD AS TO_NODE_CD,
+            tn.NODE_NM AS TO_NODE_NM,
+            e.EDGE_STATUS
+        FROM MCS_TRANSFER_ROUTE_STEP s
+        INNER JOIN MCS_ROUTE_EDGE e ON s.ROUTE_EDGE_ID = e.ROUTE_EDGE_ID
+        INNER JOIN MCS_ROUTE_NODE fn ON s.FROM_NODE_ID = fn.ROUTE_NODE_ID
+        INNER JOIN MCS_ROUTE_NODE tn ON s.TO_NODE_ID = tn.ROUTE_NODE_ID
+        WHERE s.TRANSFER_ROUTE_ID = #{transferRouteId}
+        ORDER BY s.STEP_SEQ
+    </select>
+
+    <delete id="deleteTransferRouteStepsByTransferId">
+        DELETE s
+        FROM MCS_TRANSFER_ROUTE_STEP s
+        INNER JOIN MCS_TRANSFER_ROUTE r ON s.TRANSFER_ROUTE_ID = r.TRANSFER_ROUTE_ID
+        WHERE r.TRANSFER_ID = #{transferId}
+    </delete>
+
+    <delete id="deleteTransferRouteByTransferId">
+        DELETE FROM MCS_TRANSFER_ROUTE WHERE TRANSFER_ID = #{transferId}
+    </delete>
+
+    <insert id="insertTransferRoute" parameterType="com.mcs.domain.route.dto.TransferRouteDto">
+        INSERT INTO MCS_TRANSFER_ROUTE (
+            TRANSFER_ID, ROUTE_STATUS, TOTAL_DISTANCE_M, TOTAL_TIME_SEC, TOTAL_COST,
+            OPTIMIZE_RULE, REPLAN_COUNT, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{transferId}, #{routeStatus}, #{totalDistanceM}, #{totalTimeSec}, #{totalCost},
+            #{optimizeRule}, #{replanCount}, #{regUserId}, NOW()
+        )
+    </insert>
+
+    <insert id="insertTransferRouteStep" parameterType="com.mcs.domain.route.dto.RouteStepDto">
+        INSERT INTO MCS_TRANSFER_ROUTE_STEP (
+            TRANSFER_ROUTE_ID, STEP_SEQ, ROUTE_EDGE_ID, FROM_NODE_ID, TO_NODE_ID,
+            STEP_STATUS, EXPECTED_TIME_SEC, REG_USER_ID, REG_DTM
+        ) VALUES (
+            #{transferRouteId}, #{stepSeq}, #{routeEdgeId}, #{fromNodeId}, #{toNodeId},
+            #{stepStatus}, #{expectedTimeSec}, 'SYSTEM', NOW()
+        )
+    </insert>
+
+    <update id="updateTransferRouteStatus">
+        UPDATE MCS_TRANSFER_ROUTE
+        SET ROUTE_STATUS = #{routeStatus},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE TRANSFER_ID = #{transferId}
+    </update>
+
+    <update id="updateRouteEdgeStatus">
+        UPDATE MCS_ROUTE_EDGE
+        SET EDGE_STATUS = #{edgeStatus},
+            UPD_USER_ID = #{updUserId},
+            UPD_DTM = NOW()
+        WHERE ROUTE_EDGE_ID = #{routeEdgeId}
+    </update>
+
+</mapper>

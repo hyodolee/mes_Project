@@ -88,6 +88,42 @@
         WHERE ZONE_ID = #{zoneId} AND LOCATION_CD = #{locationCd}
     </select>
 
+    <select id="selectAutoTransferDestinations" resultType="com.mcs.domain.location.dto.LocationDto">
+        SELECT
+            l.LOCATION_ID,
+            l.ZONE_ID,
+            l.LOCATION_CD,
+            l.LOCATION_NM,
+            l.MAX_CAPACITY,
+            l.CURRENT_USAGE,
+            l.LOCATION_STATUS,
+            l.USE_YN,
+            l.REG_USER_ID,
+            l.REG_DTM,
+            l.UPD_USER_ID,
+            l.UPD_DTM,
+            z.PLANT_CD,
+            p.PLANT_NM,
+            z.WAREHOUSE_CD,
+            w.WAREHOUSE_NM,
+            z.ZONE_CD,
+            z.ZONE_NM,
+            c.COM_NM AS LOCATION_STATUS_NM
+        FROM MCS_LOCATION l
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        INNER JOIN MST_PLANT p ON z.PLANT_CD = p.PLANT_CD
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        LEFT JOIN COM_CODE c ON c.GRP_CD = 'MCS_LOC_STATUS' AND l.LOCATION_STATUS = c.COM_CD
+        INNER JOIN MCS_LOCATION src ON src.LOCATION_ID = #{sourceLocationId}
+        WHERE z.PLANT_CD = #{plantCd}
+          AND l.LOCATION_ID != #{sourceLocationId}
+          AND l.USE_YN = 'Y'
+          AND l.LOCATION_STATUS != 'FULL'
+        ORDER BY CASE WHEN l.ZONE_ID = src.ZONE_ID THEN 0 ELSE 1 END,
+                 l.CURRENT_USAGE ASC,
+                 l.LOCATION_CD
+    </select>
+
     <insert id="insertLocation" parameterType="com.mcs.domain.location.dto.LocationDto">
         INSERT INTO MCS_LOCATION (
             ZONE_ID, LOCATION_CD, LOCATION_NM, MAX_CAPACITY, LOCATION_STATUS, USE_YN, REG_USER_ID, REG_DTM

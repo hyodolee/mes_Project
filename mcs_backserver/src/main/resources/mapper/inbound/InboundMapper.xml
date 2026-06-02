@@ -186,4 +186,10 @@
         DELETE FROM MCS_INBOUND_ITEM WHERE INBOUND_ID = #{inboundId}
     </delete>
 
+    <delete id="deleteInboundItem">
+        DELETE FROM MCS_INBOUND_ITEM
+        WHERE INBOUND_ITEM_ID = #{inboundItemId}
+          AND INBOUND_ID = #{inboundId}
+    </delete>
+
 </mapper>

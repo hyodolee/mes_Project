@@ -15,6 +15,7 @@ public interface TransferMapper {
     List<TransferOrderDto> selectTransferList(TransferSearchDto searchDto);
     long selectTransferCount(TransferSearchDto searchDto);
     Optional<TransferOrderDto> selectTransferById(Long transferId);
+    Optional<TransferOrderDto> selectTransferByNo(String transferNo);
     void insertTransferOrder(TransferOrderDto orderDto);
     void updateTransferOrder(TransferOrderDto orderDto);
     void updateTransferStatus(@Param("transferId") Long transferId, @Param("status") String status, @Param("updUserId") String updUserId);

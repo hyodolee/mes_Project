@@ -18,6 +18,11 @@ public interface InventoryMapper {
         @Param("itemCd") String itemCd,
         @Param("lotNo") String lotNo
     );
+    List<LocStockDto> selectAvailableLocStocksForMaterialRequest(
+        @Param("plantCd") String plantCd,
+        @Param("itemCd") String itemCd,
+        @Param("requestQty") Double requestQty
+    );
     void insertLocStock(LocStockDto locStockDto);
     
     // 재고 갱신 (조정, 입출고 등에서 사용)
@@ -36,6 +41,11 @@ public interface InventoryMapper {
         @Param("refId") Long refId
     );
     void insertLocTransHis(LocTransHisDto hisDto);
+
+    void syncLocationUsage(
+        @Param("locationId") Long locationId,
+        @Param("updUserId") String updUserId
+    );
 
     int updateMesWarehouseStockQty(
         @Param("plantCd") String plantCd,

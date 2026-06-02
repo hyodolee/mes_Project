@@ -32,6 +32,9 @@ public interface WorkOrderMapper {
                               @Param("actualEndDtm") LocalDateTime actualEndDtm,
                               @Param("updUserId") String updUserId);
 
+    int cancelWorkOrder(@Param("woId") Long woId,
+                        @Param("updUserId") String updUserId);
+
     int updateWorkOrderQty(@Param("woId") Long woId,
                           @Param("goodQty") java.math.BigDecimal goodQty,
                           @Param("defectQty") java.math.BigDecimal defectQty,

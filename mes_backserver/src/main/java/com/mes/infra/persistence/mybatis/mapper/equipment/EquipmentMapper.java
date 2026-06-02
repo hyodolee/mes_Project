@@ -3,6 +3,9 @@ package com.mes.infra.persistence.mybatis.mapper.equipment;
 import com.mes.domain.equipment.oper.dto.OperStatusDto;
 import com.mes.domain.equipment.oper.dto.OperStatusRequest;
 import com.mes.domain.equipment.oper.dto.OperStatusSearchDto;
+import com.mes.domain.equipment.master.dto.EquipmentOptionDto;
+import com.mes.domain.equipment.master.dto.WorkerOptionDto;
+import com.mes.domain.equipment.master.dto.WorkcenterOptionDto;
 import com.mes.domain.equipment.downtime.dto.DowntimeDto;
 import com.mes.domain.equipment.downtime.dto.DowntimeRequest;
 import com.mes.domain.equipment.maint.dto.MaintHisDto;
@@ -15,6 +18,15 @@ import java.util.List;
 
 @Mapper
 public interface EquipmentMapper {
+    List<WorkcenterOptionDto> selectWorkcenters(@Param("plantCd") String plantCd);
+
+    List<EquipmentOptionDto> selectEquipmentOptions(
+        @Param("plantCd") String plantCd,
+        @Param("workcenterCd") String workcenterCd
+    );
+
+    List<WorkerOptionDto> selectWorkerOptions(@Param("plantCd") String plantCd);
+
     // Operation Status
     List<OperStatusDto> selectOperStatuses(
         @Param("plantCd") String plantCd,

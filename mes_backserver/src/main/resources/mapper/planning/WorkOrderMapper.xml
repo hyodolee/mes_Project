@@ -105,8 +105,20 @@
     <update id="updateWorkOrderStatus">
         UPDATE PLN_WORK_ORDER
         SET WO_STATUS = #{woStatus},
-            ACTUAL_START_DTM = COALESCE(ACTUAL_START_DTM, #{actualStartDtm}),
-            ACTUAL_END_DTM = #{actualEndDtm},
+            <if test="actualStartDtm != null">
+                ACTUAL_START_DTM = COALESCE(ACTUAL_START_DTM, #{actualStartDtm}),
+            </if>
+            <if test="actualEndDtm != null">
+                ACTUAL_END_DTM = #{actualEndDtm},
+            </if>
+            UPD_USER_ID = #{updUserId}
+        WHERE WO_ID = #{woId}
+    </update>
+
+    <update id="cancelWorkOrder">
+        UPDATE PLN_WORK_ORDER
+        SET WO_STATUS = '취소',
+            ACTUAL_END_DTM = NOW(),
             UPD_USER_ID = #{updUserId}
         WHERE WO_ID = #{woId}
     </update>

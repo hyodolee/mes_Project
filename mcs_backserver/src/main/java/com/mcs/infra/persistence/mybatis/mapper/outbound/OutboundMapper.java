@@ -24,6 +24,6 @@ public interface OutboundMapper {
     List<OutboundItemDto> selectOutboundItems(Long outboundId);
     void insertOutboundItem(OutboundItemDto itemDto);
     void updateOutboundItem(OutboundItemDto itemDto);
-    void updateOutboundItemStatus(@Param("outboundItemId") Long outboundItemId, @Param("status") String status, @Param("updUserId") String updUserId);
+    void updateOutboundItemStatus(@Param("outboundItemId") Long outboundItemId, @Param("status") String status, @Param("shippedQty") Double shippedQty, @Param("updUserId") String updUserId);
     void deleteOutboundItems(Long outboundId);
 }

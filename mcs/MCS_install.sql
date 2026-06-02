@@ -359,6 +359,7 @@ INSERT IGNORE INTO COM_CODE (GRP_CD, COM_CD, COM_NM, SORT_SEQ, ATTR1, USE_YN, RE
 ('MCS_TF_STATUS', 'IN_PROGRESS', '이동중',   2, NULL, 'Y', 'SYSTEM', NOW()),
 ('MCS_TF_STATUS', 'COMPLETED',   '완료',     3, NULL, 'Y', 'SYSTEM', NOW()),
 ('MCS_TF_STATUS', 'CANCELLED',   '취소',     4, NULL, 'Y', 'SYSTEM', NOW()),
+('MCS_TF_STATUS', 'FAILED',      '실패',     5, NULL, 'Y', 'SYSTEM', NOW()),
 -- 이동 품목 상태
 ('MCS_TF_ITEM_STATUS', 'PENDING',   '대기',     1, NULL, 'Y', 'SYSTEM', NOW()),
 ('MCS_TF_ITEM_STATUS', 'MOVED',     '이동완료', 2, NULL, 'Y', 'SYSTEM', NOW()),

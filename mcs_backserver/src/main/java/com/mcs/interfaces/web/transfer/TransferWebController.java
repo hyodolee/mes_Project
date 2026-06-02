@@ -54,7 +54,7 @@ public class TransferWebController {
         model.addAttribute("locations", locationService.getLocationList(new LocationSearchDto()).getContent());
         
         model.addAttribute("mode", "create");
-        TransferOrderDto emptyDto = new TransferOrderDto(null, null, null, "REQUESTED", null, null, null, null, null, null, null, null, null, null, null);
+        TransferOrderDto emptyDto = new TransferOrderDto(null, null, null, "REQUESTED", null, null, null, null, null, null, null, null, null, null, null, "SHORTEST_TIME");
         model.addAttribute("request", emptyDto);
         
         return "transfer/form";
@@ -67,7 +67,7 @@ public class TransferWebController {
             
             TransferOrderDto dtoWithUser = new TransferOrderDto(
                 null, orderDto.plantCd(), autoTransferNo, "REQUESTED", orderDto.fromLocationId(), orderDto.toLocationId(),
-                orderDto.transferReason(), "SYSTEM", null, null, null, null, null, null, null
+                orderDto.transferReason(), "SYSTEM", null, null, null, null, null, null, null, orderDto.optimizeRule()
             );
             transferService.createTransferOrder(dtoWithUser);
             redirectAttributes.addFlashAttribute("message", "이동 오더가 등록되었습니다.");
@@ -100,7 +100,7 @@ public class TransferWebController {
         try {
             TransferOrderDto dtoWithId = new TransferOrderDto(
                 id, orderDto.plantCd(), orderDto.transferNo(), orderDto.transferStatus(), orderDto.fromLocationId(), orderDto.toLocationId(),
-                orderDto.transferReason(), null, null, "SYSTEM", null, null, null, null, null
+                orderDto.transferReason(), null, null, "SYSTEM", null, null, null, null, null, orderDto.optimizeRule()
             );
             transferService.updateTransferOrder(dtoWithId);
             redirectAttributes.addFlashAttribute("message", "이동 오더가 수정되었습니다.");

@@ -25,5 +25,6 @@ public interface InboundMapper {
     void insertInboundItem(InboundItemDto itemDto);
     void updateInboundItem(InboundItemDto itemDto);
     void updateInboundItemStatus(@Param("inboundItemId") Long inboundItemId, @Param("status") String status, @Param("actualQty") Double actualQty, @Param("locationId") Long locationId, @Param("updUserId") String updUserId);
+    void deleteInboundItem(@Param("inboundItemId") Long inboundItemId, @Param("inboundId") Long inboundId);
     void deleteInboundItems(Long inboundId);
 }

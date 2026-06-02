@@ -18,5 +18,6 @@ public record TransferOrderDto(
     String plantNm,
     String transferStatusNm,
     String fromLocationCd,
-    String toLocationCd
+    String toLocationCd,
+    String optimizeRule
 ) {}

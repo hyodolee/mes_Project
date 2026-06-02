@@ -3,6 +3,7 @@ package com.mcs.application.service.inbound;
 import com.mcs.domain.inbound.dto.InboundItemDto;
 import com.mcs.domain.inbound.dto.InboundOrderDto;
 import com.mcs.domain.inbound.dto.InboundSearchDto;
+import com.mcs.domain.inventory.dto.LocStockDto;
 import com.mcs.domain.inventory.dto.LocTransHisDto;
 import com.mcs.global.common.dto.PageResponse;
 import com.mcs.global.exception.BusinessException;
@@ -21,7 +22,7 @@ import java.util.List;
 public class InboundService {
 
     private final InboundMapper inboundMapper;
-    private final InventoryMapper inventoryMapper; // 입고 확정 시 재고 연동을 위해 사용
+    private final InventoryMapper inventoryMapper;
 
     public PageResponse<InboundOrderDto> getInboundList(InboundSearchDto searchDto) {
         List<InboundOrderDto> list = inboundMapper.selectInboundList(searchDto);
@@ -48,7 +49,7 @@ public class InboundService {
     public void updateInboundOrder(InboundOrderDto orderDto) {
         InboundOrderDto existing = getInboundOrder(orderDto.inboundId());
         if (!"PLANNED".equals(existing.inboundStatus())) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT); // "계획" 상태에서만 정보 수정 가능
+            throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         inboundMapper.updateInboundOrder(orderDto);
     }
@@ -78,8 +79,7 @@ public class InboundService {
         if (!"PLANNED".equals(order.inboundStatus())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
-        // TODO: 단건 삭제 쿼리 추가 필요
-        // inboundMapper.deleteInboundItemById(inboundItemId);
+        inboundMapper.deleteInboundItem(inboundItemId, inboundId);
     }
 
     @Transactional
@@ -87,23 +87,93 @@ public class InboundService {
         InboundOrderDto order = getInboundOrder(inboundId);
         String currentStatus = order.inboundStatus();
 
-        // 상태 전이 제약조건 검증 로직 생략 (실무에서는 철저한 검증 필요)
         if ("COMPLETED".equals(newStatus) && !"COMPLETED".equals(currentStatus)) {
-            // 입고 확정 처리 로직: 아이템 재고 증가
             List<InboundItemDto> items = getInboundItems(inboundId);
+            if (items.isEmpty()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT, "입고 품목을 먼저 추가해야 합니다.");
+            }
             for (InboundItemDto item : items) {
-                if (item.actualQty() != null && item.actualQty() > 0 && item.locationId() != null) {
-                    
-                    // 주의: 실제로는 해당 위치(Location)+품목(Item)+로트(Lot)를 가진 
-                    // MCS_LOCATION_STOCK이 있는지 확인 후 없으면 INSERT, 있으면 UPDATE 해야 함.
-                    // 현재는 Phase 3의 기초 뼈대로, 실제 프로젝트에서는 InventoryMapper에 해당 기능 구현이 추가로 필요합니다.
-
-                    // 품목 상태 완료 처리
-                    inboundMapper.updateInboundItemStatus(item.inboundItemId(), "STOCKED", item.actualQty(), item.locationId(), userId);
-                }
+                receiveItem(order, item, userId);
             }
         }
-        
+
         inboundMapper.updateInboundStatus(inboundId, newStatus, userId);
+    }
+
+    private void receiveItem(InboundOrderDto order, InboundItemDto item, String userId) {
+        if (item.locationId() == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "입고 적치 로케이션을 선택해야 합니다.");
+        }
+
+        double qty = resolveInboundQty(item);
+        String lotNo = normalizeLotNo(item.lotNo());
+        LocStockDto stock = getOrCreateLocationStock(order.plantCd(), item.locationId(), item.itemCd(), lotNo, userId);
+        double beforeQty = stock.stockQty();
+        double afterQty = beforeQty + qty;
+
+        inventoryMapper.updateLocStockQty(stock.locStockId(), qty, userId);
+        inventoryMapper.syncLocationUsage(item.locationId(), userId);
+        inventoryMapper.insertLocTransHis(new LocTransHisDto(
+                null,
+                order.plantCd(),
+                stock.locStockId(),
+                "IB_IN",
+                qty,
+                beforeQty,
+                afterQty,
+                "IB",
+                order.inboundNo(),
+                order.inboundId(),
+                order.inboundRmk(),
+                userId,
+                null,
+                null, null, null, null, null, null, null, null
+        ));
+        inboundMapper.updateInboundItemStatus(item.inboundItemId(), "STOCKED", qty, item.locationId(), userId);
+    }
+
+    private LocStockDto getOrCreateLocationStock(String plantCd, Long locationId, String itemCd, String lotNo, String userId) {
+        return inventoryMapper.selectLocStockForUpdate(plantCd, locationId, itemCd, lotNo)
+                .orElseGet(() -> {
+                    inventoryMapper.insertLocStock(new LocStockDto(
+                            null,
+                            plantCd,
+                            locationId,
+                            itemCd,
+                            lotNo,
+                            0.0,
+                            0.0,
+                            null,
+                            userId,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ));
+                    return inventoryMapper.selectLocStockForUpdate(plantCd, locationId, itemCd, lotNo)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
+                });
+    }
+
+    private double resolveInboundQty(InboundItemDto item) {
+        Double qty = item.actualQty();
+        if (qty == null || qty <= 0) {
+            qty = item.expectedQty();
+        }
+        if (qty == null || qty <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "입고 수량은 0보다 커야 합니다.");
+        }
+        return qty;
+    }
+
+    private String normalizeLotNo(String lotNo) {
+        return lotNo == null ? "" : lotNo.trim();
     }
 }

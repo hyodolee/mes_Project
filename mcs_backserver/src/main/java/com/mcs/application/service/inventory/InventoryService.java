@@ -52,6 +52,7 @@ public class InventoryService {
 
         // 1. 재고 업데이트
         inventoryMapper.updateLocStockQty(request.locStockId(), adjustQty, request.regUserId());
+        inventoryMapper.syncLocationUsage(currentStock.locationId(), request.regUserId());
 
         // 2. 이력 등록
         LocTransHisDto hisDto = new LocTransHisDto(

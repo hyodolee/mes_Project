@@ -5,12 +5,12 @@ spring:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://mysql-hd-mes.j.aivencloud.com:10483/MES_DB?allowPublicKeyRetrieval=true&useSSL=true&trustServerCertificate=true&sslMode=trust
     username: avnadmin
-    password: ${MES_DB_PASSWORD:YOUR_DB_PASSWORD}
+    password: ${MES_DB_PASSWORD}
 
 logging:
   level:
     root: INFO
-    com.mes: DEBUG
+    com.mes: INFO
     org.springframework.web: INFO
-    com.mes.infra.persistence.mybatis.mapper: DEBUG
+    com.mes.infra.persistence.mybatis.mapper: INFO
     # jdbc.resultsettable: DEBUG

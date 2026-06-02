@@ -23,6 +23,7 @@ public record WorkOrderCreateRequest(
         @DecimalMin(value = "0.001", message = "지시수량은 0.001 이상이어야 합니다.")
         BigDecimal woQty,
         @Size(max = 20, message = "작업장코드는 20자 이하여야 합니다.")
+        @NotBlank(message = "작업장코드는 필수입니다.")
         String workcenterCd,
         @Size(max = 20, message = "설비코드는 20자 이하여야 합니다.")
         String equipmentCd,

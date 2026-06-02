@@ -3,6 +3,7 @@ package com.mcs.infra.persistence.mybatis.mapper.location;
 import com.mcs.domain.location.dto.LocationDto;
 import com.mcs.domain.location.dto.LocationSearchDto;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,6 +13,10 @@ public interface LocationMapper {
     long selectLocationCount(LocationSearchDto searchDto);
     Optional<LocationDto> selectLocationById(Long locationId);
     Optional<LocationDto> selectLocationByCd(Long zoneId, String locationCd);
+    List<LocationDto> selectAutoTransferDestinations(
+            @Param("plantCd") String plantCd,
+            @Param("sourceLocationId") Long sourceLocationId
+    );
     void insertLocation(LocationDto locationDto);
     void updateLocation(LocationDto locationDto);
     void deleteLocation(Long locationId);

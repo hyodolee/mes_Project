@@ -1,6 +1,9 @@
 package com.mes.interfaces.api.equipment;
 
 import com.mes.application.service.equipment.EquipmentService;
+import com.mes.domain.equipment.master.dto.EquipmentOptionDto;
+import com.mes.domain.equipment.master.dto.WorkerOptionDto;
+import com.mes.domain.equipment.master.dto.WorkcenterOptionDto;
 import com.mes.domain.equipment.oper.dto.OperStatusDto;
 import com.mes.domain.equipment.oper.dto.OperStatusRequest;
 import com.mes.domain.equipment.downtime.dto.DowntimeDto;
@@ -23,6 +26,28 @@ public class EquipmentApiController {
 
     public EquipmentApiController(EquipmentService equipmentService) {
         this.equipmentService = equipmentService;
+    }
+
+    @GetMapping("/workcenters")
+    public ApiResponse<List<WorkcenterOptionDto>> getWorkcenters(
+            @RequestParam(name = "plantCd", required = false) String plantCd
+    ) {
+        return ApiResponse.ok(equipmentService.getWorkcenters(plantCd));
+    }
+
+    @GetMapping("/options")
+    public ApiResponse<List<EquipmentOptionDto>> getEquipmentOptions(
+            @RequestParam(name = "plantCd", required = false) String plantCd,
+            @RequestParam(name = "workcenterCd", required = false) String workcenterCd
+    ) {
+        return ApiResponse.ok(equipmentService.getEquipmentOptions(plantCd, workcenterCd));
+    }
+
+    @GetMapping("/workers")
+    public ApiResponse<List<WorkerOptionDto>> getWorkerOptions(
+            @RequestParam(name = "plantCd", required = false) String plantCd
+    ) {
+        return ApiResponse.ok(equipmentService.getWorkerOptions(plantCd));
     }
 
     @GetMapping("/oper-statuses")

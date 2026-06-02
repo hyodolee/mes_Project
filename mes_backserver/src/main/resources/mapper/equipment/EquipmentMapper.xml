@@ -4,6 +4,53 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mes.infra.persistence.mybatis.mapper.equipment.EquipmentMapper">
 
+    <select id="selectWorkcenters" resultType="com.mes.domain.equipment.master.dto.WorkcenterOptionDto">
+        SELECT
+            WORKCENTER_CD AS workcenterCd,
+            PLANT_CD AS plantCd,
+            WORKCENTER_NM AS workcenterNm
+        FROM MST_WORKCENTER
+        WHERE USE_YN = 'Y'
+        <if test="plantCd != null and plantCd != ''">
+            AND PLANT_CD = #{plantCd}
+        </if>
+        ORDER BY PLANT_CD, WORKCENTER_CD
+    </select>
+
+    <select id="selectEquipmentOptions" resultType="com.mes.domain.equipment.master.dto.EquipmentOptionDto">
+        SELECT
+            EQUIPMENT_CD AS equipmentCd,
+            PLANT_CD AS plantCd,
+            WORKCENTER_CD AS workcenterCd,
+            EQUIPMENT_NM AS equipmentNm,
+            EQUIPMENT_TYPE AS equipmentType,
+            EQUIPMENT_STATUS AS equipmentStatus
+        FROM MST_EQUIPMENT
+        WHERE USE_YN = 'Y'
+        <if test="plantCd != null and plantCd != ''">
+            AND PLANT_CD = #{plantCd}
+        </if>
+        <if test="workcenterCd != null and workcenterCd != ''">
+            AND WORKCENTER_CD = #{workcenterCd}
+        </if>
+        ORDER BY PLANT_CD, WORKCENTER_CD, EQUIPMENT_CD
+    </select>
+
+    <select id="selectWorkerOptions" resultType="com.mes.domain.equipment.master.dto.WorkerOptionDto">
+        SELECT
+            WORKER_ID AS workerId,
+            PLANT_CD AS plantCd,
+            WORKER_NM AS workerNm,
+            DEPT_CD AS deptCd,
+            POSITION AS position
+        FROM MST_WORKER
+        WHERE USE_YN = 'Y'
+        <if test="plantCd != null and plantCd != ''">
+            AND PLANT_CD = #{plantCd}
+        </if>
+        ORDER BY PLANT_CD, WORKER_ID
+    </select>
+
     <!-- Operation Status -->
     <select id="selectOperStatuses" resultType="com.mes.domain.equipment.oper.dto.OperStatusDto">
         SELECT

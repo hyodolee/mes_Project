@@ -1,6 +1,9 @@
 package com.mes.interfaces.api.planning;
 
 import com.mes.application.service.planning.WorkOrderService;
+import com.mes.domain.planning.workorder.dto.MaterialTransferRequest;
+import com.mes.domain.planning.workorder.dto.MaterialTransferResponse;
+import com.mes.domain.planning.workorder.dto.MaterialTransferStatusResponse;
 import com.mes.domain.planning.workorder.dto.WorkOrderCreateRequest;
 import com.mes.domain.planning.workorder.dto.WorkOrderDto;
 import com.mes.domain.planning.workorder.dto.WorkOrderUpdateStatusRequest;
@@ -49,5 +52,18 @@ public class WorkOrderApiController {
                                                    @Valid @RequestBody WorkOrderUpdateStatusRequest request) {
         workOrderService.updateWorkOrderStatus(woId, request.woStatus());
         return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/{woId}/material-transfer")
+    public ApiResponse<MaterialTransferResponse> requestMaterialTransfer(
+            @PathVariable("woId") Long woId,
+            @Valid @RequestBody MaterialTransferRequest request
+    ) {
+        return ApiResponse.ok(workOrderService.requestMaterialTransfer(woId, request));
+    }
+
+    @GetMapping("/{woId}/material-transfer/status")
+    public ApiResponse<MaterialTransferStatusResponse> getMaterialTransferStatus(@PathVariable("woId") Long woId) {
+        return ApiResponse.ok(workOrderService.getMaterialTransferStatus(woId));
     }
 }

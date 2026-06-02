@@ -3,6 +3,9 @@ package com.mes.application.service.equipment;
 import com.mes.domain.equipment.oper.dto.OperStatusDto;
 import com.mes.domain.equipment.oper.dto.OperStatusRequest;
 import com.mes.domain.equipment.oper.dto.OperStatusSearchDto;
+import com.mes.domain.equipment.master.dto.EquipmentOptionDto;
+import com.mes.domain.equipment.master.dto.WorkerOptionDto;
+import com.mes.domain.equipment.master.dto.WorkcenterOptionDto;
 import com.mes.domain.equipment.downtime.dto.DowntimeDto;
 import com.mes.domain.equipment.downtime.dto.DowntimeRequest;
 import com.mes.domain.equipment.maint.dto.MaintHisDto;
@@ -26,6 +29,18 @@ public class EquipmentService {
 
     public EquipmentService(EquipmentMapper equipmentMapper) {
         this.equipmentMapper = equipmentMapper;
+    }
+
+    public List<WorkcenterOptionDto> getWorkcenters(String plantCd) {
+        return equipmentMapper.selectWorkcenters(plantCd);
+    }
+
+    public List<EquipmentOptionDto> getEquipmentOptions(String plantCd, String workcenterCd) {
+        return equipmentMapper.selectEquipmentOptions(plantCd, workcenterCd);
+    }
+
+    public List<WorkerOptionDto> getWorkerOptions(String plantCd) {
+        return equipmentMapper.selectWorkerOptions(plantCd);
     }
 
     // Operation Status

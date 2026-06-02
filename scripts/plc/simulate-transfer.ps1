@@ -10,13 +10,16 @@ Simulates PLC events for an MCS transfer order.
 
 .EXAMPLE
 .\scripts\plc\simulate-transfer.ps1 -TransferId 12 -Scenario EquipmentError -DryRun
+
+.EXAMPLE
+.\scripts\plc\simulate-transfer.ps1 -TransferId 12 -Scenario Error -DryRun
 #>
 
 param(
     [Parameter(Mandatory = $true)]
     [long]$TransferId,
 
-    [ValidateSet("Success", "EquipmentError", "SensorMismatch", "InterlockBlocked", "Timeout")]
+    [ValidateSet("Success", "Error", "EquipmentError", "SensorMismatch", "InterlockBlocked", "Timeout")]
     [string]$Scenario = "Success",
 
     [ValidateSet("PlcApi", "DirectMcs")]
@@ -236,13 +239,18 @@ function Send-InterlockBlocked {
         -Message "Transfer completion blocked by destination interlock"
 }
 
-Write-Step "PLC simulation started: TransferId=$TransferId, Scenario=$Scenario, Mode=$Mode"
+$EffectiveScenario = $Scenario
+if ($Scenario -eq "Error") {
+    $EffectiveScenario = "EquipmentError"
+}
+
+Write-Step "PLC simulation started: TransferId=$TransferId, Scenario=$Scenario, EffectiveScenario=$EffectiveScenario, Mode=$Mode"
 
 if ($OnlyStart -and $OnlyComplete) {
     throw "OnlyStart and OnlyComplete cannot be used together."
 }
 
-switch ($Scenario) {
+switch ($EffectiveScenario) {
     "Success" {
         if (!$SkipStart -and !$OnlyComplete) {
             Start-Transfer

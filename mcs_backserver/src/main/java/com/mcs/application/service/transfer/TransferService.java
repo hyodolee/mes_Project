@@ -1,6 +1,7 @@
 package com.mcs.application.service.transfer;
 
 import com.mcs.application.service.location.LocationService;
+import com.mcs.application.service.route.RouteService;
 import com.mcs.domain.inventory.dto.LocStockDto;
 import com.mcs.domain.inventory.dto.LocTransHisDto;
 import com.mcs.domain.location.dto.LocationDto;
@@ -26,6 +27,7 @@ public class TransferService {
     private final TransferMapper transferMapper;
     private final InventoryMapper inventoryMapper;
     private final LocationService locationService;
+    private final RouteService routeService;
 
     public PageResponse<TransferOrderDto> getTransferList(TransferSearchDto searchDto) {
         List<TransferOrderDto> list = transferMapper.selectTransferList(searchDto);
@@ -48,7 +50,10 @@ public class TransferService {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         transferMapper.insertTransferOrder(orderDto);
-        return orderDto.transferId();
+        TransferOrderDto savedOrder = transferMapper.selectTransferByNo(orderDto.transferNo())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
+        routeService.createRouteForTransfer(savedOrder.transferId(), normalizeOptimizeRule(orderDto.optimizeRule()), orderDto.regUserId());
+        return savedOrder.transferId();
     }
 
     @Transactional
@@ -91,6 +96,7 @@ public class TransferService {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         transferMapper.updateTransferOrder(orderDto);
+        routeService.createRouteForTransfer(orderDto.transferId(), normalizeOptimizeRule(orderDto.optimizeRule()), orderDto.updUserId());
     }
 
     @Transactional
@@ -108,6 +114,7 @@ public class TransferService {
         if (!"REQUESTED".equals(existing.transferStatus())) {
             throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION);
         }
+        routeService.deleteTransferRoute(transferId);
         transferMapper.deleteTransferItems(transferId);
         transferMapper.deleteTransferOrder(transferId);
     }
@@ -116,26 +123,58 @@ public class TransferService {
     public void changeOrderStatus(Long transferId, String newStatus, String userId) {
         TransferOrderDto order = getTransferOrder(transferId);
         String currentStatus = order.transferStatus();
+        validateMesRequestedTransferStatusChange(order, newStatus, userId);
 
         if ("IN_PROGRESS".equals(newStatus)) {
             if (!"REQUESTED".equals(currentStatus)) {
                 throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION);
             }
             validateTransferItems(order);
+            routeService.ensureRouteForTransfer(transferId, "SHORTEST_TIME", userId);
+            routeService.changeTransferRouteStatus(transferId, "ACTIVE", userId);
         } else if ("COMPLETED".equals(newStatus)) {
             if (!"IN_PROGRESS".equals(currentStatus)) {
                 throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION);
             }
             completeTransfer(order, userId);
+            routeService.changeTransferRouteStatus(transferId, "COMPLETED", userId);
         } else if ("CANCELLED".equals(newStatus)) {
-            if (!"REQUESTED".equals(currentStatus)) {
+            if (!"REQUESTED".equals(currentStatus) && !"IN_PROGRESS".equals(currentStatus) && !"FAILED".equals(currentStatus)) {
                 throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION);
             }
+            routeService.changeTransferRouteStatus(transferId, "FAILED", userId);
         } else {
             throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION);
         }
 
         transferMapper.updateTransferStatus(transferId, newStatus, userId);
+    }
+
+    @Transactional
+    public void markOrderFailed(Long transferId, String message, String userId) {
+        TransferOrderDto order = getTransferOrder(transferId);
+        String currentStatus = order.transferStatus();
+        if ("COMPLETED".equals(currentStatus) || "CANCELLED".equals(currentStatus)) {
+            throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
+        routeService.changeTransferRouteStatus(transferId, "FAILED", userId);
+        transferMapper.updateTransferStatus(transferId, "FAILED", userId);
+    }
+
+    private void validateMesRequestedTransferStatusChange(TransferOrderDto order, String newStatus, String userId) {
+        if (!isMesRequestedTransfer(order) || "PLC".equals(userId)) {
+            return;
+        }
+        if ("IN_PROGRESS".equals(newStatus) || "COMPLETED".equals(newStatus)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "MES 자재요청 이동오더는 PLC 이벤트로 시작/완료 처리해야 합니다."
+            );
+        }
+    }
+
+    private boolean isMesRequestedTransfer(TransferOrderDto order) {
+        return order.transferNo() != null && order.transferNo().startsWith("MES-");
     }
 
     private void completeTransfer(TransferOrderDto order, String userId) {
@@ -217,6 +256,8 @@ public class TransferService {
         double toAfterQty = toBeforeQty + qty;
         inventoryMapper.updateLocStockQty(toStock.locStockId(), qty, userId);
         insertTransferHistory(order, toStock.locStockId(), "TF_IN", qty, toBeforeQty, toAfterQty, userId);
+        inventoryMapper.syncLocationUsage(order.fromLocationId(), userId);
+        inventoryMapper.syncLocationUsage(order.toLocationId(), userId);
 
         syncMesWarehouseStockIfNeeded(order, item, fromLocation, toLocation, lotNo, qty, userId);
         insertMesTransferHistory(order, item, fromLocation, toLocation, lotNo, qty, userId);
@@ -356,5 +397,9 @@ public class TransferService {
 
     private String normalizeLotNo(String lotNo) {
         return lotNo == null ? "" : lotNo.trim();
+    }
+
+    private String normalizeOptimizeRule(String optimizeRule) {
+        return optimizeRule == null || optimizeRule.isBlank() ? "SHORTEST_TIME" : optimizeRule;
     }
 }

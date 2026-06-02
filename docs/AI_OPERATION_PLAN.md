@@ -1,52 +1,97 @@
-# AI 운영 기능 계획
+# AI Operation Plan
 
-AI는 MES/MCS 상태를 직접 변경하지 않습니다. 업무 판단, 상태 변경, 인터락은 백엔드 룰 기반으로 처리하고, AI는 운영자가 이해하기 쉬운 분석/조회/알림 문장을 생성합니다.
+AI is an assistant layer for MES/MCS operations. It must not directly change production, transfer, stock, or PLC state in the first implementation.
 
-## 기능 3개
+The backend remains responsible for business rules and state changes. AI receives curated operational context, explains the situation, and suggests the next action.
 
-| 기능 | 한 줄 정의 | 실행 시점 | 결과 |
-|---|---|---|---|
-| AI 운영 분석 | 대시보드 자동 브리핑 | 대시보드 접속 또는 주기적 갱신 | 현재 리스크, 지연, 우선 확인 대상 표시 |
-| AI 운영 조회 | 챗봇형 자연어 조회 | 사용자가 질문 입력 | 작업/재고/정합성/리포트 답변 |
-| AI 이벤트 알림 | 문제 발생 시 자동 분석 | PLC 에러, 인터락, 지연 감지 | 원인/영향/조치 메시지 생성 및 발송 |
+## Scope
 
-## 전체 흐름
-
-```text
-PLC PowerShell Simulator
-→ MES/MCS REST API
-→ 업무 처리 / 인터락 검사
-→ 이벤트 로그 저장
-→ AI 분석
-→ 대시보드 표시 / 챗봇 답변 / 알림 발송
-```
-
-## 구현 단위
-
-| 영역 | 주요 컴포넌트 | 역할 |
+| Feature | Purpose | First target |
 |---|---|---|
-| PLC 이벤트 | `PlcEventService` | PLC 이벤트 수신, 로그 저장, 업무 상태 반영 |
-| 인터락 | `InterlockService` | 출고/이동/재고 처리 전 확정 룰 검사 |
-| 모니터링 | `MonitoringService` | 지연, 재고 부족, 상태 불일치 감지 |
-| 알림 | `AlertService`, `NotificationService` | 알림 이벤트 생성, 이메일/SMS/화면 알림 발송 |
-| AI | `AiAnalysisService` | 운영 분석, 자연어 조회 답변, 알림 문장 생성 |
+| AI incident analysis | Explain why a work order or transfer is blocked | MES work order + MCS transfer + PLC event failure |
+| AI operation query | Answer natural-language questions from operators | "Why can this work order not start?" |
+| AI operation summary | Summarize current MES/MCS status on dashboard screens | Waiting work orders, failed transfers, recent PLC errors |
+| AI alert message generation | Generate human-readable notification text | PLC error/interlock message for operator |
 
-## 추천 테이블
+## Recommended Stack
 
-| 테이블 | 용도 |
-|---|---|
-| `MCS_PLC_EVENT_LOG` | PLC 이벤트 수신 이력 |
-| `MCS_INTERLOCK_LOG` | 인터락 차단 이력 |
-| `MCS_ALERT_EVENT` | 알림 대상 이벤트 |
-| `MCS_ALERT_DELIVERY` | 알림 발송 이력 |
-| `MCS_AI_ANALYSIS_LOG` | AI 분석/응답 생성 이력 |
+Use Spring AI first.
 
-## 개발 순서
+Reasons:
+
+- Current backend is Spring Boot.
+- MES/MCS data and business rules already live in Java services.
+- Tool calling can wrap existing service methods.
+- It keeps the portfolio architecture simpler than adding a separate Python AI server.
+
+LangChain or LangGraph can be added later only if the project needs complex multi-step autonomous agents.
+
+## First Implementation
+
+Start with AI incident analysis.
+
+Input context:
+
+- Work order summary
+- Material transfer status
+- MCS route summary
+- Recent PLC events for the transfer
+- Current blocking reason from backend rules
+
+Output:
+
+- Problem summary
+- Likely cause
+- Operational impact
+- Recommended recovery step
+
+Example question:
 
 ```text
-1. PLC 이벤트 수신 API와 로그 테이블
-2. 인터락 로그와 알림 이벤트 기반
-3. AI 운영 분석 대시보드
-4. AI 이벤트 알림
-5. AI 운영 조회 챗봇
+WO202606010009 왜 시작이 안 돼?
 ```
+
+Expected answer:
+
+```text
+WO202606010009는 연결된 MCS 이동오더가 FAILED 상태라서 시작할 수 없습니다.
+최근 PLC 이벤트에서 EQUIPMENT_ERROR가 발생했고, MCS가 해당 이동오더를 실패 처리했습니다.
+복구하려면 MCS에서 실패 이동오더를 취소한 뒤 MES에서 자재 요청을 다시 생성하세요.
+```
+
+## Backend Design
+
+```text
+React AI panel
+  -> MES AI API
+    -> AiIncidentAnalysisService
+      -> WorkOrderService
+      -> McsTransferClient
+      -> PLC event lookup
+      -> Spring AI ChatClient
+```
+
+## Tool Candidates
+
+| Tool | Responsibility |
+|---|---|
+| `getWorkOrderContext(woNo)` | Work order, item, lot, status, current MES block reason |
+| `getMcsTransferContext(woId)` | Linked MCS transfers, latest active transfer, route |
+| `getPlcEventsByTransfer(transferId)` | Recent PLC events for transfer |
+| `getProblemWorkOrders()` | Work orders blocked by MCS transfer state |
+| `getRecentTransferFailures()` | Recent failed MCS transfers and PLC causes |
+
+## Guardrails
+
+- AI does not execute cancel, start, complete, stock correction, or route status changes.
+- AI may recommend a recovery action, but the user must click the actual button.
+- AI answers must include the source status values used for the conclusion.
+- If required context is missing, AI should say what data is missing instead of guessing.
+
+## Development Order
+
+1. AI incident analysis API for one work order.
+2. React analysis panel on MES work order screen.
+3. Natural-language operation query screen.
+4. Dashboard operation summary.
+5. Alert message generation for PLC failure/interlock.

@@ -127,6 +127,41 @@
         FOR UPDATE
     </select>
 
+    <select id="selectAvailableLocStocksForMaterialRequest" resultType="com.mcs.domain.inventory.dto.LocStockDto">
+        SELECT
+            ls.LOC_STOCK_ID,
+            ls.PLANT_CD,
+            ls.LOCATION_ID,
+            ls.ITEM_CD,
+            ls.LOT_NO,
+            ls.STOCK_QTY,
+            ls.RESERVED_QTY,
+            ls.AVAILABLE_QTY,
+            ls.REG_USER_ID,
+            ls.REG_DTM,
+            ls.UPD_USER_ID,
+            ls.UPD_DTM,
+            p.PLANT_NM,
+            w.WAREHOUSE_NM,
+            z.ZONE_NM,
+            l.LOCATION_CD,
+            l.LOCATION_NM,
+            i.ITEM_NM,
+            i.ITEM_SPEC,
+            i.UNIT
+        FROM MCS_LOCATION_STOCK ls
+        INNER JOIN MST_PLANT p ON ls.PLANT_CD = p.PLANT_CD
+        INNER JOIN MCS_LOCATION l ON ls.LOCATION_ID = l.LOCATION_ID
+        INNER JOIN MCS_ZONE z ON l.ZONE_ID = z.ZONE_ID
+        INNER JOIN MST_WAREHOUSE w ON z.WAREHOUSE_CD = w.WAREHOUSE_CD
+        INNER JOIN MST_ITEM i ON ls.ITEM_CD = i.ITEM_CD
+        WHERE ls.PLANT_CD = #{plantCd}
+          AND ls.ITEM_CD = #{itemCd}
+          AND ls.AVAILABLE_QTY &gt;= #{requestQty}
+          AND l.USE_YN = 'Y'
+        ORDER BY ls.AVAILABLE_QTY DESC, ls.REG_DTM, l.LOCATION_CD
+    </select>
+
     <insert id="insertLocStock" parameterType="com.mcs.domain.inventory.dto.LocStockDto">
         INSERT INTO MCS_LOCATION_STOCK (
             PLANT_CD, LOCATION_ID, ITEM_CD, LOT_NO, STOCK_QTY, RESERVED_QTY, REG_USER_ID, REG_DTM
@@ -141,6 +176,25 @@
             UPD_USER_ID = #{updUserId},
             UPD_DTM = NOW()
         WHERE LOC_STOCK_ID = #{locStockId}
+    </update>
+
+    <update id="syncLocationUsage">
+        UPDATE MCS_LOCATION l
+        LEFT JOIN (
+            SELECT LOCATION_ID, COALESCE(SUM(STOCK_QTY), 0) AS CURRENT_USAGE
+            FROM MCS_LOCATION_STOCK
+            WHERE LOCATION_ID = #{locationId}
+            GROUP BY LOCATION_ID
+        ) s ON l.LOCATION_ID = s.LOCATION_ID
+        SET l.CURRENT_USAGE = COALESCE(s.CURRENT_USAGE, 0),
+            l.LOCATION_STATUS = CASE
+                WHEN COALESCE(s.CURRENT_USAGE, 0) <![CDATA[<=]]> 0 THEN 'EMPTY'
+                WHEN COALESCE(s.CURRENT_USAGE, 0) <![CDATA[>=]]> l.MAX_CAPACITY THEN 'FULL'
+                ELSE 'PARTIAL'
+            END,
+            l.UPD_USER_ID = #{updUserId},
+            l.UPD_DTM = NOW()
+        WHERE l.LOCATION_ID = #{locationId}
     </update>
 
     <!-- 이력 조회 -->

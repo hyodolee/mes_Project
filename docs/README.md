@@ -40,3 +40,11 @@
 ## React Frontend Migration
 
 - [REACT_FRONTEND_MIGRATION_PLAN.md](REACT_FRONTEND_MIGRATION_PLAN.md): React + Mantis 프론트엔드 전환 계획
+## MCS Route Optimization
+
+- [MCS_ROUTE_OPTIMIZATION_DESIGN.md](MCS_ROUTE_OPTIMIZATION_DESIGN.md): MCS 경로 최적화 설계, DB/API/화면/PLC 시나리오
+
+## Demo And AI
+
+- [DEMO_SCENARIOS.md](DEMO_SCENARIOS.md): Fixed normal/failure/recovery demo scenarios for MES/MCS/PLC.
+- [AI_OPERATION_PLAN.md](AI_OPERATION_PLAN.md): Spring AI based operation analysis and query plan.
