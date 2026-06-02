@@ -55,7 +55,7 @@ Retry is allowed only when the previous transfer is `CANCELLED`.
 Run this once if the existing database does not have the failed transfer status code:
 
 ```sql
-source mcs/MCS_add_failed_transfer_status.sql;
+source db/patches/mcs/MCS_add_failed_transfer_status.sql;
 ```
 
 For a fresh MCS installation, `mcs/MCS_install.sql` already includes `MCS_TF_STATUS = FAILED`.

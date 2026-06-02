@@ -1,7 +1,7 @@
 -- ============================================================
 -- MCS Route Demo Bypass Patch
 -- Purpose: Add a demo bypass edge for NCM-01-01 -> NCM-01-02 tests.
--- Run this once if MCS_route_optimization.sql was already executed.
+-- Run this once if db/patches/mcs/MCS_route_optimization.sql was already executed.
 -- ============================================================
 
 SET NAMES utf8mb4;
@@ -67,4 +67,3 @@ WHERE e.PLANT_CD = 'P001'
 -- 2. Calculate NCM-01-01 -> NCM-01-02 again.
 -- 3. Expected route:
 --    N-NCM-01-01 -> N-CV-01 -> N-BUF-01 -> N-NCM-01-02
-

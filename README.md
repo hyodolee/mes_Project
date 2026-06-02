@@ -1,70 +1,41 @@
 # MES/MCS 통합 제조 운영 프로젝트
 
-MES(Manufacturing Execution System)와 MCS(Material Control System)를 같은 DB 기반으로 연동하고, 향후 Spring AI를 통해 운영 분석/조회/알림 기능을 확장하는 포트폴리오 프로젝트입니다.
+MES(Manufacturing Execution System)와 MCS(Material Control System)를 같은 DB 기반으로 연동하고, 이후 Spring AI로 운영 조회/분석/알림 기능을 확장하는 포트폴리오 프로젝트입니다.
 
 ## 프로젝트 목표
 
-- MES는 생산계획, 작업지시, 기준정보, 생산/품질/재고의 상위 업무를 담당합니다.
-- MCS는 창고, Zone, Location, 로케이션 재고, 입고/출고/이동 실행을 담당합니다.
-- PLC 설비 연동은 실제 장비 대신 Windows PowerShell 기반 시뮬레이터로 대체합니다.
-- AI는 업무 상태를 직접 변경하지 않고, 운영 데이터를 요약/분석/설명/알림 문장으로 변환하는 보조 역할을 담당합니다.
+- MES는 생산계획, 작업오더, 기준정보, 생산 실적 흐름을 담당합니다.
+- MCS는 창고, Zone, Location, 재고, 자재 이동, 경로 최적화 흐름을 담당합니다.
+- PLC/설비 이벤트는 실제 장비 대신 PowerShell 시뮬레이터로 재현합니다.
+- AI는 상태를 직접 변경하지 않고, 운영 데이터를 분석하고 설명하는 보조 역할로 붙입니다.
 
 ## 시스템 구성
 
-| 영역 | 경로 | 포트 | 설명 |
+| 영역 | 경로 | 포트 | 역할 |
 |---|---|---:|---|
-| MES | `mes_backserver/` | 8080 | 생산/기준정보 중심 백엔드 |
-| MCS | `mcs_backserver/` | 8081 | 물류 실행/로케이션 재고 중심 백엔드 |
-| MCS 설계/SQL | `mcs/` | - | MCS DDL, 더미데이터, 업무 흐름 문서 |
-| 문서 | `docs/` | - | 현재 기준 문서와 보관 문서 |
-
-## 기술 스택
-
-| 구분 | 기술 |
-|---|---|
-| Language | Java 21 |
-| Framework | Spring Boot 3.3.5 |
-| Persistence | MyBatis 3.0.3 |
-| Database | MariaDB |
-| View | Thymeleaf |
-| Build | Gradle |
-| AI 확장 | Spring AI 예정 |
-| PLC 시뮬레이션 | Windows PowerShell 예정 |
+| MES backend | `mes_backserver/` | 8080 | 생산/기준정보 중심 API |
+| MCS backend | `mcs_backserver/` | 8081 | 자재 이동/로케이션 재고 중심 API |
+| React frontend | `mes_frontend/` | 3000 | MES/MCS 운영 화면 |
+| MCS schema | `mcs/` | - | MCS 기준 설치 SQL과 설계 문서 |
+| Documents | `docs/` | - | 설계, 시연, 실행, DB 파일 정리 |
 
 ## 현재 구현 요약
 
-| 시스템 | 구현 내용 |
-|---|---|
-| MES | 기준정보, 생산계획/작업지시, 생산실적, 품질, 재고, 설비 기능 기반 구현 |
-| MCS | Zone/Location, 로케이션 재고, 재고 조정, 입고, 출고 워크플로 구현 |
-| 연동 | MES/MCS 동일 DB 운영, MCS 테이블은 `MCS_` 접두어 사용 |
-| 다음 작업 | MCS 이동 관리, PLC 이벤트 수신, 인터락/알림, AI 운영 기능 |
+- MES 작업오더 생성, 시작, 완료, 취소
+- MES 작업오더에서 MCS 자재 이동 요청
+- MCS 이동오더 자동 생성, LOT/로케이션/경로 자동 배정
+- MCS 경로 관리와 경로 최적화 계산
+- PLC 시뮬레이터 기반 성공/실패/복구 이벤트 처리
+- MCS 자재 이동 완료 전 MES 작업 시작 차단
+- React 화면에서 MES/MCS/PLC 상태 확인
 
-## AI 기능 범위
+## 실행
 
-| 기능 | 설명 |
-|---|---|
-| AI 운영 분석 | 대시보드에서 현재 리스크, 지연, 우선 확인 대상을 자동 브리핑 |
-| AI 운영 조회 | 사용자가 자연어로 작업/재고/정합성/리포트를 조회 |
-| AI 이벤트 알림 | PLC 에러, 인터락, 지연 발생 시 원인/영향/조치 메시지 생성 |
+DB 비밀번호는 Git에 저장하지 않습니다. MES/MCS backend 실행 전 `MES_DB_PASSWORD` 환경변수를 설정하세요.
 
-자세한 내용은 [AI_OPERATION_PLAN.md](docs/AI_OPERATION_PLAN.md)를 참고합니다.
-
-## 주요 문서
-
-문서의 현재 기준과 보관 문서는 [docs/README.md](docs/README.md)에 정리되어 있습니다.
-
-| 문서 | 용도 |
-|---|---|
-| [docs/PROJECT_ROADMAP.md](docs/PROJECT_ROADMAP.md) | 현재 상태와 다음 작업 우선순위 |
-| [docs/MCS_DEVELOPMENT_PROGRESS.md](docs/MCS_DEVELOPMENT_PROGRESS.md) | MCS 현재 개발 진행 상황 |
-| [docs/DB_FILES.md](docs/DB_FILES.md) | SQL 덤프/DDL/더미데이터 파일 정리 |
-| [mcs/MCS_설계문서_v2.md](mcs/MCS_설계문서_v2.md) | MCS 테이블, ERD, API, 연동 설계 |
-| [mcs/MCS_더미데이터_업무흐름.md](mcs/MCS_더미데이터_업무흐름.md) | MCS 더미데이터 기반 업무 시나리오 |
-| [AGENTS.md](AGENTS.md) | Codex/에이전트 작업 가이드 |
-| [CLAUDE.md](CLAUDE.md) | Claude 작업 가이드 |
-
-## 실행 명령
+```powershell
+$env:MES_DB_PASSWORD = "your-password"
+```
 
 MES:
 
@@ -80,25 +51,43 @@ Set-Location 'C:\dev\mes_project\mcs_backserver'
 .\gradlew.bat bootRun
 ```
 
-MCS 빌드:
+React:
 
 ```powershell
-Set-Location 'C:\dev\mes_project\mcs_backserver'
-.\gradlew.bat build -x test
+Set-Location 'C:\dev\mes_project\mes_frontend'
+npm run dev
 ```
 
-## 포트폴리오 데모 시나리오
+React 빌드:
+
+```powershell
+Set-Location 'C:\dev\mes_project\mes_frontend'
+npm run build
+```
+
+## 주요 문서
+
+문서 입구는 [docs/README.md](docs/README.md)입니다.
+
+| 문서 | 용도 |
+|---|---|
+| [docs/PROJECT_ROADMAP.md](docs/PROJECT_ROADMAP.md) | 현재 상태와 다음 개발 순서 |
+| [docs/MCS_DEVELOPMENT_PROGRESS.md](docs/MCS_DEVELOPMENT_PROGRESS.md) | MCS 기능별 진행 현황 |
+| [docs/runbooks/DEMO_SCENARIOS.md](docs/runbooks/DEMO_SCENARIOS.md) | 정상/실패/복구 시연 순서 |
+| [docs/design/AI_OPERATION_PLAN.md](docs/design/AI_OPERATION_PLAN.md) | Spring AI 기반 AI 기능 설계 |
+| [docs/db/DB_FILES.md](docs/db/DB_FILES.md) | SQL, dump, patch 파일 위치 |
+| [mcs/MCS_설계문서_v2.md](mcs/MCS_설계문서_v2.md) | MCS 원본 설계 문서 |
+| [AGENTS.md](AGENTS.md) | Codex/AI 에이전트 작업 가이드 |
+
+## 시연 흐름
 
 ```text
-PLC 시뮬레이터
-→ MES/MCS API 호출
-→ 출고/이동/재고 상태 변경
-→ 인터락 또는 이벤트 로그 저장
-→ AI 운영 분석/조회/알림
+MES 작업오더 생성
+-> MES 자재 요청
+-> MCS 이동오더 자동 생성
+-> MCS 경로 계산
+-> PLC 이벤트 시뮬레이션
+-> 성공: MCS 완료, MES 작업 시작 가능
+-> 실패: MCS 실패, MES 작업 시작 차단
+-> 복구: MCS 실패 건 취소, MES 재요청, PLC 성공 처리
 ```
-
-최종 목표는 단순 CRUD가 아니라, 제조 현장의 생산 실행과 물류 실행, 설비 이벤트, 운영 모니터링, AI 보조 분석이 하나의 흐름으로 보이는 시스템입니다.
-
-## React Frontend Migration
-
-- [docs/REACT_FRONTEND_MIGRATION_PLAN.md](docs/REACT_FRONTEND_MIGRATION_PLAN.md): React + Mantis 프론트엔드 전환 계획

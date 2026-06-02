@@ -109,6 +109,27 @@ public class McsTransferClient {
         }
     }
 
+    public List<McsPlcEventSummary> getPlcEventsByTransfer(Long transferId, int size) {
+        try {
+            ApiResponse<PlcEventPage> response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/plc/events")
+                            .queryParam("targetType", "TRANSFER")
+                            .queryParam("targetId", transferId)
+                            .queryParam("page", 1)
+                            .queryParam("size", size)
+                            .build())
+                    .retrieve()
+                    .body(PlcEventListResponse.class);
+            if (response == null || !response.success() || response.data() == null) {
+                return List.of();
+            }
+            return response.data().content() == null ? List.of() : response.data().content();
+        } catch (RestClientResponseException | ResourceAccessException e) {
+            return List.of();
+        }
+    }
+
     public void cancelTransfer(Long transferId) {
         try {
             ApiResponse<Void> response = restClient.post()
@@ -217,6 +238,27 @@ public class McsTransferClient {
     ) {
     }
 
+    public record McsPlcEventSummary(
+            Long eventId,
+            String equipmentCd,
+            String eventType,
+            String eventStatus,
+            String targetType,
+            Long targetId,
+            String locationCd,
+            String errorCode,
+            String eventMessage,
+            String rawPayload,
+            String eventDtm,
+            String processedYn,
+            String processResult,
+            String processMessage,
+            String processedDtm,
+            String regUserId,
+            String regDtm
+    ) {
+    }
+
     private interface ApiResponse<T> {
         boolean success();
         String message();
@@ -244,6 +286,19 @@ public class McsTransferClient {
 
     private record TransferListResponse(boolean success, String code, String message, TransferPage data)
             implements ApiResponse<TransferPage> {
+    }
+
+    private record PlcEventPage(
+            List<McsPlcEventSummary> content,
+            long totalElements,
+            int totalPages,
+            int currentPage,
+            int size
+    ) {
+    }
+
+    private record PlcEventListResponse(boolean success, String code, String message, PlcEventPage data)
+            implements ApiResponse<PlcEventPage> {
     }
 
     private record CancelMaterialRequestResponse(boolean success, String code, String message, Integer data)

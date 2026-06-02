@@ -10,9 +10,15 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import Divider from '@mui/material/Divider';
+import Drawer from '@mui/material/Drawer';
 import FormControl from '@mui/material/FormControl';
 import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Snackbar from '@mui/material/Snackbar';
@@ -27,7 +33,7 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-import { PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { BulbOutlined, CloseOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 
 import MainCard from 'components/MainCard';
 import { mesEquipmentApi } from 'api/mes/equipment';
@@ -177,6 +183,11 @@ export default function MesWorkOrders() {
   const [materialForm, setMaterialForm] = useState(emptyMaterialForm);
   const [message, setMessage] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
+  const [analysisDrawerOpen, setAnalysisDrawerOpen] = useState(false);
+  const [analysisOrder, setAnalysisOrder] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState('');
 
   const { data: workOrderResponse, error: workOrderError, isLoading, mutate } = useSWR(['mes-work-orders', query], () => mesWorkOrderApi.list(query));
   const { data: plantResponse } = useSWR('mes-plants', () => mesMasterApi.plants({ useYn: 'Y' }));
@@ -355,6 +366,42 @@ export default function MesWorkOrders() {
     }
   };
 
+  const handleAiAnalysis = async (order) => {
+    setAnalysisDrawerOpen(true);
+    setAnalysisOrder(order);
+    setAnalysis(null);
+    setAnalysisError('');
+    setAnalysisLoading(true);
+    try {
+      const response = await mesWorkOrderApi.aiAnalysis(order.woId);
+      setAnalysis(getApiData(response, null));
+    } catch (error) {
+      setAnalysisError(error.message);
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
+
+  const renderAnalysisList = (title, items, emptyText) => (
+    <Box>
+      <Typography variant="subtitle1" sx={{ mb: 0.75 }}>{title}</Typography>
+      {items?.length ? (
+        <List dense disablePadding>
+          {items.map((item, index) => (
+            <ListItem key={`${title}-${index}`} sx={{ px: 0, py: 0.35, alignItems: 'flex-start' }}>
+              <ListItemText
+                primary={item}
+                primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }}
+              />
+            </ListItem>
+          ))}
+        </List>
+      ) : (
+        <Typography variant="body2" color="text.secondary">{emptyText}</Typography>
+      )}
+    </Box>
+  );
+
   return (
     <Stack spacing={3}>
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}>
@@ -484,6 +531,14 @@ export default function MesWorkOrders() {
                     <TableCell>{order.lotNo || '-'}</TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<BulbOutlined />}
+                          onClick={() => handleAiAnalysis(order)}
+                        >
+                          AI 분석
+                        </Button>
                         <Button
                           size="small"
                           variant="outlined"
@@ -704,6 +759,99 @@ export default function MesWorkOrders() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Drawer
+        anchor="right"
+        open={analysisDrawerOpen}
+        onClose={() => setAnalysisDrawerOpen(false)}
+        PaperProps={{ sx: { width: { xs: '100%', sm: 460 }, maxWidth: '100%' } }}
+      >
+        <Box sx={{ p: 2.5 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <Box>
+              <Typography variant="h4">AI 작업오더 분석</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {analysisOrder?.woNo || '-'} / {analysisOrder?.itemNm || analysisOrder?.itemCd || '-'}
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={() => setAnalysisDrawerOpen(false)}>
+              <CloseOutlined />
+            </IconButton>
+          </Stack>
+
+          <Divider sx={{ my: 2 }} />
+
+          {analysisLoading && (
+            <Stack spacing={1.5} sx={{ alignItems: 'center', py: 7 }}>
+              <CircularProgress />
+              <Typography variant="body2" color="text.secondary">MES/MCS/PLC 데이터를 모아 AI 분석 중입니다.</Typography>
+            </Stack>
+          )}
+
+          {!analysisLoading && analysisError && (
+            <Alert severity="error">{analysisError}</Alert>
+          )}
+
+          {!analysisLoading && !analysisError && analysis && (
+            <Stack spacing={2.25}>
+              {!analysis.aiGenerated && (
+                <Alert severity="info" variant="outlined">
+                  OpenAI API Key가 없거나 호출에 실패해 규칙 기반 미리보기 분석을 표시합니다.
+                </Alert>
+              )}
+
+              <Box>
+                <Typography variant="subtitle1" sx={{ mb: 0.75 }}>상태 요약</Typography>
+                <Alert severity={analysis.evidence?.mcsTransfer?.transferStatus === 'FAILED' ? 'error' : 'info'}>
+                  {analysis.summary}
+                </Alert>
+              </Box>
+
+              {renderAnalysisList('확인된 사실', analysis.facts, '확인된 사실이 없습니다.')}
+
+              <Box>
+                <Typography variant="subtitle1" sx={{ mb: 0.75 }}>추정 원인</Typography>
+                <Typography variant="body2" color="text.secondary">{analysis.inference || '-'}</Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle1" sx={{ mb: 0.75 }}>운영 영향</Typography>
+                <Typography variant="body2" color="text.secondary">{analysis.impact || '-'}</Typography>
+              </Box>
+
+              {renderAnalysisList('권장 조치', analysis.recommendedActions, '권장 조치가 없습니다.')}
+
+              <Divider />
+
+              <Box>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>근거 데이터</Typography>
+                <Stack spacing={1}>
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+                    <Chip label={`MES: ${analysis.evidence?.workOrder?.woStatus || '-'}`} size="small" />
+                    <Chip
+                      label={`MCS: ${analysis.evidence?.mcsTransfer?.transferStatus || '요청 전'}`}
+                      size="small"
+                      color={getMaterialStatusColor(analysis.evidence?.mcsTransfer?.transferStatus)}
+                      variant="light"
+                    />
+                    <Chip label={`Model: ${analysis.model || '-'}`} size="small" variant="outlined" />
+                  </Stack>
+                  {analysis.evidence?.mcsTransfer && (
+                    <Typography variant="caption" color="text.secondary">
+                      이동오더 {analysis.evidence.mcsTransfer.transferNo} / {analysis.evidence.mcsTransfer.fromLocationCd || '-'} → {analysis.evidence.mcsTransfer.toLocationCd || '-'}
+                    </Typography>
+                  )}
+                  {analysis.evidence?.plcEvents?.length > 0 && (
+                    <Typography variant="caption" color="text.secondary">
+                      최근 PLC 이벤트 {analysis.evidence.plcEvents[0].eventType} / {analysis.evidence.plcEvents[0].eventMessage || '-'}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            </Stack>
+          )}
+        </Box>
+      </Drawer>
 
       <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
         {message && <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>{message.text}</Alert>}

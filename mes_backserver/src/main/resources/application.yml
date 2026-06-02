@@ -1,6 +1,12 @@
 spring:
   application:
     name: mes_backserver
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:missing}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o-mini}
   profiles:
     active: local
   flyway:
