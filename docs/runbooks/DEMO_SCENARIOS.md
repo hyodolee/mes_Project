@@ -1,110 +1,122 @@
-# MES/MCS 시연 시나리오
+# MES/MCS 데모 시나리오
 
-이 문서는 AI 기능을 붙이기 전, MES/MCS/PLC 시뮬레이터가 하나의 운영 흐름으로 연결되어 있음을 반복 시연하기 위한 기준입니다.
+이 문서는 현재 프로젝트를 시연할 때 사용할 흐름을 정리합니다.
 
-## 시연 목표
+## 1. 기본 화면 확인
+
+준비:
+
+- MES backend: `http://localhost:8080`
+- MCS backend: `http://localhost:8081`
+- React frontend: `http://localhost:3000`
+
+확인 화면:
+
+1. `MCS > 로케이션 재고`
+2. `MCS > 이동 관리`
+3. `MCS > PLC 이벤트`
+4. `MES > 작업 오더`
+5. `AI 운영 분석`
+
+## 2. 정상 자재 이동 시나리오
+
+흐름:
 
 ```text
-MES 작업오더
-  -> MCS 자재 이동 요청
-    -> MCS 경로 계산
-      -> PLC 이벤트 시뮬레이션
-        -> 성공: 재고 반영 및 MES 작업 시작 허용
-        -> 실패: MES 작업 시작 차단
-        -> 복구: 실패 이동 취소 후 재요청
+MES 작업오더 생성
+-> MES에서 자재 요청
+-> MCS 이동오더 생성
+-> MCS 이동 시작
+-> PLC 성공 이벤트 수신
+-> MCS 이동 완료
+-> MES 작업 시작 가능
 ```
 
-## 권장 시연 데이터
+확인 포인트:
 
-| 항목 | 값 |
-|---|---|
-| 공장 | 오창1공장 |
-| 완제품 | `FG-CEL-001` / 파우치셀 60Ah(NCM811) |
-| 자재 | `RM-NCM-001` / NCM811 양극활물질 |
-| 작업 수량 | `3` |
-| 설비 | `EQ001` |
-| 출발 Location | `NCM-01-01` |
-| 도착 Location | `NCM-01-02` |
-| 경로 기준 | 혼잡 회피 또는 최단 시간 |
+- `MCS > 이동 관리`에서 이동오더 상태가 진행/완료로 바뀌는지 확인합니다.
+- `MCS > PLC 이벤트`에서 성공 이벤트가 기록되는지 확인합니다.
+- `MES > 작업 오더`에서 작업 시작 조건이 충족되는지 확인합니다.
 
-`RM-NCM-001`의 사용 가능한 LOT가 없으면 MCS 로케이션 재고에서 먼저 재고를 생성하거나 조정합니다.
+## 3. PLC 데이터 누락 시나리오
 
-## 시나리오 1. 정상 이동
+목표:
 
-목적: MES가 MCS 자재 이동 완료 전까지 작업 시작을 기다리는 흐름을 보여줍니다.
+PLC가 필수 데이터를 빠뜨려 보냈을 때 MCS가 이벤트를 검증 실패로 처리하고, AI 챗봇이 원인을 설명하는지 확인합니다.
 
-1. React에서 MES 작업오더 화면을 엽니다.
-2. 권장 시연 데이터로 작업오더를 생성합니다.
-3. `자재 요청`을 클릭합니다.
-4. MCS 이동오더가 생성되었는지 확인합니다.
-5. MCS 이동 관리 화면에서 새 이동오더의 ID를 확인합니다.
-6. PLC 성공 시뮬레이션을 실행합니다.
+예상 흐름:
 
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File "C:\dev\mes_project\scripts\plc\simulate-transfer.ps1" -TransferId {TRANSFER_ID} -Scenario Success -Mode PlcApi
+```text
+PLC 이벤트 payload 필수 필드 누락
+-> MCS PLC 이벤트 수신
+-> VALIDATION_FAILED 처리
+-> MCS 이동 완료 처리 보류
+-> MES 작업 시작 차단
+-> AI 챗봇에서 원인 질문
 ```
 
 기대 결과:
 
-- MCS 이동오더 상태가 `완료(COMPLETED)`가 됩니다.
-- PLC 이벤트 이력에 `TRANSFER_STARTED`, `TRANSFER_COMPLETED`가 남습니다.
-- MCS 로케이션 재고가 출발지에서 차감되고 도착지에 반영됩니다.
-- MES 작업오더의 `시작` 버튼이 활성화됩니다.
+- `MCS > PLC 이벤트` 화면에 데이터 누락 이벤트가 표시됩니다.
+- 누락 필드는 `targetId`, `toLocationCd`, `lotNo` 같은 값으로 확인할 수 있습니다.
+- `MCS > 이동 관리`에서 관련 이동 건이 정상 완료되지 않은 상태로 남습니다.
+- `MES > 작업 오더`에서는 자재 이동 완료 전까지 작업 시작이 제한됩니다.
+- 챗봇에 “왜 작업 시작이 안 돼?” 또는 “실패한 자재 이동 있어?”라고 물으면 데이터 누락이나 PLC 이벤트 문제를 설명합니다.
 
-## 시나리오 2. 실패 이동
+## 4. AI 운영 브리핑 시나리오
 
-목적: PLC 오류나 인터락 발생 시 MES 작업 시작이 차단되는 흐름을 보여줍니다.
+흐름:
 
-1. 새 MES 작업오더를 생성합니다.
-2. `자재 요청`을 클릭합니다.
-3. MCS 이동 관리 화면에서 새 이동오더의 ID를 확인합니다.
-4. PLC 실패 시뮬레이션을 실행합니다.
-
-설비 오류:
-
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File "C:\dev\mes_project\scripts\plc\simulate-transfer.ps1" -TransferId {TRANSFER_ID} -Scenario EquipmentError -Mode PlcApi
-```
-
-인터락:
-
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File "C:\dev\mes_project\scripts\plc\simulate-transfer.ps1" -TransferId {TRANSFER_ID} -Scenario InterlockBlocked -Mode PlcApi
-```
+1. `AI 운영 분석` 화면으로 이동합니다.
+2. `AI 실시간 운영 브리핑` 카드에서 `분석 시작`을 누릅니다.
+3. 브리핑 결과를 확인합니다.
+4. 같은 화면에 머무를 때 반복 호출되지 않는지 확인합니다.
+5. 필요한 경우 `다시 분석`을 눌러 새로 요청합니다.
 
 기대 결과:
 
-- MCS 이동오더 상태가 `실패(FAILED)`가 됩니다.
-- PLC 이벤트 이력에 오류 이벤트가 남습니다.
-- MES 작업오더의 `시작` 버튼은 비활성 상태로 유지됩니다.
-- MES에는 MCS 자재 이동이 완료되지 않았다는 안내가 표시됩니다.
+- 현재 공장 위험도, 주요 이슈, 우선 조치가 표시됩니다.
+- 브리핑 결과는 프론트 `localStorage`에 저장되어 다시 보여집니다.
+- 자동으로 30초마다 AI를 재호출하지 않습니다.
 
-## 시나리오 3. 실패 후 복구
+## 5. AI 챗봇 시나리오
 
-목적: 실패 이동은 이력으로 남기고, 취소 후 새 이동 요청으로 복구하는 흐름을 보여줍니다.
+예시 질문:
 
-1. MCS 이동 상태가 `FAILED`인 작업오더를 준비합니다.
-2. MCS 이동 관리 화면에서 실패 이동오더를 `취소`합니다.
-3. MES 작업오더 화면으로 돌아갑니다.
-4. 같은 작업오더에서 `자재 요청`을 다시 클릭합니다.
-5. 새 MCS 이동오더가 생성되었는지 확인합니다.
-6. 새 이동오더 ID로 PLC 성공 시뮬레이션을 실행합니다.
-
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File "C:\dev\mes_project\scripts\plc\simulate-transfer.ps1" -TransferId {NEW_TRANSFER_ID} -Scenario Success -Mode PlcApi
-```
+- `실패한 자재 이동 있어?`
+- `최근 설비 오류 있어?`
+- `작업 시작 못 하는 건 있어?`
+- `PLC 데이터 누락 이벤트 있어?`
 
 기대 결과:
 
-- 이전 실패 이동오더는 `취소(CANCELLED)`로 남습니다.
-- 새 이동오더는 `완료(COMPLETED)`가 됩니다.
-- MES 작업오더의 `시작` 버튼이 활성화됩니다.
+- 챗봇은 스트리밍 방식으로 답변합니다.
+- 답변은 `현황`, `원인`, `확인할 화면`, `조치`처럼 읽기 쉬운 구조로 표시됩니다.
+- 답변 아래 `근거 데이터`를 열면 조회 근거를 확인할 수 있습니다.
 
-## 시연 전 체크리스트
+## 6. AI 알림 시나리오
 
-- MES backend가 `8080`에서 실행 중입니다.
-- MCS backend가 `8081`에서 실행 중입니다.
-- React frontend가 `3000`에서 실행 중입니다.
-- backend 실행 전에 `MES_DB_PASSWORD` 환경변수가 설정되어 있습니다.
-- 기존 DB에 `FAILED` 상태 코드가 없다면 `db/patches/mcs/MCS_add_failed_transfer_status.sql`을 한 번 실행합니다.
-- PLC 명령은 `C:\dev\mes_project`에서 실행하거나 script path를 절대경로로 지정합니다.
+흐름:
+
+```text
+PLC 오류 또는 이동 실패 이벤트 발생
+-> 백엔드 스케줄러가 이벤트 감지
+-> AI 알림 생성
+-> 알림 DB 저장
+-> SSE로 프론트에 실시간 전달
+```
+
+확인 포인트:
+
+- 헤더 알림 아이콘의 배지가 갱신되는지 확인합니다.
+- 알림 목록에서 새 알림이 보이는지 확인합니다.
+- 같은 이벤트에 대해 중복 알림이 계속 생기지 않는지 확인합니다.
+
+## 7. 데모 전 체크리스트
+
+- MES backend가 8080에서 실행 중입니다.
+- MCS backend가 8081에서 실행 중입니다.
+- React frontend가 3000에서 실행 중입니다.
+- 로그인 토큰이 만료되지 않았습니다.
+- `OPENAI_API_KEY`가 설정되어 있거나, AI fallback 동작을 설명할 준비가 되어 있습니다.
+- PLC 시뮬레이터 스크립트 경로를 확인했습니다.

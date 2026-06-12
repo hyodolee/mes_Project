@@ -13,6 +13,7 @@ import java.util.List;
 @Mapper
 public interface WorkOrderMapper {
     List<WorkOrderDto> selectWorkOrders(
+            @Param("woNo") String woNo,
             @Param("plantCd") String plantCd,
             @Param("itemCd") String itemCd,
             @Param("woStatus") String woStatus,

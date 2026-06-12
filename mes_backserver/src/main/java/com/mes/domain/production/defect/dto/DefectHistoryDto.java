@@ -4,27 +4,36 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public record DefectHistoryDto(
-    Long defectId,
-    String plantCd,
-    Long resultId,
-    Long procResultId,
-    LocalDate defectDt,
-    String defectType,
-    String defectCd,
-    String defectNm,
-    BigDecimal defectQty,
-    String defectCause,
-    String defectAction,
-    String disposition,
-    BigDecimal dispositionQty,
-    LocalDate dispositionDt,
-    String itemCd,
-    String lotNo,
-    String workerId,
-    String equipmentCd,
-    String processCd,
-    String defectRmk,
-    String regUserId,
-    LocalDateTime regDtm
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class DefectHistoryDto {
+    private Long defectId;
+    private String plantCd;
+    private Long resultId;
+    private Long procResultId;
+    private LocalDate defectDt;
+    private String defectType;
+    private String defectCd;
+    private String defectNm;
+    private BigDecimal defectQty;
+    private String defectCause;
+    private String defectAction;
+    private String disposition;
+    private BigDecimal dispositionQty;
+    private LocalDate dispositionDt;
+    private String itemCd;
+    private String lotNo;
+    private String workerId;
+    private String equipmentCd;
+    private String processCd;
+    private String defectRmk;
+    private String regUserId;
+    private LocalDateTime regDtm;
+}

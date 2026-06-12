@@ -5,24 +5,33 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record DefectHistoryCreateRequest(
-    @NotBlank String plantCd,
-    @NotNull Long resultId,
-    Long procResultId,
-    @NotNull LocalDate defectDt,
-    @NotBlank String defectType,
-    @NotBlank String defectCd,
-    String defectNm,
-    @NotNull BigDecimal defectQty,
-    String defectCause,
-    String defectAction,
-    String disposition,
-    BigDecimal dispositionQty,
-    LocalDate dispositionDt,
-    @NotBlank String itemCd,
-    String lotNo,
-    String workerId,
-    String equipmentCd,
-    String processCd,
-    String defectRmk
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class DefectHistoryCreateRequest {
+    private String plantCd;
+    private Long resultId;
+    private Long procResultId;
+    private LocalDate defectDt;
+    private String defectType;
+    private String defectCd;
+    private String defectNm;
+    private BigDecimal defectQty;
+    private String defectCause;
+    private String defectAction;
+    private String disposition;
+    private BigDecimal dispositionQty;
+    private LocalDate dispositionDt;
+    private String itemCd;
+    private String lotNo;
+    private String workerId;
+    private String equipmentCd;
+    private String processCd;
+    private String defectRmk;
+}

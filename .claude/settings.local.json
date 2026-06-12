@@ -16,7 +16,29 @@
       "Bash(\"C:/Program Files/Java/jdk-21.0.10/bin/java.exe\" -version)",
       "Bash(cmd.exe:*)",
       "Bash(cmd /c \"cd /d C:\\\\dev\\\\mes_project\\\\mes_backserver & gradlew.bat build -x test\")",
-      "Bash(powershell.exe:*)"
+      "Bash(powershell.exe:*)",
+      "Bash(LOG=\"$HOME/build_errs.log\"; echo \"=== sample .java lines ===\"; grep -n \"\\\\.java:\" \"$LOG\" | head -3 | cat -A | head -3)",
+      "Bash(python3 -c ' *)",
+      "Bash(sed -i \"s#r'\\(\\\\[A-Za-z\\\\]:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.+?\\\\\\\\\\\\\\\\.java\\):\\\\\\\\\\\\\\\\d+:'#r'\\(\\\\\\\\\\\\\\\\S.*?\\\\\\\\\\\\\\\\.java\\):\\\\\\\\\\\\\\\\d+:'#\" /tmp/fix_calls.py)",
+      "Read(//tmp/**)",
+      "Bash(set -e)",
+      "Bash(rm -v mes_backserver/tmp_ai_api.js mes_backserver/tmp_operations.jsx mes_frontend/src/pages/ai/operations.jsx.tmp)",
+      "Bash(mkdir -p support notification analysis query)",
+      "Bash(mv -v AiClientGateway.java AiJsonSupport.java AiTextSupport.java support/)",
+      "Bash(mv -v AiNotificationService.java SseEmitterService.java notification/)",
+      "Bash(sed -i 's/^import com\\\\.mes\\\\.application\\\\.service\\\\.ai\\\\.AiNotificationService;/import com.mes.application.service.ai.notification.AiNotificationService;/;s/^import com\\\\.mes\\\\.application\\\\.service\\\\.ai\\\\.SseEmitterService;/import com.mes.application.service.ai.notification.SseEmitterService;/' AiNotificationApiController.java)",
+      "Bash(sed -i 's/^import com\\\\.mes\\\\.application\\\\.service\\\\.ai\\\\.OperationAiAnalysisService;/import com.mes.application.service.ai.analysis.OperationAiAnalysisService;/' OperationAiAnalysisApiController.java)",
+      "Bash(sed -i 's/^import com\\\\.mes\\\\.application\\\\.service\\\\.ai\\\\.OperationQueryService;/import com.mes.application.service.ai.query.OperationQueryService;/' OperationQueryApiController.java)",
+      "Bash(sed -i 's/^import com\\\\.mes\\\\.application\\\\.service\\\\.ai\\\\.WorkOrderAiAnalysisService;/import com.mes.application.service.ai.analysis.WorkOrderAiAnalysisService;/' WorkOrderAiAnalysisApiController.java)",
+      "Bash(./gradlew.bat compileJava -x test)",
+      "Bash(sed -i 's/^final class AiJsonSupport/public final class AiJsonSupport/; s/^    static /    public static /' AiJsonSupport.java)",
+      "Bash(sed -i 's/^final class AiTextSupport/public final class AiTextSupport/; s/^    static /    public static /' AiTextSupport.java)",
+      "Bash(node -e \"const s=require\\('fs'\\).readFileSync\\('src/pages/ai/operations.jsx','utf8'\\);require\\('@babel/core'\\).transform\\(s,{presets:[['@babel/preset-react']],filename:'op.jsx'}\\);console.log\\('JSX parse OK'\\)\")",
+      "Bash(node -e \"console.log\\(Object.keys\\(require\\('./package.json'\\).scripts||{}\\).join\\(', '\\)\\)\")",
+      "Bash(./node_modules/.bin/eslint src/pages/ai/operations.jsx)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(node_modules/.bin/vite build *)",
+      "Bash(node_modules/.bin/eslint src/sections/operations/operationsDashboard.jsx src/pages/ai/operations.jsx src/pages/dashboard/mes.jsx src/pages/dashboard/mcs.jsx --quiet)"
     ]
   }
 }

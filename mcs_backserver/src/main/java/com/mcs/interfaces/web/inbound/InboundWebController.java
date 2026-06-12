@@ -61,8 +61,8 @@ public class InboundWebController {
             String autoInboundNo = "IB-" + System.currentTimeMillis();
             
             InboundOrderDto dtoWithUser = new InboundOrderDto(
-                null, orderDto.plantCd(), autoInboundNo, "PLANNED", orderDto.vendorCd(), orderDto.warehouseCd(),
-                orderDto.expectedDt(), null, null, orderDto.inboundRmk(),
+                null, orderDto.getPlantCd(), autoInboundNo, "PLANNED", orderDto.getVendorCd(), orderDto.getWarehouseCd(),
+                orderDto.getExpectedDt(), null, null, orderDto.getInboundRmk(),
                 "SYSTEM", null, null, null, null, null, null, null
             );
             inboundService.createInboundOrder(dtoWithUser);
@@ -93,8 +93,8 @@ public class InboundWebController {
     public String updateInbound(@PathVariable Long id, @ModelAttribute InboundOrderDto orderDto, RedirectAttributes redirectAttributes) {
         try {
             InboundOrderDto dtoWithId = new InboundOrderDto(
-                id, orderDto.plantCd(), orderDto.inboundNo(), orderDto.inboundStatus(), orderDto.vendorCd(), orderDto.warehouseCd(),
-                orderDto.expectedDt(), orderDto.actualDt(), null, orderDto.inboundRmk(),
+                id, orderDto.getPlantCd(), orderDto.getInboundNo(), orderDto.getInboundStatus(), orderDto.getVendorCd(), orderDto.getWarehouseCd(),
+                orderDto.getExpectedDt(), orderDto.getActualDt(), null, orderDto.getInboundRmk(),
                 null, null, "SYSTEM", null, null, null, null, null
             );
             inboundService.updateInboundOrder(dtoWithId);
@@ -128,3 +128,4 @@ public class InboundWebController {
         }
     }
 }
+

@@ -33,19 +33,19 @@ public class ZoneService {
     @Transactional
     public Long createZone(ZoneDto zoneDto) {
         // 중복 체크
-        zoneMapper.selectZoneByCd(zoneDto.warehouseCd(), zoneDto.zoneCd())
+        zoneMapper.selectZoneByCd(zoneDto.getWarehouseCd(), zoneDto.getZoneCd())
                 .ifPresent(z -> {
                     throw new BusinessException(ErrorCode.DUPLICATE_ZONE_CD);
                 });
 
         zoneMapper.insertZone(zoneDto);
-        return zoneDto.zoneId();
+        return zoneDto.getZoneId();
     }
 
     @Transactional
     public void updateZone(ZoneDto zoneDto) {
         // 존재 확인
-        getZone(zoneDto.zoneId());
+        getZone(zoneDto.getZoneId());
         zoneMapper.updateZone(zoneDto);
     }
 
@@ -57,3 +57,4 @@ public class ZoneService {
         zoneMapper.deleteZone(zoneId);
     }
 }
+

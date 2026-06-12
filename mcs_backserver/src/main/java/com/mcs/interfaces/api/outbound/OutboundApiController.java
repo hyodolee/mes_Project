@@ -35,14 +35,14 @@ public class OutboundApiController {
 
     @PostMapping
     public ApiResponse<Long> createOutbound(@RequestBody OutboundOrderDto orderDto) {
-        String outboundNo = orderDto.outboundNo();
+        String outboundNo = orderDto.getOutboundNo();
         if (outboundNo == null || outboundNo.isBlank()) {
             outboundNo = "OB-" + System.currentTimeMillis();
         }
 
         OutboundOrderDto dtoWithUser = new OutboundOrderDto(
-                null, orderDto.plantCd(), outboundNo, "REQUESTED", orderDto.customerCd(), orderDto.warehouseCd(),
-                orderDto.requestDt(), null, orderDto.destination(), orderDto.issuePlanId(), orderDto.woId(), orderDto.outboundRmk(),
+                null, orderDto.getPlantCd(), outboundNo, "REQUESTED", orderDto.getCustomerCd(), orderDto.getWarehouseCd(),
+                orderDto.getRequestDt(), null, orderDto.getDestination(), orderDto.getIssuePlanId(), orderDto.getWoId(), orderDto.getOutboundRmk(),
                 "SYSTEM", null, null, null, null, null, null
         );
         return ApiResponse.ok(outboundService.createOutboundOrder(dtoWithUser));
@@ -51,8 +51,8 @@ public class OutboundApiController {
     @PutMapping("/{outboundId}")
     public ApiResponse<Void> updateOutbound(@PathVariable Long outboundId, @RequestBody OutboundOrderDto orderDto) {
         OutboundOrderDto dtoWithId = new OutboundOrderDto(
-                outboundId, orderDto.plantCd(), orderDto.outboundNo(), orderDto.outboundStatus(), orderDto.customerCd(), orderDto.warehouseCd(),
-                orderDto.requestDt(), orderDto.shippedDt(), orderDto.destination(), orderDto.issuePlanId(), orderDto.woId(), orderDto.outboundRmk(),
+                outboundId, orderDto.getPlantCd(), orderDto.getOutboundNo(), orderDto.getOutboundStatus(), orderDto.getCustomerCd(), orderDto.getWarehouseCd(),
+                orderDto.getRequestDt(), orderDto.getShippedDt(), orderDto.getDestination(), orderDto.getIssuePlanId(), orderDto.getWoId(), orderDto.getOutboundRmk(),
                 null, null, "SYSTEM", null, null, null, null
         );
         outboundService.updateOutboundOrder(dtoWithId);
@@ -71,3 +71,4 @@ public class OutboundApiController {
         return ApiResponse.ok();
     }
 }
+

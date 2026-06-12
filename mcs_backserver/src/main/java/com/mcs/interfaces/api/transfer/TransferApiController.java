@@ -35,14 +35,14 @@ public class TransferApiController {
 
     @PostMapping
     public ApiResponse<Long> createTransfer(@RequestBody TransferOrderDto orderDto) {
-        String transferNo = orderDto.transferNo();
+        String transferNo = orderDto.getTransferNo();
         if (transferNo == null || transferNo.isBlank()) {
             transferNo = "TF-" + System.currentTimeMillis();
         }
 
         TransferOrderDto dtoWithUser = new TransferOrderDto(
-                null, orderDto.plantCd(), transferNo, "REQUESTED", orderDto.fromLocationId(), orderDto.toLocationId(),
-                orderDto.transferReason(), "SYSTEM", null, null, null, null, null, null, null, orderDto.optimizeRule()
+                null, orderDto.getPlantCd(), transferNo, "REQUESTED", orderDto.getFromLocationId(), orderDto.getToLocationId(),
+                orderDto.getTransferReason(), "SYSTEM", null, null, null, null, null, null, null, orderDto.getOptimizeRule()
         );
         return ApiResponse.ok(transferService.createTransferOrder(dtoWithUser));
     }
@@ -50,8 +50,8 @@ public class TransferApiController {
     @PutMapping("/{transferId}")
     public ApiResponse<Void> updateTransfer(@PathVariable Long transferId, @RequestBody TransferOrderDto orderDto) {
         TransferOrderDto dtoWithId = new TransferOrderDto(
-                transferId, orderDto.plantCd(), orderDto.transferNo(), orderDto.transferStatus(), orderDto.fromLocationId(), orderDto.toLocationId(),
-                orderDto.transferReason(), null, null, "SYSTEM", null, null, null, null, null, orderDto.optimizeRule()
+                transferId, orderDto.getPlantCd(), orderDto.getTransferNo(), orderDto.getTransferStatus(), orderDto.getFromLocationId(), orderDto.getToLocationId(),
+                orderDto.getTransferReason(), null, null, "SYSTEM", null, null, null, null, null, orderDto.getOptimizeRule()
         );
         transferService.updateTransferOrder(dtoWithId);
         return ApiResponse.ok();
@@ -81,3 +81,4 @@ public class TransferApiController {
         return ApiResponse.ok();
     }
 }
+

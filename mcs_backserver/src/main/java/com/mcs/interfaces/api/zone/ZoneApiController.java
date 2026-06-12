@@ -29,8 +29,8 @@ public class ZoneApiController {
     public ApiResponse<Long> createZone(@RequestBody ZoneDto zoneDto) {
         // 실제 운영 시 세션 등에서 사용자 ID 추출
         ZoneDto dtoWithUser = new ZoneDto(
-            null, zoneDto.plantCd(), zoneDto.warehouseCd(), zoneDto.zoneCd(),
-            zoneDto.zoneNm(), zoneDto.zoneType(), zoneDto.sortSeq(), zoneDto.useYn(),
+            null, zoneDto.getPlantCd(), zoneDto.getWarehouseCd(), zoneDto.getZoneCd(),
+            zoneDto.getZoneNm(), zoneDto.getZoneType(), zoneDto.getSortSeq(), zoneDto.getUseYn(),
             "SYSTEM", null, null, null, null, null, null
         );
         return ApiResponse.ok(zoneService.createZone(dtoWithUser));
@@ -40,7 +40,7 @@ public class ZoneApiController {
     public ApiResponse<Void> updateZone(@PathVariable Long zoneId, @RequestBody ZoneDto zoneDto) {
         ZoneDto dtoWithId = new ZoneDto(
             zoneId, null, null, null,
-            zoneDto.zoneNm(), zoneDto.zoneType(), zoneDto.sortSeq(), zoneDto.useYn(),
+            zoneDto.getZoneNm(), zoneDto.getZoneType(), zoneDto.getSortSeq(), zoneDto.getUseYn(),
             null, null, "SYSTEM", null, null, null, null
         );
         zoneService.updateZone(dtoWithId);
@@ -53,3 +53,4 @@ public class ZoneApiController {
         return ApiResponse.ok();
     }
 }
+

@@ -42,13 +42,13 @@ public class InboundService {
     @Transactional
     public Long createInboundOrder(InboundOrderDto orderDto) {
         inboundMapper.insertInboundOrder(orderDto);
-        return orderDto.inboundId();
+        return orderDto.getInboundId();
     }
 
     @Transactional
     public void updateInboundOrder(InboundOrderDto orderDto) {
-        InboundOrderDto existing = getInboundOrder(orderDto.inboundId());
-        if (!"PLANNED".equals(existing.inboundStatus())) {
+        InboundOrderDto existing = getInboundOrder(orderDto.getInboundId());
+        if (!"PLANNED".equals(existing.getInboundStatus())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         inboundMapper.updateInboundOrder(orderDto);
@@ -57,7 +57,7 @@ public class InboundService {
     @Transactional
     public void deleteInboundOrder(Long inboundId) {
         InboundOrderDto existing = getInboundOrder(inboundId);
-        if (!"PLANNED".equals(existing.inboundStatus())) {
+        if (!"PLANNED".equals(existing.getInboundStatus())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         inboundMapper.deleteInboundItems(inboundId);
@@ -66,8 +66,8 @@ public class InboundService {
 
     @Transactional
     public void addInboundItem(InboundItemDto itemDto) {
-        InboundOrderDto order = getInboundOrder(itemDto.inboundId());
-        if (!"PLANNED".equals(order.inboundStatus())) {
+        InboundOrderDto order = getInboundOrder(itemDto.getInboundId());
+        if (!"PLANNED".equals(order.getInboundStatus())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         inboundMapper.insertInboundItem(itemDto);
@@ -76,7 +76,7 @@ public class InboundService {
     @Transactional
     public void deleteInboundItem(Long inboundId, Long inboundItemId) {
         InboundOrderDto order = getInboundOrder(inboundId);
-        if (!"PLANNED".equals(order.inboundStatus())) {
+        if (!"PLANNED".equals(order.getInboundStatus())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         inboundMapper.deleteInboundItem(inboundItemId, inboundId);
@@ -85,7 +85,7 @@ public class InboundService {
     @Transactional
     public void changeOrderStatus(Long inboundId, String newStatus, String userId) {
         InboundOrderDto order = getInboundOrder(inboundId);
-        String currentStatus = order.inboundStatus();
+        String currentStatus = order.getInboundStatus();
 
         if ("COMPLETED".equals(newStatus) && !"COMPLETED".equals(currentStatus)) {
             List<InboundItemDto> items = getInboundItems(inboundId);
@@ -101,35 +101,35 @@ public class InboundService {
     }
 
     private void receiveItem(InboundOrderDto order, InboundItemDto item, String userId) {
-        if (item.locationId() == null) {
+        if (item.getLocationId() == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "입고 적치 로케이션을 선택해야 합니다.");
         }
 
         double qty = resolveInboundQty(item);
-        String lotNo = normalizeLotNo(item.lotNo());
-        LocStockDto stock = getOrCreateLocationStock(order.plantCd(), item.locationId(), item.itemCd(), lotNo, userId);
-        double beforeQty = stock.stockQty();
+        String lotNo = normalizeLotNo(item.getLotNo());
+        LocStockDto stock = getOrCreateLocationStock(order.getPlantCd(), item.getLocationId(), item.getItemCd(), lotNo, userId);
+        double beforeQty = stock.getStockQty();
         double afterQty = beforeQty + qty;
 
-        inventoryMapper.updateLocStockQty(stock.locStockId(), qty, userId);
-        inventoryMapper.syncLocationUsage(item.locationId(), userId);
+        inventoryMapper.updateLocStockQty(stock.getLocStockId(), qty, userId);
+        inventoryMapper.syncLocationUsage(item.getLocationId(), userId);
         inventoryMapper.insertLocTransHis(new LocTransHisDto(
                 null,
-                order.plantCd(),
-                stock.locStockId(),
+                order.getPlantCd(),
+                stock.getLocStockId(),
                 "IB_IN",
                 qty,
                 beforeQty,
                 afterQty,
                 "IB",
-                order.inboundNo(),
-                order.inboundId(),
-                order.inboundRmk(),
+                order.getInboundNo(),
+                order.getInboundId(),
+                order.getInboundRmk(),
                 userId,
                 null,
                 null, null, null, null, null, null, null, null
         ));
-        inboundMapper.updateInboundItemStatus(item.inboundItemId(), "STOCKED", qty, item.locationId(), userId);
+        inboundMapper.updateInboundItemStatus(item.getInboundItemId(), "STOCKED", qty, item.getLocationId(), userId);
     }
 
     private LocStockDto getOrCreateLocationStock(String plantCd, Long locationId, String itemCd, String lotNo, String userId) {
@@ -163,9 +163,9 @@ public class InboundService {
     }
 
     private double resolveInboundQty(InboundItemDto item) {
-        Double qty = item.actualQty();
+        Double qty = item.getActualQty();
         if (qty == null || qty <= 0) {
-            qty = item.expectedQty();
+            qty = item.getExpectedQty();
         }
         if (qty == null || qty <= 0) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "입고 수량은 0보다 커야 합니다.");
@@ -177,3 +177,4 @@ public class InboundService {
         return lotNo == null ? "" : lotNo.trim();
     }
 }
+

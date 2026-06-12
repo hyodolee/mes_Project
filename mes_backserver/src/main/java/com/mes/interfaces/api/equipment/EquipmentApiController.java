@@ -63,7 +63,7 @@ public class EquipmentApiController {
     @PostMapping("/oper-statuses")
     public ApiResponse<Void> recordOperStatus(@Valid @RequestBody OperStatusRequest request) {
         equipmentService.recordOperStatus(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 
     @GetMapping("/downtimes")
@@ -79,7 +79,7 @@ public class EquipmentApiController {
     @PostMapping("/downtimes")
     public ApiResponse<Void> recordDowntime(@Valid @RequestBody DowntimeRequest request) {
         equipmentService.recordDowntime(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 
     @GetMapping("/maint-histories")
@@ -95,6 +95,6 @@ public class EquipmentApiController {
     @PostMapping("/maint-histories")
     public ApiResponse<Void> recordMaintHistory(@Valid @RequestBody MaintHisRequest request) {
         equipmentService.recordMaintHistory(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

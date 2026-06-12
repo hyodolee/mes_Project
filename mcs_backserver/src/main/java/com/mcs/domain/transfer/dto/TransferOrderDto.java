@@ -2,22 +2,27 @@ package com.mcs.domain.transfer.dto;
 
 import java.time.LocalDateTime;
 
-public record TransferOrderDto(
-    Long transferId,
-    String plantCd,
-    String transferNo,
-    String transferStatus,
-    Long fromLocationId,
-    Long toLocationId,
-    String transferReason,
-    String regUserId,
-    LocalDateTime regDtm,
-    String updUserId,
-    LocalDateTime updDtm,
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class TransferOrderDto {
+    private Long transferId;
+    private String plantCd;
+    private String transferNo;
+    private String transferStatus;
+    private Long fromLocationId;
+    private Long toLocationId;
+    private String transferReason;
+    private String regUserId;
+    private LocalDateTime regDtm;
+    private String updUserId;
+    private LocalDateTime updDtm;
     // Join Fields
-    String plantNm,
-    String transferStatusNm,
-    String fromLocationCd,
-    String toLocationCd,
-    String optimizeRule
-) {}
+    private String plantNm;
+    private String transferStatusNm;
+    private String fromLocationCd;
+    private String toLocationCd;
+    private String optimizeRule;
+}
+

@@ -28,8 +28,8 @@ public class LocationApiController {
     @PostMapping
     public ApiResponse<Long> createLocation(@RequestBody LocationDto locationDto) {
         LocationDto dtoWithUser = new LocationDto(
-            null, locationDto.zoneId(), locationDto.locationCd(), locationDto.locationNm(),
-            locationDto.maxCapacity(), 0.0, "EMPTY", locationDto.useYn(),
+            null, locationDto.getZoneId(), locationDto.getLocationCd(), locationDto.getLocationNm(),
+            locationDto.getMaxCapacity(), 0.0, "EMPTY", locationDto.getUseYn(),
             "SYSTEM", null, null, null, null, null, null, null, null, null, null
         );
         return ApiResponse.ok(locationService.createLocation(dtoWithUser));
@@ -38,8 +38,8 @@ public class LocationApiController {
     @PutMapping("/{locationId}")
     public ApiResponse<Void> updateLocation(@PathVariable Long locationId, @RequestBody LocationDto locationDto) {
         LocationDto dtoWithId = new LocationDto(
-            locationId, null, null, locationDto.locationNm(),
-            locationDto.maxCapacity(), null, locationDto.locationStatus(), locationDto.useYn(),
+            locationId, null, null, locationDto.getLocationNm(),
+            locationDto.getMaxCapacity(), null, locationDto.getLocationStatus(), locationDto.getUseYn(),
             null, null, "SYSTEM", null, null, null, null, null, null, null, null
         );
         locationService.updateLocation(dtoWithId);
@@ -52,3 +52,4 @@ public class LocationApiController {
         return ApiResponse.ok();
     }
 }
+

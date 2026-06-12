@@ -7,6 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PlcEventSearchDto extends PageRequest {
+    private Long eventId;
     private String equipmentCd;
     private String eventType;
     private String eventStatus;

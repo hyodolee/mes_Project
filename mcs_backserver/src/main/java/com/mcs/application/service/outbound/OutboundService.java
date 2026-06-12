@@ -42,13 +42,13 @@ public class OutboundService {
     @Transactional
     public Long createOutboundOrder(OutboundOrderDto orderDto) {
         outboundMapper.insertOutboundOrder(orderDto);
-        return orderDto.outboundId();
+        return orderDto.getOutboundId();
     }
 
     @Transactional
     public void updateOutboundOrder(OutboundOrderDto orderDto) {
-        OutboundOrderDto existing = getOutboundOrder(orderDto.outboundId());
-        if (!"REQUESTED".equals(existing.outboundStatus())) {
+        OutboundOrderDto existing = getOutboundOrder(orderDto.getOutboundId());
+        if (!"REQUESTED".equals(existing.getOutboundStatus())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         outboundMapper.updateOutboundOrder(orderDto);
@@ -57,7 +57,7 @@ public class OutboundService {
     @Transactional
     public void deleteOutboundOrder(Long outboundId) {
         OutboundOrderDto existing = getOutboundOrder(outboundId);
-        if (!"REQUESTED".equals(existing.outboundStatus())) {
+        if (!"REQUESTED".equals(existing.getOutboundStatus())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         outboundMapper.deleteOutboundItems(outboundId);
@@ -67,7 +67,7 @@ public class OutboundService {
     @Transactional
     public void changeOrderStatus(Long outboundId, String newStatus, String userId) {
         OutboundOrderDto order = getOutboundOrder(outboundId);
-        String currentStatus = order.outboundStatus();
+        String currentStatus = order.getOutboundStatus();
 
         if ("SHIPPED".equals(newStatus) && !"SHIPPED".equals(currentStatus)) {
             List<OutboundItemDto> items = getOutboundItems(outboundId);
@@ -83,58 +83,58 @@ public class OutboundService {
     }
 
     private void shipItem(OutboundOrderDto order, OutboundItemDto item, String userId) {
-        if (item.locationId() == null) {
+        if (item.getLocationId() == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "출고 로케이션을 선택해야 합니다.");
         }
 
         double qty = resolveOutboundQty(item);
-        String lotNo = normalizeLotNo(item.lotNo());
-        LocStockDto stock = inventoryMapper.selectLocStockForUpdate(order.plantCd(), item.locationId(), item.itemCd(), lotNo)
+        String lotNo = normalizeLotNo(item.getLotNo());
+        LocStockDto stock = inventoryMapper.selectLocStockForUpdate(order.getPlantCd(), item.getLocationId(), item.getItemCd(), lotNo)
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.INSUFFICIENT_STOCK,
                         "출고 로케이션의 해당 품목/LOT 재고가 없습니다."
                 ));
 
-        if (stock.availableQty() < qty) {
+        if (stock.getAvailableQty() < qty) {
             throw new BusinessException(
                     ErrorCode.INSUFFICIENT_STOCK,
-                    "출고 로케이션의 가용 재고가 부족합니다. 현재 가용수량: " + stock.availableQty()
+                    "출고 로케이션의 가용 재고가 부족합니다. 현재 가용수량: " + stock.getAvailableQty()
             );
         }
 
-        double beforeQty = stock.stockQty();
+        double beforeQty = stock.getStockQty();
         double afterQty = beforeQty - qty;
-        inventoryMapper.updateLocStockQty(stock.locStockId(), -qty, userId);
-        inventoryMapper.syncLocationUsage(item.locationId(), userId);
+        inventoryMapper.updateLocStockQty(stock.getLocStockId(), -qty, userId);
+        inventoryMapper.syncLocationUsage(item.getLocationId(), userId);
         inventoryMapper.insertLocTransHis(new LocTransHisDto(
                 null,
-                order.plantCd(),
-                stock.locStockId(),
+                order.getPlantCd(),
+                stock.getLocStockId(),
                 "OB_OUT",
                 qty,
                 beforeQty,
                 afterQty,
                 "OB",
-                order.outboundNo(),
-                order.outboundId(),
-                order.outboundRmk(),
+                order.getOutboundNo(),
+                order.getOutboundId(),
+                order.getOutboundRmk(),
                 userId,
                 null,
                 null, null, null, null, null, null, null, null
         ));
-        outboundMapper.updateOutboundItemStatus(item.outboundItemId(), "SHIPPED", qty, userId);
+        outboundMapper.updateOutboundItemStatus(item.getOutboundItemId(), "SHIPPED", qty, userId);
     }
 
     private double resolveOutboundQty(OutboundItemDto item) {
-        Double qty = item.shippedQty();
+        Double qty = item.getShippedQty();
         if (qty == null || qty <= 0) {
-            qty = item.pickedQty();
+            qty = item.getPickedQty();
         }
         if (qty == null || qty <= 0) {
-            qty = item.allocatedQty();
+            qty = item.getAllocatedQty();
         }
         if (qty == null || qty <= 0) {
-            qty = item.requestedQty();
+            qty = item.getRequestedQty();
         }
         if (qty == null || qty <= 0) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "출고 수량은 0보다 커야 합니다.");
@@ -146,3 +146,4 @@ public class OutboundService {
         return lotNo == null ? "" : lotNo.trim();
     }
 }
+

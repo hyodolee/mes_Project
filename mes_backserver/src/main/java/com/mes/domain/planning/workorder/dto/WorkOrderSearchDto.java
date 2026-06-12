@@ -9,6 +9,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class WorkOrderSearchDto extends PageRequest {
+    private String woNo;
     private String plantCd;
     private String itemCd;
     private String woStatus;

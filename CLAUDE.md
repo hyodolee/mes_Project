@@ -11,7 +11,10 @@
 Windows 10, Java 21, Spring Boot 3.3.5, MyBatis 3.0.3, MariaDB, Thymeleaf, Gradle
 
 ## 핵심 패턴 (MES/MCS 공통)
-- DTO: Java Record(불변), API응답: `ApiResponse.ok()/fail()`
+- DTO: Lombok class (`@Getter @Setter @NoArgsConstructor @AllArgsConstructor`), API응답: `ApiResponse.ok()/fail()`
+  - getter는 `getXxx()` / boolean primitive는 `isXxx()` / 검증 어노테이션은 필드에 부착
+  - MyBatis 매핑: `resultType` + 컬럼 별칭(`AS camelCase`) 방식 (setter 주입), `<resultMap>` 불필요
+  - mes_backserver는 MES 전 DTO를 Lombok class로 통일함 (record 사용 안 함)
 - 페이징: `SearchDto extends PageRequest` → `PageResponse.createPagedResponse()`
 - 예외: `ErrorCode enum` + `BusinessException` + `GlobalExceptionHandler`
 - 계층: `interfaces/api`(REST) + `interfaces/web`(Thymeleaf) + `application/service` + `infra/persistence/mybatis/mapper`

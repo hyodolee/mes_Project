@@ -1,9 +1,14 @@
 package com.mcs.domain.mes.dto;
 
-public record WarehouseDto(
-    String warehouseCd,
-    String plantCd,
-    String warehouseNm,
-    String warehouseType,
-    String useYn
-) {}
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class WarehouseDto {
+    private String warehouseCd;
+    private String plantCd;
+    private String warehouseNm;
+    private String warehouseType;
+    private String useYn;
+}
+

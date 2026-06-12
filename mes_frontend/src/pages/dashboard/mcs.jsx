@@ -1,21 +1,25 @@
 import { Link as RouterLink } from 'react-router-dom';
 
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
+import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { AlertOutlined, DatabaseOutlined, SwapOutlined, UnorderedListOutlined } from '@ant-design/icons';
 
 import MainCard from 'components/MainCard';
-
-const kpis = [
-  { label: '입고 대기', value: '-', caption: 'MCS 입고 예정/대기 건수' },
-  { label: '출고 대기', value: '-', caption: 'MCS 출고 지시/대기 건수' },
-  { label: '이동 진행', value: '-', caption: '진행 중인 로케이션 이동 오더' },
-  { label: 'PLC 이벤트', value: '-', caption: '최근 설비 이벤트 수집 현황' }
-];
+import {
+  DetailDrawer,
+  OperationFlowPanel,
+  PlcSignalTrendPanel,
+  SignalStatusPanel,
+  TransferProductionTrendPanel,
+  TransferStatusPanel,
+  useOperationsDashboard
+} from 'sections/operations/operationsDashboard';
 
 const workAreas = [
   { title: '입고 관리', caption: '입고 오더와 품목 입고 상태를 관리합니다.', url: '/mcs/inbounds', icon: <UnorderedListOutlined /> },
@@ -27,6 +31,19 @@ const workAreas = [
 ];
 
 export default function McsDashboard() {
+  const {
+    dashboard,
+    isLoading,
+    errors,
+    detail,
+    setDetail,
+    openTransfers,
+    openSignals,
+    openWorkOrders
+  } = useOperationsDashboard();
+
+  const hasTrend = dashboard.trend.labels.length > 0;
+
   return (
     <Stack spacing={3}>
       <Stack spacing={0.75}>
@@ -36,21 +53,37 @@ export default function McsDashboard() {
         </Typography>
       </Stack>
 
-      <Grid container spacing={2.5}>
-        {kpis.map((item) => (
-          <Grid key={item.label} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <MainCard>
-              <Stack spacing={0.75}>
-                <Typography variant="h3">{item.value}</Typography>
-                <Typography variant="subtitle1">{item.label}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {item.caption}
-                </Typography>
-              </Stack>
-            </MainCard>
-          </Grid>
-        ))}
+      {isLoading && <LinearProgress />}
+      {errors.map((error, index) => (
+        <Alert key={index} severity="error">{error.message}</Alert>
+      ))}
+
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <TransferStatusPanel dashboard={dashboard} onOpenTransfers={openTransfers} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <SignalStatusPanel dashboard={dashboard} onOpenSignals={openSignals} />
+        </Grid>
       </Grid>
+
+      {hasTrend && (
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <PlcSignalTrendPanel dashboard={dashboard} onOpenSignals={openSignals} />
+          </Grid>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <TransferProductionTrendPanel dashboard={dashboard} onOpenTransfers={openTransfers} />
+          </Grid>
+        </Grid>
+      )}
+
+      <OperationFlowPanel
+        dashboard={dashboard}
+        onOpenWorkOrders={openWorkOrders}
+        onOpenTransfers={openTransfers}
+        onOpenSignals={openSignals}
+      />
 
       <MainCard
         title="MCS 업무 화면"
@@ -75,6 +108,8 @@ export default function McsDashboard() {
           ))}
         </Grid>
       </MainCard>
+
+      <DetailDrawer detail={detail} onClose={() => setDetail(null)} />
     </Stack>
   );
 }

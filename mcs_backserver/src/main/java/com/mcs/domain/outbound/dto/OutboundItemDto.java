@@ -2,26 +2,31 @@ package com.mcs.domain.outbound.dto;
 
 import java.time.LocalDateTime;
 
-public record OutboundItemDto(
-    Long outboundItemId,
-    Long outboundId,
-    String itemCd,
-    String lotNo,
-    Long locationId,
-    Double requestedQty,
-    Double allocatedQty,
-    Double pickedQty,
-    Double shippedQty,
-    String itemStatus,
-    String itemRmk,
-    String regUserId,
-    LocalDateTime regDtm,
-    String updUserId,
-    LocalDateTime updDtm,
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class OutboundItemDto {
+    private Long outboundItemId;
+    private Long outboundId;
+    private String itemCd;
+    private String lotNo;
+    private Long locationId;
+    private Double requestedQty;
+    private Double allocatedQty;
+    private Double pickedQty;
+    private Double shippedQty;
+    private String itemStatus;
+    private String itemRmk;
+    private String regUserId;
+    private LocalDateTime regDtm;
+    private String updUserId;
+    private LocalDateTime updDtm;
     // Join Fields
-    String itemNm,
-    String itemSpec,
-    String unit,
-    String locationCd,
-    String itemStatusNm
-) {}
+    private String itemNm;
+    private String itemSpec;
+    private String unit;
+    private String locationCd;
+    private String itemStatusNm;
+}
+

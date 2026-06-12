@@ -4,18 +4,27 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public record MaintHisDto(
-    Long maintId,
-    String plantCd,
-    String equipmentCd,
-    String maintNo,
-    String maintType,
-    LocalDate maintDt,
-    LocalDateTime startDtm,
-    LocalDateTime endDtm,
-    BigDecimal maintTime,
-    String maintWorkerId,
-    String maintResult,
-    BigDecimal maintCost,
-    LocalDateTime regDtm
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class MaintHisDto {
+    private Long maintId;
+    private String plantCd;
+    private String equipmentCd;
+    private String maintNo;
+    private String maintType;
+    private LocalDate maintDt;
+    private LocalDateTime startDtm;
+    private LocalDateTime endDtm;
+    private BigDecimal maintTime;
+    private String maintWorkerId;
+    private String maintResult;
+    private BigDecimal maintCost;
+    private LocalDateTime regDtm;
+}

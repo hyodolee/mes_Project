@@ -4,19 +4,28 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public record StockDto(
-    Long stockId,
-    String plantCd,
-    String warehouseCd,
-    String locationCd,
-    String itemCd,
-    String itemNm,
-    String lotNo,
-    BigDecimal stockQty,
-    BigDecimal reservedQty,
-    BigDecimal availableQty,
-    String unit,
-    String stockStatus,
-    LocalDate expireDt,
-    LocalDateTime regDtm
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class StockDto {
+    private Long stockId;
+    private String plantCd;
+    private String warehouseCd;
+    private String locationCd;
+    private String itemCd;
+    private String itemNm;
+    private String lotNo;
+    private BigDecimal stockQty;
+    private BigDecimal reservedQty;
+    private BigDecimal availableQty;
+    private String unit;
+    private String stockStatus;
+    private LocalDate expireDt;
+    private LocalDateTime regDtm;
+}

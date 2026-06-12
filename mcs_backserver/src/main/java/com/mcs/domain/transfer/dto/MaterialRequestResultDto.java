@@ -1,15 +1,19 @@
 package com.mcs.domain.transfer.dto;
 
-public record MaterialRequestResultDto(
-        Long transferId,
-        String transferNo,
-        Long fromLocationId,
-        String fromLocationCd,
-        Long toLocationId,
-        String toLocationCd,
-        String itemCd,
-        String lotNo,
-        Double transferQty,
-        String optimizeRule
-) {
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class MaterialRequestResultDto {
+    private Long transferId;
+    private String transferNo;
+    private Long fromLocationId;
+    private String fromLocationCd;
+    private Long toLocationId;
+    private String toLocationCd;
+    private String itemCd;
+    private String lotNo;
+    private Double transferQty;
+    private String optimizeRule;
 }
+

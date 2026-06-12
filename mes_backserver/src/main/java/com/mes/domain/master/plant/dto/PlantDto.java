@@ -1,12 +1,20 @@
 package com.mes.domain.master.plant.dto;
 
-public record PlantDto(
-        String plantCd,
-        String companyCd,
-        String companyNm,
-        String plantNm,
-        String addr,
-        String telNo,
-        String useYn
-) {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class PlantDto {
+    private String plantCd;
+    private String companyCd;
+    private String companyNm;
+    private String plantNm;
+    private String addr;
+    private String telNo;
+    private String useYn;
 }

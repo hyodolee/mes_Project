@@ -36,18 +36,18 @@ public class MaterialRequestService {
     public MaterialRequestResultDto createMaterialRequest(MaterialRequestDto request) {
         validateRequest(request);
 
-        String optimizeRule = normalizeOptimizeRule(request.optimizeRule());
+        String optimizeRule = normalizeOptimizeRule(request.getOptimizeRule());
         LocStockDto sourceStock = selectSourceStock(request);
-        LocationDto destination = selectDestination(request.plantCd(), sourceStock.locationId(), optimizeRule);
+        LocationDto destination = selectDestination(request.getPlantCd(), sourceStock.getLocationId(), optimizeRule);
 
-        String transferNo = createTransferNo(request.woId());
+        String transferNo = createTransferNo(request.getWoId());
         Long transferId = transferService.createTransferOrder(new TransferOrderDto(
                 null,
-                request.plantCd(),
+                request.getPlantCd(),
                 transferNo,
                 "REQUESTED",
-                sourceStock.locationId(),
-                destination.locationId(),
+                sourceStock.getLocationId(),
+                destination.getLocationId(),
                 createTransferReason(request),
                 SYSTEM_USER,
                 null,
@@ -63,9 +63,9 @@ public class MaterialRequestService {
         transferService.createTransferItem(transferId, new TransferItemDto(
                 null,
                 transferId,
-                request.itemCd(),
-                normalizeLotNo(sourceStock.lotNo()),
-                request.requestQty(),
+                request.getItemCd(),
+                normalizeLotNo(sourceStock.getLotNo()),
+                request.getRequestQty(),
                 "REQUESTED",
                 SYSTEM_USER,
                 null,
@@ -80,13 +80,13 @@ public class MaterialRequestService {
         return new MaterialRequestResultDto(
                 transferId,
                 transferNo,
-                sourceStock.locationId(),
-                sourceStock.locationCd(),
-                destination.locationId(),
-                destination.locationCd(),
-                request.itemCd(),
-                normalizeLotNo(sourceStock.lotNo()),
-                request.requestQty(),
+                sourceStock.getLocationId(),
+                sourceStock.getLocationCd(),
+                destination.getLocationId(),
+                destination.getLocationCd(),
+                request.getItemCd(),
+                normalizeLotNo(sourceStock.getLotNo()),
+                request.getRequestQty(),
                 optimizeRule
         );
     }
@@ -103,42 +103,42 @@ public class MaterialRequestService {
 
         int cancelledCount = 0;
         for (TransferOrderDto transfer : transferService.getTransferList(searchDto).getContent()) {
-            if ("CANCELLED".equals(transfer.transferStatus())) {
+            if ("CANCELLED".equals(transfer.getTransferStatus())) {
                 continue;
             }
-            if ("COMPLETED".equals(transfer.transferStatus())) {
+            if ("COMPLETED".equals(transfer.getTransferStatus())) {
                 throw new BusinessException(
                         ErrorCode.BUSINESS_ERROR,
                         "MCS 자재 이동이 이미 완료되어 작업오더만 취소할 수 없습니다. 재고 복구 또는 반품 이동을 먼저 처리하세요. 이동번호="
-                                + transfer.transferNo()
+                                + transfer.getTransferNo()
                 );
             }
-            transferService.changeOrderStatus(transfer.transferId(), "CANCELLED", SYSTEM_USER);
+            transferService.changeOrderStatus(transfer.getTransferId(), "CANCELLED", SYSTEM_USER);
             cancelledCount++;
         }
         return cancelledCount;
     }
 
     private void validateRequest(MaterialRequestDto request) {
-        if (request.plantCd() == null || request.plantCd().isBlank()
-                || request.itemCd() == null || request.itemCd().isBlank()
-                || request.requestQty() == null || request.requestQty() <= 0
-                || request.woId() == null
-                || request.woNo() == null || request.woNo().isBlank()) {
+        if (request.getPlantCd() == null || request.getPlantCd().isBlank()
+                || request.getItemCd() == null || request.getItemCd().isBlank()
+                || request.getRequestQty() == null || request.getRequestQty() <= 0
+                || request.getWoId() == null
+                || request.getWoNo() == null || request.getWoNo().isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
     }
 
     private LocStockDto selectSourceStock(MaterialRequestDto request) {
         List<LocStockDto> stocks = inventoryMapper.selectAvailableLocStocksForMaterialRequest(
-                request.plantCd(),
-                request.itemCd(),
-                request.requestQty()
+                request.getPlantCd(),
+                request.getItemCd(),
+                request.getRequestQty()
         );
         if (stocks.isEmpty()) {
             throw new BusinessException(
                     ErrorCode.INSUFFICIENT_STOCK,
-                    "MCS에서 자동 배정 가능한 가용 재고가 없습니다. 품목=" + request.itemCd()
+                    "MCS에서 자동 배정 가능한 가용 재고가 없습니다. 품목=" + request.getItemCd()
             );
         }
         return stocks.get(0);
@@ -151,10 +151,10 @@ public class MaterialRequestService {
                 RouteOptimizeResultDto result = routeService.optimize(new RouteOptimizeRequest(
                         plantCd,
                         sourceLocationId,
-                        candidate.locationId(),
+                        candidate.getLocationId(),
                         optimizeRule
                 ));
-                if (Boolean.TRUE.equals(result.routeAvailable())) {
+                if (Boolean.TRUE.equals(result.getRouteAvailable())) {
                     return candidate;
                 }
             } catch (BusinessException ignored) {
@@ -170,11 +170,11 @@ public class MaterialRequestService {
     }
 
     private String createTransferReason(MaterialRequestDto request) {
-        String reason = request.requestReason();
+        String reason = request.getRequestReason();
         if (reason == null || reason.isBlank()) {
             reason = "MES 작업오더 자재 요청";
         }
-        return reason + " / WO=" + request.woNo() + " / WC=" + defaultText(request.workcenterCd());
+        return reason + " / WO=" + request.getWoNo() + " / WC=" + defaultText(request.getWorkcenterCd());
     }
 
     private String normalizeOptimizeRule(String optimizeRule) {
@@ -189,3 +189,4 @@ public class MaterialRequestService {
         return value == null || value.isBlank() ? "-" : value;
     }
 }
+

@@ -4,19 +4,28 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public record TransDto(
-    Long transId,
-    String plantCd,
-    String transNo,
-    LocalDate transDt,
-    String transType,
-    String transReason,
-    String itemCd,
-    String lotNo,
-    BigDecimal transQty,
-    String unit,
-    String fromWarehouseCd,
-    String toWarehouseCd,
-    String refNo,
-    LocalDateTime regDtm
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class TransDto {
+    private Long transId;
+    private String plantCd;
+    private String transNo;
+    private LocalDate transDt;
+    private String transType;
+    private String transReason;
+    private String itemCd;
+    private String lotNo;
+    private BigDecimal transQty;
+    private String unit;
+    private String fromWarehouseCd;
+    private String toWarehouseCd;
+    private String refNo;
+    private LocalDateTime regDtm;
+}

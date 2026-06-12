@@ -86,7 +86,7 @@ export default function MesDefects() {
         cardTitle="불량 이력 목록"
         swrKey="mes-defect-histories"
         fetcher={mesProductionApi.defectHistories}
-        initialSearch={{ plantCd: '', itemCd: '', fromDt: '', toDt: '' }}
+        initialSearch={{ plantCd: '', itemCd: '', fromDt: '', toDt: '', defectId: '' }}
         filters={[
           { field: 'plantCd', label: '공장' },
           { field: 'itemCd', label: '품목 코드' },

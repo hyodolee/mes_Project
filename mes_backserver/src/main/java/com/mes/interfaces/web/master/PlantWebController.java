@@ -63,12 +63,12 @@ public class PlantWebController {
     public String editForm(@PathVariable("plantCd") String plantCd, Model model) {
         var plant = plantService.getPlant(plantCd);
         model.addAttribute("request", new PlantUpsertRequest(
-                plant.plantCd(),
-                plant.companyCd(),
-                plant.plantNm(),
-                plant.addr(),
-                plant.telNo(),
-                plant.useYn()
+                plant.getPlantCd(),
+                plant.getCompanyCd(),
+                plant.getPlantNm(),
+                plant.getAddr(),
+                plant.getTelNo(),
+                plant.getUseYn()
         ));
         model.addAttribute("companies", companyService.getCompanies(null, "Y"));
         model.addAttribute("mode", "edit");
@@ -85,7 +85,7 @@ public class PlantWebController {
             model.addAttribute("companies", companyService.getCompanies(null, "Y"));
             return "master/plant/form";
         }
-        if (!plantCd.equals(request.plantCd())) {
+        if (!plantCd.equals(request.getPlantCd())) {
             throw new IllegalArgumentException("경로의 plantCd와 폼의 plantCd가 일치하지 않습니다.");
         }
         plantService.updatePlant(request);

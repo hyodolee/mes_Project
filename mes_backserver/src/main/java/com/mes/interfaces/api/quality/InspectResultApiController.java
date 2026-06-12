@@ -39,6 +39,6 @@ public class InspectResultApiController {
     @PostMapping
     public ApiResponse<Void> createInspectResult(@Valid @RequestBody InspectResultCreateRequest request) {
         inspectResultService.createInspectResult(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

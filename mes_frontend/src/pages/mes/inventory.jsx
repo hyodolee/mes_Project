@@ -83,10 +83,11 @@ export default function MesInventory() {
           cardTitle="현재고 목록"
           swrKey="mes-stocks"
           fetcher={mesInventoryApi.stocks}
-          initialSearch={{ plantCd: '', warehouseCd: '', itemCd: '', lotNo: '', stockStatus: '' }}
+          initialSearch={{ plantCd: '', warehouseCd: '', locationCd: '', itemCd: '', lotNo: '', stockStatus: '', stockId: '' }}
           filters={[
             { field: 'plantCd', label: '공장' },
             { field: 'warehouseCd', label: '창고' },
+            { field: 'locationCd', label: 'Location' },
             { field: 'itemCd', label: '품목 코드' },
             { field: 'lotNo', label: 'LOT 번호' },
             { field: 'stockStatus', label: '상태' }

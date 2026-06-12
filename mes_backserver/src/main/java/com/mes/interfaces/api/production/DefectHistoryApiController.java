@@ -34,6 +34,6 @@ public class DefectHistoryApiController {
     @PostMapping
     public ApiResponse<Void> createDefectHistory(@Valid @RequestBody DefectHistoryCreateRequest request) {
         defectHistoryService.createDefectHistory(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

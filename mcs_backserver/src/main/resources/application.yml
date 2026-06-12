@@ -7,6 +7,17 @@ spring:
   profiles:
     active: local
 
+app:
+  security:
+    username: ${MCS_AUTH_USERNAME:admin}
+    password: ${MCS_AUTH_PASSWORD:admin123}
+    display-name: ${MCS_AUTH_DISPLAY_NAME:MES/MCS Admin}
+    role: ${MCS_AUTH_ROLE:ADMIN}
+    allowed-origins: ${SECURITY_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+    jwt:
+      secret: ${JWT_SECRET:mes-mcs-dev-jwt-secret-change-me-please}
+      expiration-seconds: ${JWT_EXPIRATION_SECONDS:7200}
+
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
   type-aliases-package: com.mcs

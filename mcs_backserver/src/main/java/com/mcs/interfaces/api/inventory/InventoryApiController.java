@@ -38,8 +38,8 @@ public class InventoryApiController {
 
     @PostMapping("/stocks/{locStockId}/adjust")
     public ApiResponse<Void> adjustStock(@PathVariable Long locStockId, @RequestBody StockAdjustRequest request) {
-        double adjustQty = request.adjustQty() == null ? 0 : request.adjustQty();
-        if ("ADJ_MINUS".equals(request.adjustType())) {
+        double adjustQty = request.getAdjustQty() == null ? 0 : request.getAdjustQty();
+        if ("ADJ_MINUS".equals(request.getAdjustType())) {
             adjustQty = -Math.abs(adjustQty);
         } else {
             adjustQty = Math.abs(adjustQty);
@@ -47,9 +47,9 @@ public class InventoryApiController {
 
         inventoryService.adjustStock(new StockAdjustRequest(
                 locStockId,
-                request.adjustType(),
+                request.getAdjustType(),
                 adjustQty,
-                request.transRmk(),
+                request.getTransRmk(),
                 "SYSTEM"
         ));
         return ApiResponse.ok();
@@ -60,3 +60,4 @@ public class InventoryApiController {
         return ApiResponse.ok(inventoryService.getLocTransHisList(searchDto));
     }
 }
+

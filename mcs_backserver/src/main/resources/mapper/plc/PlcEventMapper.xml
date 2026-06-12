@@ -4,6 +4,9 @@
 
     <sql id="plcEventWhere">
         <where>
+            <if test="eventId != null">
+                AND EVENT_ID = #{eventId}
+            </if>
             <if test="equipmentCd != null and equipmentCd != ''">
                 AND EQUIPMENT_CD LIKE CONCAT('%', #{equipmentCd}, '%')
             </if>

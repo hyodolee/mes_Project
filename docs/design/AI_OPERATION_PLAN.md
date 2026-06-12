@@ -1,97 +1,124 @@
-# AI Operation Plan
+# AI 운영 기능 계획
 
-AI is an assistant layer for MES/MCS operations. It must not directly change production, transfer, stock, or PLC state in the first implementation.
+AI 기능은 MES/MCS 운영을 보조하는 기능입니다. 생산, 이동, 재고, PLC, 설비, 검사, 불량 데이터를 직접 변경하지 않고, 현재 상황과 다음 확인 방향을 설명합니다.
 
-The backend remains responsible for business rules and state changes. AI receives curated operational context, explains the situation, and suggests the next action.
+## 핵심 기능
 
-## Scope
-
-| Feature | Purpose | First target |
+| 기능 | 설명 | 상태 |
 |---|---|---|
-| AI incident analysis | Explain why a work order or transfer is blocked | MES work order + MCS transfer + PLC event failure |
-| AI operation query | Answer natural-language questions from operators | "Why can this work order not start?" |
-| AI operation summary | Summarize current MES/MCS status on dashboard screens | Waiting work orders, failed transfers, recent PLC errors |
-| AI alert message generation | Generate human-readable notification text | PLC error/interlock message for operator |
+| AI 실시간 운영 브리핑 | 공장 전체 운영 상태를 요약합니다. | 구현 |
+| AI 운영 챗봇 | 사용자가 자연어로 MES/MCS 상태를 질문합니다. | 구현 |
+| AI 이벤트 알림 | PLC 오류와 이동 실패를 감지해 운영 알림을 만듭니다. | 구현 |
+| 운영 문서 검색 Tool | PLC-MCS 문서를 검색해 챗봇 답변 근거로 사용합니다. | 1차 구현 |
+| Chroma 기반 RAG | 문서를 벡터화해 의미 기반 검색을 합니다. | 예정 |
 
-## Recommended Stack
+## 현재 구현 상태
 
-Use Spring AI first.
+### AI 실시간 운영 브리핑
 
-Reasons:
-
-- Current backend is Spring Boot.
-- MES/MCS data and business rules already live in Java services.
-- Tool calling can wrap existing service methods.
-- It keeps the portfolio architecture simpler than adding a separate Python AI server.
-
-LangChain or LangGraph can be added later only if the project needs complex multi-step autonomous agents.
-
-## First Implementation
-
-Start with AI incident analysis.
-
-Input context:
-
-- Work order summary
-- Material transfer status
-- MCS route summary
-- Recent PLC events for the transfer
-- Current blocking reason from backend rules
-
-Output:
-
-- Problem summary
-- Likely cause
-- Operational impact
-- Recommended recovery step
-
-Example question:
+목표:
 
 ```text
-WO202606010009 왜 시작이 안 돼?
+공장 전체 운영 스냅샷을 보고
+현재 위험도, 주요 이슈, 우선 조치 방향을 설명합니다.
 ```
 
-Expected answer:
+입력 데이터:
+
+- 작업오더 상태
+- MCS 이동 상태
+- PLC 이벤트
+- 재고
+- 검사 결과
+- 불량 이력
+- 설비 현황
+
+운영 방식:
+
+- 최초 화면에서 저장된 브리핑이 있으면 먼저 보여줍니다.
+- 사용자가 `분석 시작` 또는 `다시 분석`을 눌렀을 때 AI를 호출합니다.
+- 같은 화면에 머무르는 동안 30초마다 반복 호출하지 않습니다.
+- AI 호출 실패 시 규칙 기반 요약으로 대체합니다.
+
+### AI 운영 챗봇
+
+목표:
 
 ```text
-WO202606010009는 연결된 MCS 이동오더가 FAILED 상태라서 시작할 수 없습니다.
-최근 PLC 이벤트에서 EQUIPMENT_ERROR가 발생했고, MCS가 해당 이동오더를 실패 처리했습니다.
-복구하려면 MCS에서 실패 이동오더를 취소한 뒤 MES에서 자재 요청을 다시 생성하세요.
+사용자가 "실패한 자재 이동 있어?"처럼 질문하면
+AI가 필요한 조회 Tool을 선택해 답변합니다.
 ```
 
-## Backend Design
+현재 방식:
+
+- Spring AI Tool Calling 사용
+- SSE 스트리밍 응답 사용
+- `MessageChatMemoryAdvisor`로 최근 대화 기억
+- 프론트는 Zustand로 현재 탭의 대화 화면 상태 관리
+
+현재 메모리:
+
+- short-term memory만 사용합니다.
+- 서버 메모리에 최근 12개 메시지를 기억합니다.
+- DB 저장, long-term memory, 탭 간 공유는 아직 보류입니다.
+
+### AI 이벤트 알림
+
+목표:
 
 ```text
-React AI panel
-  -> MES AI API
-    -> AiIncidentAnalysisService
-      -> WorkOrderService
-      -> McsTransferClient
-      -> PLC event lookup
-      -> Spring AI ChatClient
+PLC 오류, 인터록, 이동 실패 같은 운영 이벤트를 감지하고
+화면 알림으로 알려줍니다.
 ```
 
-## Tool Candidates
+현재 방식:
 
-| Tool | Responsibility |
-|---|---|
-| `getWorkOrderContext(woNo)` | Work order, item, lot, status, current MES block reason |
-| `getMcsTransferContext(woId)` | Linked MCS transfers, latest active transfer, route |
-| `getPlcEventsByTransfer(transferId)` | Recent PLC events for transfer |
-| `getProblemWorkOrders()` | Work orders blocked by MCS transfer state |
-| `getRecentTransferFailures()` | Recent failed MCS transfers and PLC causes |
+- 백엔드 스케줄러가 60초마다 PLC 이벤트 확인
+- 알림 대상 이벤트 선별
+- 중복 알림 방지
+- DB 저장
+- SSE로 프론트에 push
 
-## Guardrails
+## RAG 계획
 
-- AI does not execute cancel, start, complete, stock correction, or route status changes.
-- AI may recommend a recovery action, but the user must click the actual button.
-- AI answers must include the source status values used for the conclusion.
-- If required context is missing, AI should say what data is missing instead of guessing.
+RAG는 바로 복잡하게 들어가지 않고 학습 단계로 진행합니다.
 
-## Development Order
+사용할 Vector DB:
 
-1. AI incident analysis API for one work order.
-2. React analysis panel on MES work order screen.
-3. Natural-language operation query screen.
-4. Dashboard operation summary.
-5. Alert message generation for PLC failure/interlock.
+- Chroma
+
+문서:
+
+- `docs/rag/plc-mcs-communication-spec.md`
+- `docs/rag/plc-tag-mapping.md`
+- `docs/rag/plc-troubleshooting-sop.md`
+
+진행 순서:
+
+1. 문서 구조를 RAG에 맞게 정리합니다.
+2. chunk가 무엇인지 설명하고 작은 단위로 나누는 기준을 정합니다.
+3. embedding이 무엇인지 설명합니다.
+4. Chroma를 Docker로 실행합니다.
+5. Spring AI에서 Chroma VectorStore를 연결합니다.
+6. 문서를 적재합니다.
+7. 검색 API를 먼저 만듭니다.
+8. 챗봇에 검색 결과를 붙입니다.
+9. 답변에 문서 출처를 표시합니다.
+
+## 운영 제한 사항
+
+- AI는 작업오더 시작/취소/완료를 직접 실행하지 않습니다.
+- AI는 MCS 이동오더를 직접 생성/취소/완료하지 않습니다.
+- AI는 재고를 직접 수정하지 않습니다.
+- AI 답변은 판단 보조용입니다.
+- 데이터가 부족하면 추측하지 않고 부족한 데이터를 말해야 합니다.
+
+## 다음 보강 작업
+
+| 순서 | 작업 | 이유 |
+|---:|---|---|
+| 1 | 깨진 문서/화면 문구 정리 | 학습과 유지보수를 위해 읽을 수 있어야 함 |
+| 2 | 챗봇 답변 가독성 개선 | 현장 담당자가 빠르게 읽을 수 있어야 함 |
+| 3 | RAG 학습 단계 시작 | 문서 기반 답변을 이해하면서 구현하기 위함 |
+| 4 | Chroma 연결 | AWS 배포 전 로컬에서 벡터 검색 구조 검증 |
+| 5 | 출처 표시 | AI 답변의 근거 문서를 확인할 수 있게 하기 위함 |

@@ -42,7 +42,8 @@
     "vite": "8.0.13",
     "vite-jsconfig-paths": "2.0.1",
     "web-vitals": "5.2.0",
-    "yup": "1.7.1"
+    "yup": "1.7.1",
+    "zustand": "5.0.9"
   },
   "eslintConfig": {
     "extends": [

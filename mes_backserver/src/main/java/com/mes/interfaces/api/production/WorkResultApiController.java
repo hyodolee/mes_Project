@@ -34,6 +34,6 @@ public class WorkResultApiController {
     @PostMapping
     public ApiResponse<Void> createWorkResult(@Valid @RequestBody WorkResultCreateRequest request) {
         workResultService.createWorkResult(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import useSWR from 'swr';
 
 import Alert from '@mui/material/Alert';
@@ -41,25 +42,42 @@ function getApiData(response, fallback) {
 
 function getResultColor(result) {
   if (result === 'SUCCESS') return 'success';
+  if (result === 'VALIDATION_FAILED') return 'warning';
   if (result === 'FAILED') return 'error';
   return 'default';
 }
 
 function getEventColor(status) {
   if (status === 'ERROR') return 'error';
+  if (status === 'INTERLOCK') return 'warning';
   if (status === 'WARNING') return 'warning';
   return 'info';
 }
 
+function getProcessResultLabel(result) {
+  if (result === 'SUCCESS') return '처리 완료';
+  if (result === 'VALIDATION_FAILED') return '데이터 누락';
+  if (result === 'FAILED') return '처리 실패';
+  return '대기';
+}
+
+function extractMissingFields(message) {
+  const match = String(message || '').match(/missingFields=([^,.\s]+(?:,[^,.\s]+)*)/);
+  if (!match) return [];
+  return match[1].split(',').map((field) => field.trim()).filter(Boolean);
+}
+
 export default function McsPlcEvents() {
+  const [urlSearchParams] = useSearchParams();
   const [search, setSearch] = useState({
-    equipmentCd: '',
-    eventType: '',
-    eventStatus: '',
-    processResult: '',
-    targetId: '',
-    fromDate: '',
-    toDate: ''
+    eventId: urlSearchParams.get('eventId') || '',
+    equipmentCd: urlSearchParams.get('equipmentCd') || '',
+    eventType: urlSearchParams.get('eventType') || '',
+    eventStatus: urlSearchParams.get('eventStatus') || '',
+    processResult: urlSearchParams.get('processResult') || '',
+    targetId: urlSearchParams.get('targetId') || '',
+    fromDate: urlSearchParams.get('fromDate') || '',
+    toDate: urlSearchParams.get('toDate') || ''
   });
   const [query, setQuery] = useState({ page: 1, size: 10 });
 
@@ -77,7 +95,7 @@ export default function McsPlcEvents() {
   };
 
   const handleReset = () => {
-    setSearch({ equipmentCd: '', eventType: '', eventStatus: '', processResult: '', targetId: '', fromDate: '', toDate: '' });
+    setSearch({ eventId: '', equipmentCd: '', eventType: '', eventStatus: '', processResult: '', targetId: '', fromDate: '', toDate: '' });
     setQuery({ page: 1, size: 10 });
   };
 
@@ -92,6 +110,9 @@ export default function McsPlcEvents() {
 
       <MainCard title="검색 조건">
         <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 2.4 }}>
+            <TextField fullWidth size="small" label="이벤트 ID" value={search.eventId} onChange={(event) => handleSearchValue('eventId', event.target.value)} />
+          </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
             <TextField fullWidth size="small" label="설비 코드" value={search.equipmentCd} onChange={(event) => handleSearchValue('equipmentCd', event.target.value)} />
           </Grid>
@@ -116,6 +137,7 @@ export default function McsPlcEvents() {
                 <MenuItem value="NORMAL">NORMAL</MenuItem>
                 <MenuItem value="WARNING">WARNING</MenuItem>
                 <MenuItem value="ERROR">ERROR</MenuItem>
+                <MenuItem value="INTERLOCK">INTERLOCK</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -125,6 +147,7 @@ export default function McsPlcEvents() {
               <Select label="처리 결과" value={search.processResult} onChange={(event) => handleSearchValue('processResult', event.target.value)}>
                 <MenuItem value="">전체</MenuItem>
                 <MenuItem value="SUCCESS">SUCCESS</MenuItem>
+                <MenuItem value="VALIDATION_FAILED">VALIDATION_FAILED</MenuItem>
                 <MenuItem value="FAILED">FAILED</MenuItem>
               </Select>
             </FormControl>
@@ -180,7 +203,7 @@ export default function McsPlcEvents() {
                 <TableCell>대상</TableCell>
                 <TableCell>Location</TableCell>
                 <TableCell>처리 결과</TableCell>
-                <TableCell>메시지</TableCell>
+                <TableCell>누락/오류 내용</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -191,36 +214,57 @@ export default function McsPlcEvents() {
                   </TableCell>
                 </TableRow>
               )}
-              {page.content.map((event) => (
-                <TableRow key={event.eventId} hover>
-                  <TableCell>{event.eventDtm}</TableCell>
-                  <TableCell>{event.equipmentCd}</TableCell>
-                  <TableCell>
-                    <Typography variant="subtitle2">{event.eventType}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {event.errorCode || '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={event.eventStatus} size="small" color={getEventColor(event.eventStatus)} variant="light" />
-                  </TableCell>
-                  <TableCell>
-                    {event.targetType} #{event.targetId || '-'}
-                  </TableCell>
-                  <TableCell>{event.locationCd || '-'}</TableCell>
-                  <TableCell>
-                    <Chip label={event.processResult || 'PENDING'} size="small" color={getResultColor(event.processResult)} variant="light" />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{event.eventMessage || '-'}</Typography>
-                    {event.processMessage && (
+              {page.content.map((event) => {
+                const missingFields = extractMissingFields(event.processMessage);
+                const isValidationFailed = event.processResult === 'VALIDATION_FAILED';
+
+                return (
+                  <TableRow key={event.eventId} hover sx={isValidationFailed ? { bgcolor: 'warning.lighter' } : undefined}>
+                    <TableCell>{event.eventDtm}</TableCell>
+                    <TableCell>{event.equipmentCd || '-'}</TableCell>
+                    <TableCell>
+                      <Typography variant="subtitle2">{event.eventType}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {event.processMessage}
+                        {event.errorCode || '-'}
                       </Typography>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={event.eventStatus} size="small" color={getEventColor(event.eventStatus)} variant="light" />
+                    </TableCell>
+                    <TableCell>
+                      {event.targetType} #{event.targetId || '-'}
+                    </TableCell>
+                    <TableCell>{event.locationCd || '-'}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={getProcessResultLabel(event.processResult)}
+                        size="small"
+                        color={getResultColor(event.processResult)}
+                        variant="light"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {missingFields.length > 0 && (
+                        <Stack direction="row" spacing={0.5} sx={{ mb: 0.75, flexWrap: 'wrap', rowGap: 0.5 }}>
+                          {missingFields.map((field) => (
+                            <Chip key={field} label={field} size="small" color="warning" variant="outlined" />
+                          ))}
+                        </Stack>
+                      )}
+                      <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>{event.eventMessage || '-'}</Typography>
+                      {event.processMessage && (
+                        <Typography
+                          variant="caption"
+                          color={isValidationFailed ? 'warning.dark' : 'text.secondary'}
+                          sx={{ display: 'block', mt: 0.5, overflowWrap: 'anywhere' }}
+                        >
+                          {event.processMessage}
+                        </Typography>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>

@@ -1,19 +1,24 @@
 package com.mcs.domain.route.dto;
 
-public record RouteStepDto(
-        Long routeStepId,
-        Long transferRouteId,
-        Integer stepSeq,
-        Long routeEdgeId,
-        Long fromNodeId,
-        Long toNodeId,
-        String stepStatus,
-        Integer expectedTimeSec,
-        String edgeCd,
-        String edgeNm,
-        String fromNodeCd,
-        String fromNodeNm,
-        String toNodeCd,
-        String toNodeNm,
-        String edgeStatus
-) {}
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class RouteStepDto {
+    private Long routeStepId;
+    private Long transferRouteId;
+    private Integer stepSeq;
+    private Long routeEdgeId;
+    private Long fromNodeId;
+    private Long toNodeId;
+    private String stepStatus;
+    private Integer expectedTimeSec;
+    private String edgeCd;
+    private String edgeNm;
+    private String fromNodeCd;
+    private String fromNodeNm;
+    private String toNodeCd;
+    private String toNodeNm;
+    private String edgeStatus;
+}
+

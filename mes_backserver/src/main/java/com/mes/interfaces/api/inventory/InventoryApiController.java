@@ -41,6 +41,6 @@ public class InventoryApiController {
     @PostMapping("/trans")
     public ApiResponse<Void> processTransaction(@Valid @RequestBody TransRequest request) {
         inventoryService.processTransaction(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

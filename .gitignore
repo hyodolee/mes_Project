@@ -8,6 +8,7 @@ bin/
 build/
 .gradle/
 .vscode/
+**/.vscode/
 *.md
 !README.md
 !AGENTS.md
@@ -16,3 +17,8 @@ build/
 !mcs/**/*.md
 !mes_backserver/README.md
 nul
+
+# 임시 파일 / 작업 산출물
+tmp/
+*.tmp
+docs/ai/fine-tuning/generated/

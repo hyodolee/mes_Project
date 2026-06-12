@@ -1,3 +1,7 @@
 import { createHttpClient } from '../httpClient';
+import { getMcsApiBaseUrl } from '../apiBaseUrl';
+import { authTokenStore } from '../authTokenStore';
 
-export const mcsApi = createHttpClient(import.meta.env.VITE_MCS_API_BASE_URL || 'http://localhost:8081');
+export const mcsApi = createHttpClient(getMcsApiBaseUrl(), {
+  getToken: authTokenStore.getMcsToken
+});

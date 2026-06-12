@@ -3,25 +3,34 @@ package com.mes.domain.production.processresult.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record ProcessResultDto(
-    Long procResultId,
-    Long resultId,
-    Long routingId,
-    Integer processSeq,
-    String processCd,
-    String processNm,
-    LocalDateTime startDtm,
-    LocalDateTime endDtm,
-    BigDecimal inputQty,
-    BigDecimal outputQty,
-    BigDecimal goodQty,
-    BigDecimal defectQty,
-    String workerId,
-    String equipmentCd,
-    BigDecimal workTime,
-    String processStatus,
-    String lotNo,
-    String procRmk,
-    String regUserId,
-    LocalDateTime regDtm
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProcessResultDto {
+    private Long procResultId;
+    private Long resultId;
+    private Long routingId;
+    private Integer processSeq;
+    private String processCd;
+    private String processNm;
+    private LocalDateTime startDtm;
+    private LocalDateTime endDtm;
+    private BigDecimal inputQty;
+    private BigDecimal outputQty;
+    private BigDecimal goodQty;
+    private BigDecimal defectQty;
+    private String workerId;
+    private String equipmentCd;
+    private BigDecimal workTime;
+    private String processStatus;
+    private String lotNo;
+    private String procRmk;
+    private String regUserId;
+    private LocalDateTime regDtm;
+}

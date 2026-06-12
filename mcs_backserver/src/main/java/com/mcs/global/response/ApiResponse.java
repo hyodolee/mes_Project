@@ -1,6 +1,20 @@
 package com.mcs.global.response;
 
-public record ApiResponse<T>(boolean success, String code, String message, T data) {
+/**
+ * REST API 공통 응답 형식.
+ *
+ * <p>컨트롤러가 반환하는 실제 업무 데이터는 {@code data}에 담고,
+ * 성공 여부와 메시지는 모든 API가 같은 필드로 내려준다.</p>
+ */
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class ApiResponse<T> {
+    private boolean success;
+    private String code;
+    private String message;
+    private T data;
 
     public static <T> ApiResponse<T> ok(T data) {
         return new ApiResponse<>(true, "OK", "success", data);

@@ -1,21 +1,26 @@
 import { Link as RouterLink } from 'react-router-dom';
 
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
+import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { BarChartOutlined, BuildOutlined, DatabaseOutlined, ExperimentOutlined, ProfileOutlined } from '@ant-design/icons';
 
 import MainCard from 'components/MainCard';
-
-const kpis = [
-  { label: '작업 오더', value: '-', caption: 'MES 작업 지시와 진행 상태' },
-  { label: '생산 계획', value: '-', caption: '계획 대비 실행 흐름' },
-  { label: '생산 실적', value: '-', caption: '완료 수량과 실적 반영 상태' },
-  { label: '품질/불량', value: '-', caption: '검사와 불량 이력 상태' }
-];
+import {
+  DetailDrawer,
+  EquipmentPanel,
+  QualityPriorityTable,
+  QualityResultPanel,
+  StockEquipmentPriorityTable,
+  StockPanel,
+  WorkOrderStatusPanel,
+  useOperationsDashboard
+} from 'sections/operations/operationsDashboard';
 
 const workAreas = [
   { title: '작업 오더', caption: '생산 작업 지시와 진행 상태를 조회합니다.', url: '/mes/work-orders', icon: <ProfileOutlined /> },
@@ -27,6 +32,22 @@ const workAreas = [
 ];
 
 export default function MesDashboard() {
+  const {
+    dashboard,
+    isLoading,
+    errors,
+    defects,
+    stocks,
+    equipmentStatuses,
+    detail,
+    setDetail,
+    openDefects,
+    openInspections,
+    openStocks,
+    openEquipment,
+    openWorkOrders
+  } = useOperationsDashboard();
+
   return (
     <Stack spacing={3}>
       <Stack spacing={0.75}>
@@ -36,20 +57,36 @@ export default function MesDashboard() {
         </Typography>
       </Stack>
 
-      <Grid container spacing={2.5}>
-        {kpis.map((item) => (
-          <Grid key={item.label} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <MainCard>
-              <Stack spacing={0.75}>
-                <Typography variant="h3">{item.value}</Typography>
-                <Typography variant="subtitle1">{item.label}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {item.caption}
-                </Typography>
-              </Stack>
-            </MainCard>
-          </Grid>
-        ))}
+      {isLoading && <LinearProgress />}
+      {errors.map((error, index) => (
+        <Alert key={index} severity="error">{error.message}</Alert>
+      ))}
+
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, xl: 7 }}>
+          <QualityResultPanel dashboard={dashboard} onOpenDefects={openDefects} onOpenInspections={openInspections} />
+        </Grid>
+        <Grid size={{ xs: 12, xl: 5 }}>
+          <StockPanel dashboard={dashboard} onOpen={openStocks} />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <WorkOrderStatusPanel dashboard={dashboard} onOpenWorkOrders={openWorkOrders} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <EquipmentPanel dashboard={dashboard} onOpen={openEquipment} />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <QualityPriorityTable defects={defects} failedInspections={dashboard.failedInspections} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <StockEquipmentPriorityTable stocks={stocks} equipmentStatuses={equipmentStatuses} />
+        </Grid>
       </Grid>
 
       <MainCard
@@ -75,6 +112,8 @@ export default function MesDashboard() {
           ))}
         </Grid>
       </MainCard>
+
+      <DetailDrawer detail={detail} onClose={() => setDetail(null)} />
     </Stack>
   );
 }

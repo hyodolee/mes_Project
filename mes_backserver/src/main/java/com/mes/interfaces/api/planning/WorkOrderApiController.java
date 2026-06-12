@@ -27,13 +27,14 @@ public class WorkOrderApiController {
 
     @GetMapping
     public ApiResponse<List<WorkOrderDto>> getWorkOrders(
+            @RequestParam(name = "woNo", required = false) String woNo,
             @RequestParam(name = "plantCd", required = false) String plantCd,
             @RequestParam(name = "itemCd", required = false) String itemCd,
             @RequestParam(name = "woStatus", required = false) String woStatus,
             @RequestParam(name = "woFromDt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate woFromDt,
             @RequestParam(name = "woToDt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate woToDt
     ) {
-        return ApiResponse.ok(workOrderService.getWorkOrders(plantCd, itemCd, woStatus, woFromDt, woToDt));
+        return ApiResponse.ok(workOrderService.getWorkOrders(woNo, plantCd, itemCd, woStatus, woFromDt, woToDt));
     }
 
     @GetMapping("/{woId}")
@@ -44,14 +45,14 @@ public class WorkOrderApiController {
     @PostMapping
     public ApiResponse<Void> createWorkOrder(@Valid @RequestBody WorkOrderCreateRequest request) {
         workOrderService.createWorkOrder(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 
     @PatchMapping("/{woId}/status")
     public ApiResponse<Void> updateWorkOrderStatus(@PathVariable("woId") Long woId,
                                                    @Valid @RequestBody WorkOrderUpdateStatusRequest request) {
-        workOrderService.updateWorkOrderStatus(woId, request.woStatus());
-        return ApiResponse.ok(null);
+        workOrderService.updateWorkOrderStatus(woId, request.getWoStatus());
+        return ApiResponse.ok();
     }
 
     @PostMapping("/{woId}/material-transfer")

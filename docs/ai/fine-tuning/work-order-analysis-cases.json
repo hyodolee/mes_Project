@@ -1,0 +1,304 @@
+[
+  {
+    "id": "WO_ANALYSIS_001",
+    "split": "train",
+    "scenarioType": "NORMAL_COMPLETED",
+    "evidence": {
+      "workOrder": {
+        "workOrderNo": "WO202606010012",
+        "status": "WAITING",
+        "plantName": "오창1공장",
+        "itemCode": "FG-CEL-001",
+        "itemName": "파우치셀 60Ah (NCM811)",
+        "lotNo": "LOT-FGCEL001-20260601-0012",
+        "orderQty": 3,
+        "goodQty": 0,
+        "defectQty": 0
+      },
+      "materialTransfer": {
+        "transferNo": "MES-53-780300251997",
+        "status": "COMPLETED",
+        "fromLocation": "CEL-01-02",
+        "toLocation": "CEL-01-01",
+        "routePolicy": "AVOID_CONGESTION"
+      },
+      "plcEvents": [
+        {
+          "eventType": "TRANSFER_STARTED",
+          "message": "PLC가 자재 이동 시작 이벤트를 전송했습니다."
+        },
+        {
+          "eventType": "TRANSFER_COMPLETED",
+          "message": "PLC가 자재 이동 완료 이벤트를 전송했습니다."
+        }
+      ]
+    },
+    "analysis": {
+      "summary": "MCS 자재 이동이 완료되어 MES 작업 시작이 가능한 상태입니다.",
+      "facts": [
+        "작업오더 상태는 대기입니다.",
+        "연결된 MCS 이동오더 상태는 완료입니다.",
+        "PLC 이벤트에 이동 시작과 이동 완료 기록이 있습니다."
+      ],
+      "inference": "필요 자재가 도착 Location으로 이동 완료되었으므로 작업 시작 조건을 만족합니다.",
+      "impact": "현재 확인되는 자재 이동 지연 요인은 없습니다.",
+      "recommendedActions": [
+        "MES 작업오더 화면에서 시작 버튼을 눌러 작업을 시작합니다.",
+        "작업 시작 후 양품/불량 수량 기록이 정상 반영되는지 확인합니다."
+      ]
+    }
+  },
+  {
+    "id": "WO_ANALYSIS_002",
+    "split": "train",
+    "scenarioType": "MATERIAL_REQUEST_NOT_CREATED",
+    "evidence": {
+      "workOrder": {
+        "workOrderNo": "WO202606010001",
+        "status": "WAITING",
+        "plantName": "오창1공장",
+        "itemCode": "FG-CEL-001",
+        "itemName": "파우치셀 60Ah (NCM811)",
+        "lotNo": "LOT-FGCEL001-20260601-0001",
+        "orderQty": 1,
+        "goodQty": 0,
+        "defectQty": 0
+      },
+      "materialTransfer": null,
+      "plcEvents": []
+    },
+    "analysis": {
+      "summary": "MCS 자재 이동 요청이 아직 생성되지 않아 작업 시작 전 단계에 머물러 있습니다.",
+      "facts": [
+        "작업오더 상태는 대기입니다.",
+        "연결된 MCS 이동오더가 없습니다.",
+        "PLC 이벤트 기록도 없습니다."
+      ],
+      "inference": "MES에서 작업에 필요한 자재 이동 요청이 생성되지 않았기 때문에 MCS가 자재 이동을 수행할 수 없습니다.",
+      "impact": "자재 도착 여부를 확인할 수 없어 작업 시작이 지연될 수 있습니다.",
+      "recommendedActions": [
+        "MES 작업오더 화면에서 자재 요청을 생성합니다.",
+        "MCS 이동오더가 생성된 뒤 경로와 LOT 배정 상태를 확인합니다."
+      ]
+    }
+  },
+  {
+    "id": "WO_ANALYSIS_003",
+    "split": "train",
+    "scenarioType": "TRANSFER_REQUESTED",
+    "evidence": {
+      "workOrder": {
+        "workOrderNo": "WO202606010007",
+        "status": "WAITING",
+        "plantName": "오창1공장",
+        "itemCode": "FG-CEL-001",
+        "itemName": "파우치셀 60Ah (NCM811)",
+        "lotNo": "LOT-FGCEL001-20260601-0007",
+        "orderQty": 1,
+        "goodQty": 0,
+        "defectQty": 0
+      },
+      "materialTransfer": {
+        "transferNo": "MES-48-780292118009",
+        "status": "REQUESTED",
+        "fromLocation": "CEL-01-02",
+        "toLocation": "CEL-01-01",
+        "routePolicy": "AVOID_CONGESTION"
+      },
+      "plcEvents": []
+    },
+    "analysis": {
+      "summary": "MCS 자재 이동오더가 요청 상태라서 아직 작업 시작 조건이 완료되지 않았습니다.",
+      "facts": [
+        "작업오더 상태는 대기입니다.",
+        "연결된 MCS 이동오더 상태는 요청입니다.",
+        "PLC 이동 시작 이벤트가 없습니다."
+      ],
+      "inference": "MCS가 이동오더를 아직 실제 이동 단계로 진행하지 않았으므로 자재 도착을 보장할 수 없습니다.",
+      "impact": "작업자가 작업을 시작하면 실제 자재 위치와 MES 상태가 불일치할 수 있습니다.",
+      "recommendedActions": [
+        "MCS 이동관리에서 해당 이동오더가 시작 가능한 상태인지 확인합니다.",
+        "PLC 시뮬레이터 또는 설비 이벤트로 이동을 진행한 뒤 완료 상태를 확인합니다."
+      ]
+    }
+  },
+  {
+    "id": "WO_ANALYSIS_004",
+    "split": "train",
+    "scenarioType": "TRANSFER_FAILED_EQUIPMENT_ERROR",
+    "evidence": {
+      "workOrder": {
+        "workOrderNo": "WO202606010009",
+        "status": "WAITING",
+        "plantName": "오창1공장",
+        "itemCode": "FG-CEL-001",
+        "itemName": "파우치셀 60Ah (NCM811)",
+        "lotNo": "LOT-FGCEL001-20260601-0009",
+        "orderQty": 3,
+        "goodQty": 0,
+        "defectQty": 0
+      },
+      "materialTransfer": {
+        "transferNo": "MES-50-780299291953",
+        "status": "FAILED",
+        "fromLocation": "CEL-01-02",
+        "toLocation": "CEL-01-01",
+        "routePolicy": "SHORTEST_TIME"
+      },
+      "plcEvents": [
+        {
+          "eventType": "TRANSFER_STARTED",
+          "message": "PLC가 자재 이동 시작 이벤트를 전송했습니다."
+        },
+        {
+          "eventType": "EQUIPMENT_ERROR",
+          "message": "컨베이어 구간에서 설비 오류가 발생했습니다."
+        }
+      ]
+    },
+    "analysis": {
+      "summary": "PLC 설비 오류로 MCS 자재 이동이 실패하여 MES 작업 시작이 차단된 상태입니다.",
+      "facts": [
+        "작업오더 상태는 대기입니다.",
+        "연결된 MCS 이동오더 상태는 실패입니다.",
+        "PLC 이벤트에 설비 오류가 기록되어 있습니다."
+      ],
+      "inference": "이동 중 설비 오류가 발생해 자재가 도착 Location까지 정상 이동하지 못한 것으로 판단됩니다.",
+      "impact": "자재 위치가 불확실하므로 작업 시작 시 생산 및 추적 이력이 불일치할 수 있습니다.",
+      "recommendedActions": [
+        "MCS에서 실패 이동오더의 상세 오류와 설비 상태를 확인합니다.",
+        "현장 조치 후 실패 이동오더를 취소하고 MES에서 자재 요청을 다시 생성합니다.",
+        "새 이동오더가 완료된 뒤 작업을 시작합니다."
+      ]
+    }
+  },
+  {
+    "id": "WO_ANALYSIS_005",
+    "split": "train",
+    "scenarioType": "INTERLOCK_BLOCKED",
+    "evidence": {
+      "workOrder": {
+        "workOrderNo": "WO202606010014",
+        "status": "WAITING",
+        "plantName": "오창1공장",
+        "itemCode": "FG-CEL-001",
+        "itemName": "파우치셀 60Ah (NCM811)",
+        "lotNo": "LOT-FGCEL001-20260601-0014",
+        "orderQty": 3,
+        "goodQty": 0,
+        "defectQty": 0
+      },
+      "materialTransfer": {
+        "transferNo": "MES-54-780301000001",
+        "status": "FAILED",
+        "fromLocation": "CEL-01-02",
+        "toLocation": "CEL-01-01",
+        "routePolicy": "AVOID_CONGESTION"
+      },
+      "plcEvents": [
+        {
+          "eventType": "INTERLOCK_BLOCKED",
+          "message": "안전 인터락 조건으로 자재 이동이 차단되었습니다."
+        }
+      ]
+    },
+    "analysis": {
+      "summary": "안전 인터락으로 자재 이동이 차단되어 MCS 이동오더가 실패했습니다.",
+      "facts": [
+        "MCS 이동오더 상태는 실패입니다.",
+        "PLC 이벤트에 인터락 차단 기록이 있습니다.",
+        "작업오더는 아직 대기 상태입니다."
+      ],
+      "inference": "안전 조건 또는 설비 상태가 충족되지 않아 PLC가 이동을 허용하지 않은 상황입니다.",
+      "impact": "인터락 원인을 해소하기 전에는 같은 자재 이동을 재시도해도 다시 실패할 가능성이 높습니다.",
+      "recommendedActions": [
+        "현장 설비의 안전 인터락 조건을 먼저 확인합니다.",
+        "인터락 해소 후 기존 실패 이동오더를 취소합니다.",
+        "MES에서 자재 요청을 다시 생성하고 정상 완료 여부를 확인합니다."
+      ]
+    }
+  },
+  {
+    "id": "WO_ANALYSIS_006",
+    "split": "validation",
+    "scenarioType": "CANCELLED_WO_TRANSFER_REMAINS",
+    "evidence": {
+      "workOrder": {
+        "workOrderNo": "WO202606010007",
+        "status": "CANCELLED",
+        "plantName": "오창1공장",
+        "itemCode": "FG-CEL-001",
+        "itemName": "파우치셀 60Ah (NCM811)",
+        "lotNo": "LOT-FGCEL001-20260601-0007",
+        "orderQty": 1,
+        "goodQty": 0,
+        "defectQty": 0
+      },
+      "materialTransfer": {
+        "transferNo": "MES-48-780292118009",
+        "status": "REQUESTED",
+        "fromLocation": "CEL-01-02",
+        "toLocation": "CEL-01-01",
+        "routePolicy": "AVOID_CONGESTION"
+      },
+      "plcEvents": []
+    },
+    "analysis": {
+      "summary": "MES 작업오더는 취소됐지만 연결된 MCS 이동오더가 요청 상태로 남아 있어 상태 불일치가 발생했습니다.",
+      "facts": [
+        "작업오더 상태는 취소입니다.",
+        "연결된 MCS 이동오더 상태는 요청입니다.",
+        "PLC 이동 이벤트는 없습니다."
+      ],
+      "inference": "취소된 생산 작업에 대해 물류 이동 요청이 남아 있으므로 불필요한 자재 이동이 발생할 수 있습니다.",
+      "impact": "자재가 잘못 이동되거나 재고 위치 추적이 어긋날 수 있습니다.",
+      "recommendedActions": [
+        "MCS 이동관리에서 남아 있는 이동오더를 취소합니다.",
+        "MES 작업오더 취소 시 연결된 MCS 이동오더가 함께 취소되는지 재확인합니다."
+      ]
+    }
+  },
+  {
+    "id": "WO_ANALYSIS_007",
+    "split": "validation",
+    "scenarioType": "ROUTE_BLOCKED",
+    "evidence": {
+      "workOrder": {
+        "workOrderNo": "WO202606010015",
+        "status": "WAITING",
+        "plantName": "오창1공장",
+        "itemCode": "FG-CEL-001",
+        "itemName": "파우치셀 60Ah (NCM811)",
+        "lotNo": "LOT-FGCEL001-20260601-0015",
+        "orderQty": 3,
+        "goodQty": 0,
+        "defectQty": 0
+      },
+      "materialTransfer": {
+        "transferNo": "MES-55-780301000002",
+        "status": "REQUESTED",
+        "fromLocation": "NCM-01-01",
+        "toLocation": "NCM-01-02",
+        "routePolicy": "SHORTEST_TIME",
+        "routeAvailable": false,
+        "blockedSegment": "N-CV-01"
+      },
+      "plcEvents": []
+    },
+    "analysis": {
+      "summary": "MCS 경로의 필수 구간이 막혀 있어 현재 기준으로는 사용 가능한 이동 경로가 없습니다.",
+      "facts": [
+        "MCS 이동오더 상태는 요청입니다.",
+        "경로 계산 결과 사용 가능한 경로가 없습니다.",
+        "막힌 구간은 N-CV-01입니다."
+      ],
+      "inference": "출발지와 도착지를 연결하는 공통 노드가 막혀 있어 우회 경로도 성립하지 않는 상태입니다.",
+      "impact": "경로가 복구되기 전까지 자재 이동과 작업 시작이 지연됩니다.",
+      "recommendedActions": [
+        "MCS 경로관리에서 N-CV-01 구간 상태를 확인합니다.",
+        "해당 구간을 사용 가능 상태로 복구하거나 다른 연결 경로를 추가합니다.",
+        "경로 재계산 후 MCS 이동을 다시 진행합니다."
+      ]
+    }
+  }
+]

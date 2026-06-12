@@ -4,24 +4,29 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record InboundOrderDto(
-    Long inboundId,
-    String plantCd,
-    String inboundNo,
-    String inboundStatus,
-    String vendorCd,
-    String warehouseCd,
-    LocalDate expectedDt,
-    LocalDateTime actualDt,
-    Long receivePlanId,
-    String inboundRmk,
-    String regUserId,
-    LocalDateTime regDtm,
-    String updUserId,
-    LocalDateTime updDtm,
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class InboundOrderDto {
+    private Long inboundId;
+    private String plantCd;
+    private String inboundNo;
+    private String inboundStatus;
+    private String vendorCd;
+    private String warehouseCd;
+    private LocalDate expectedDt;
+    private LocalDateTime actualDt;
+    private Long receivePlanId;
+    private String inboundRmk;
+    private String regUserId;
+    private LocalDateTime regDtm;
+    private String updUserId;
+    private LocalDateTime updDtm;
     // Join Fields
-    String plantNm,
-    String vendorNm,
-    String warehouseNm,
-    String inboundStatusNm
-) {}
+    private String plantNm;
+    private String vendorNm;
+    private String warehouseNm;
+    private String inboundStatusNm;
+}
+

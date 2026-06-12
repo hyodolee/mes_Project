@@ -7,6 +7,8 @@ spring:
       chat:
         options:
           model: ${OPENAI_MODEL:gpt-4o-mini}
+          # gpt-5 계열은 temperature=1만 허용 (다른 값이면 API 400 에러로 폴백됨)
+          temperature: ${OPENAI_TEMPERATURE:1}
   profiles:
     active: local
   flyway:
@@ -22,6 +24,10 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
+ai:
+  rag:
+    docs-root: ${AI_RAG_DOCS_ROOT:../docs}
+
 management:
   endpoints:
     web:
@@ -34,3 +40,15 @@ management:
 mcs:
   api:
     base-url: http://127.0.0.1:8081
+    service-username: ${MCS_SERVICE_USERNAME:admin}
+
+app:
+  security:
+    username: ${MES_AUTH_USERNAME:admin}
+    password: ${MES_AUTH_PASSWORD:admin123}
+    display-name: ${MES_AUTH_DISPLAY_NAME:MES/MCS Admin}
+    role: ${MES_AUTH_ROLE:ADMIN}
+    allowed-origins: ${SECURITY_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+    jwt:
+      secret: ${JWT_SECRET:mes-mcs-dev-jwt-secret-change-me-please}
+      expiration-seconds: ${JWT_EXPIRATION_SECONDS:7200}

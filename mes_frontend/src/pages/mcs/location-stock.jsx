@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import useSWR from 'swr';
 
 import Alert from '@mui/material/Alert';
@@ -39,8 +40,21 @@ function getApiData(response, fallback) {
   return response?.data ?? fallback;
 }
 
+const defaultSearch = { plantCd: '', warehouseCd: '', zoneId: '', locationCd: '', itemCd: '', lotNo: '', excludeZeroStock: true };
+
 export default function McsLocationStock() {
-  const [search, setSearch] = useState({ plantCd: '', warehouseCd: '', zoneId: '', locationCd: '', itemCd: '', lotNo: '', excludeZeroStock: true });
+  const [urlSearchParams] = useSearchParams();
+  const initialSearch = {
+    ...defaultSearch,
+    plantCd: urlSearchParams.get('plantCd') || '',
+    warehouseCd: urlSearchParams.get('warehouseCd') || '',
+    zoneId: urlSearchParams.get('zoneId') || '',
+    locationCd: urlSearchParams.get('locationCd') || '',
+    itemCd: urlSearchParams.get('itemCd') || '',
+    lotNo: urlSearchParams.get('lotNo') || '',
+    excludeZeroStock: urlSearchParams.get('excludeZeroStock') !== 'false'
+  };
+  const [search, setSearch] = useState(initialSearch);
   const [query, setQuery] = useState({ page: 1, size: 10 });
   const [adjustTarget, setAdjustTarget] = useState(null);
   const [adjustForm, setAdjustForm] = useState({ adjustType: 'ADJ_PLUS', adjustQty: 1, transRmk: '' });
@@ -90,7 +104,7 @@ export default function McsLocationStock() {
   };
 
   const handleReset = () => {
-    setSearch({ plantCd: '', warehouseCd: '', zoneId: '', locationCd: '', itemCd: '', lotNo: '', excludeZeroStock: true });
+    setSearch(defaultSearch);
     setQuery({ page: 1, size: 10 });
   };
 

@@ -2,26 +2,31 @@ package com.mcs.domain.inventory.dto;
 
 import java.time.LocalDateTime;
 
-public record LocStockDto(
-    Long locStockId,
-    String plantCd,
-    Long locationId,
-    String itemCd,
-    String lotNo,
-    Double stockQty,
-    Double reservedQty,
-    Double availableQty,
-    String regUserId,
-    LocalDateTime regDtm,
-    String updUserId,
-    LocalDateTime updDtm,
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class LocStockDto {
+    private Long locStockId;
+    private String plantCd;
+    private Long locationId;
+    private String itemCd;
+    private String lotNo;
+    private Double stockQty;
+    private Double reservedQty;
+    private Double availableQty;
+    private String regUserId;
+    private LocalDateTime regDtm;
+    private String updUserId;
+    private LocalDateTime updDtm;
     // Join Fields
-    String plantNm,
-    String warehouseNm,
-    String zoneNm,
-    String locationCd,
-    String locationNm,
-    String itemNm,
-    String itemSpec,
-    String unit
-) {}
+    private String plantNm;
+    private String warehouseNm;
+    private String zoneNm;
+    private String locationCd;
+    private String locationNm;
+    private String itemNm;
+    private String itemSpec;
+    private String unit;
+}
+

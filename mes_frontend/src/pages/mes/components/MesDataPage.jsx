@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import useSWR from 'swr';
 
 import Alert from '@mui/material/Alert';
@@ -28,14 +29,44 @@ function getApiData(response, fallback) {
   return response?.data ?? fallback;
 }
 
+function makeInitialSearch(initialSearch, searchParams) {
+  const nextSearch = { ...initialSearch };
+
+  Object.keys(nextSearch).forEach((field) => {
+    const value = searchParams.get(field);
+    if (value !== null) {
+      nextSearch[field] = value;
+    }
+  });
+
+  return nextSearch;
+}
+
+function matchesSearch(row, query) {
+  return Object.entries(query).every(([field, value]) => {
+    if (value === '' || value === null || value === undefined) {
+      return true;
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(row, field)) {
+      return true;
+    }
+
+    return String(row[field]) === String(value);
+  });
+}
+
 export default function MesDataPage({ title, description, cardTitle = '목록', swrKey, fetcher, initialSearch, filters, columns, getRowId, renderActions }) {
-  const [search, setSearch] = useState(initialSearch);
-  const [query, setQuery] = useState(initialSearch);
+  const [urlSearchParams] = useSearchParams();
+  const initialSearchFromUrl = useMemo(() => makeInitialSearch(initialSearch, urlSearchParams), [initialSearch, urlSearchParams]);
+  const [search, setSearch] = useState(initialSearchFromUrl);
+  const [query, setQuery] = useState(initialSearchFromUrl);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const { data, error, isLoading, mutate } = useSWR([swrKey, query], () => fetcher(query));
-  const rows = getApiData(data, []);
+  const rawRows = getApiData(data, []);
+  const rows = useMemo(() => rawRows.filter((row) => matchesSearch(row, query)), [rawRows, query]);
 
   const visibleRows = useMemo(() => {
     const start = page * rowsPerPage;

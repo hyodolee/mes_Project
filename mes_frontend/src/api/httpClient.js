@@ -1,18 +1,24 @@
 const contentType = 'application/json; charset=utf-8';
 
 async function request(baseUrl, path, options = {}) {
+  const token = options.getToken?.();
+  const { getToken, ...requestOptions } = options;
   const response = await fetch(`${baseUrl}${path}`, {
     headers: {
       'Content-Type': contentType,
-      ...(options.headers || {})
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(requestOptions.headers || {})
     },
-    ...options
+    ...requestOptions
   });
 
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
+    if (response.status === 401 && !path.startsWith('/api/auth/')) {
+      window.dispatchEvent(new CustomEvent('app:unauthorized'));
+    }
     const message = data?.message || `HTTP ${response.status}`;
     throw new Error(message);
   }
@@ -37,12 +43,14 @@ export function createQueryString(params = {}) {
   return value ? `?${value}` : '';
 }
 
-export function createHttpClient(baseUrl) {
+export function createHttpClient(baseUrl, options = {}) {
+  const withAuth = (requestOptions = {}) => ({ ...requestOptions, getToken: options.getToken });
+
   return {
-    get: (path, options) => request(baseUrl, path, { ...options, method: 'GET' }),
-    post: (path, body, options) => request(baseUrl, path, { ...options, method: 'POST', body: JSON.stringify(body) }),
-    put: (path, body, options) => request(baseUrl, path, { ...options, method: 'PUT', body: JSON.stringify(body) }),
-    patch: (path, body, options) => request(baseUrl, path, { ...options, method: 'PATCH', body: JSON.stringify(body) }),
-    delete: (path, options) => request(baseUrl, path, { ...options, method: 'DELETE' })
+    get: (path, requestOptions) => request(baseUrl, path, withAuth({ ...requestOptions, method: 'GET' })),
+    post: (path, body, requestOptions) => request(baseUrl, path, withAuth({ ...requestOptions, method: 'POST', body: JSON.stringify(body) })),
+    put: (path, body, requestOptions) => request(baseUrl, path, withAuth({ ...requestOptions, method: 'PUT', body: JSON.stringify(body) })),
+    patch: (path, body, requestOptions) => request(baseUrl, path, withAuth({ ...requestOptions, method: 'PATCH', body: JSON.stringify(body) })),
+    delete: (path, requestOptions) => request(baseUrl, path, withAuth({ ...requestOptions, method: 'DELETE' }))
   };
 }

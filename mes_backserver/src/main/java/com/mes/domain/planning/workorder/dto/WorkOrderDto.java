@@ -4,31 +4,39 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public record WorkOrderDto(
-        Long woId,
-        String plantCd,
-        String plantNm,
-        String woNo,
-        Long planId,
-        LocalDate woDt,
-        String itemCd,
-        String itemNm,
-        BigDecimal woQty,
-        String workcenterCd,
-        String equipmentCd,
-        String workerId,
-        LocalDateTime planStartDtm,
-        LocalDateTime planEndDtm,
-        LocalDateTime actualStartDtm,
-        LocalDateTime actualEndDtm,
-        BigDecimal goodQty,
-        BigDecimal defectQty,
-        String woStatus,
-        Integer priority,
-        String lotNo,
-        Long parentWoId,
-        String orderNo,
-        LocalDate deliveryDt,
-        String woRmk
-) {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class WorkOrderDto {
+    private Long woId;
+    private String plantCd;
+    private String plantNm;
+    private String woNo;
+    private Long planId;
+    private LocalDate woDt;
+    private String itemCd;
+    private String itemNm;
+    private BigDecimal woQty;
+    private String workcenterCd;
+    private String equipmentCd;
+    private String workerId;
+    private LocalDateTime planStartDtm;
+    private LocalDateTime planEndDtm;
+    private LocalDateTime actualStartDtm;
+    private LocalDateTime actualEndDtm;
+    private BigDecimal goodQty;
+    private BigDecimal defectQty;
+    private String woStatus;
+    private Integer priority;
+    private String lotNo;
+    private Long parentWoId;
+    private String orderNo;
+    private LocalDate deliveryDt;
+    private String woRmk;
 }

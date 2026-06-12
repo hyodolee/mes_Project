@@ -2,20 +2,25 @@ package com.mcs.domain.transfer.dto;
 
 import java.time.LocalDateTime;
 
-public record TransferItemDto(
-    Long transferItemId,
-    Long transferId,
-    String itemCd,
-    String lotNo,
-    Double transferQty,
-    String itemStatus,
-    String regUserId,
-    LocalDateTime regDtm,
-    String updUserId,
-    LocalDateTime updDtm,
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class TransferItemDto {
+    private Long transferItemId;
+    private Long transferId;
+    private String itemCd;
+    private String lotNo;
+    private Double transferQty;
+    private String itemStatus;
+    private String regUserId;
+    private LocalDateTime regDtm;
+    private String updUserId;
+    private LocalDateTime updDtm;
     // Join Fields
-    String itemNm,
-    String itemSpec,
-    String unit,
-    String itemStatusNm
-) {}
+    private String itemNm;
+    private String itemSpec;
+    private String unit;
+    private String itemStatusNm;
+}
+

@@ -3,25 +3,30 @@ package com.mcs.domain.outbound.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record OutboundOrderDto(
-    Long outboundId,
-    String plantCd,
-    String outboundNo,
-    String outboundStatus,
-    String customerCd,
-    String warehouseCd,
-    LocalDateTime requestDt,
-    LocalDateTime shippedDt,
-    String destination,
-    Long issuePlanId,
-    Long woId,
-    String outboundRmk,
-    String regUserId,
-    LocalDateTime regDtm,
-    String updUserId,
-    LocalDateTime updDtm,
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class OutboundOrderDto {
+    private Long outboundId;
+    private String plantCd;
+    private String outboundNo;
+    private String outboundStatus;
+    private String customerCd;
+    private String warehouseCd;
+    private LocalDateTime requestDt;
+    private LocalDateTime shippedDt;
+    private String destination;
+    private Long issuePlanId;
+    private Long woId;
+    private String outboundRmk;
+    private String regUserId;
+    private LocalDateTime regDtm;
+    private String updUserId;
+    private LocalDateTime updDtm;
     // Join Fields
-    String plantNm,
-    String warehouseNm,
-    String outboundStatusNm
-) {}
+    private String plantNm;
+    private String warehouseNm;
+    private String outboundStatusNm;
+}
+

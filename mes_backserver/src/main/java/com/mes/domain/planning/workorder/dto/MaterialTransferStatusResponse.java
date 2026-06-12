@@ -1,16 +1,24 @@
 package com.mes.domain.planning.workorder.dto;
 
-public record MaterialTransferStatusResponse(
-        Long woId,
-        boolean requested,
-        boolean completed,
-        boolean startable,
-        Long transferId,
-        String transferNo,
-        String transferStatus,
-        String transferStatusNm,
-        String fromLocationCd,
-        String toLocationCd,
-        String message
-) {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class MaterialTransferStatusResponse {
+    private Long woId;
+    private boolean requested;
+    private boolean completed;
+    private boolean startable;
+    private Long transferId;
+    private String transferNo;
+    private String transferStatus;
+    private String transferStatusNm;
+    private String fromLocationCd;
+    private String toLocationCd;
+    private String message;
 }

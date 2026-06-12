@@ -57,8 +57,8 @@ public class LocationWebController {
     public String createLocation(@ModelAttribute LocationDto locationDto, RedirectAttributes redirectAttributes) {
         try {
             LocationDto dtoWithUser = new LocationDto(
-                null, locationDto.zoneId(), locationDto.locationCd(), locationDto.locationNm(),
-                locationDto.maxCapacity(), 0.0, "EMPTY", locationDto.useYn(),
+                null, locationDto.getZoneId(), locationDto.getLocationCd(), locationDto.getLocationNm(),
+                locationDto.getMaxCapacity(), 0.0, "EMPTY", locationDto.getUseYn(),
                 "SYSTEM", null, null, null, null, null, null, null, null, null, null
             );
             locationService.createLocation(dtoWithUser);
@@ -85,8 +85,8 @@ public class LocationWebController {
     public String updateLocation(@PathVariable Long id, @ModelAttribute LocationDto locationDto, RedirectAttributes redirectAttributes) {
         try {
             LocationDto dtoWithId = new LocationDto(
-                id, locationDto.zoneId(), locationDto.locationCd(), locationDto.locationNm(),
-                locationDto.maxCapacity(), null, locationDto.locationStatus(), locationDto.useYn(),
+                id, locationDto.getZoneId(), locationDto.getLocationCd(), locationDto.getLocationNm(),
+                locationDto.getMaxCapacity(), null, locationDto.getLocationStatus(), locationDto.getUseYn(),
                 null, null, "SYSTEM", null, null, null, null, null, null, null, null
             );
             locationService.updateLocation(dtoWithId);
@@ -108,3 +108,4 @@ public class LocationWebController {
         return "redirect:/locations";
     }
 }
+

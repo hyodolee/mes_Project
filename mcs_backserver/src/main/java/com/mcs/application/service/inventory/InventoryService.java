@@ -41,36 +41,37 @@ public class InventoryService {
 
     @Transactional
     public void adjustStock(StockAdjustRequest request) {
-        LocStockDto currentStock = getLocStock(request.locStockId());
+        LocStockDto currentStock = getLocStock(request.getLocStockId());
 
-        double adjustQty = request.adjustQty();
-        double afterQty = currentStock.stockQty() + adjustQty;
+        double adjustQty = request.getAdjustQty();
+        double afterQty = currentStock.getStockQty() + adjustQty;
 
         if (afterQty < 0) {
             throw new BusinessException(ErrorCode.INVALID_INPUT); // 재고는 0보다 작을 수 없음
         }
 
         // 1. 재고 업데이트
-        inventoryMapper.updateLocStockQty(request.locStockId(), adjustQty, request.regUserId());
-        inventoryMapper.syncLocationUsage(currentStock.locationId(), request.regUserId());
+        inventoryMapper.updateLocStockQty(request.getLocStockId(), adjustQty, request.getRegUserId());
+        inventoryMapper.syncLocationUsage(currentStock.getLocationId(), request.getRegUserId());
 
         // 2. 이력 등록
         LocTransHisDto hisDto = new LocTransHisDto(
             null,
-            currentStock.plantCd(),
-            currentStock.locStockId(),
-            request.adjustType(),
+            currentStock.getPlantCd(),
+            currentStock.getLocStockId(),
+            request.getAdjustType(),
             Math.abs(adjustQty), // 이력에는 양수로 저장하고 타입으로 구분
-            currentStock.stockQty(),
+            currentStock.getStockQty(),
             afterQty,
             "ADJ",
             null,
             null,
-            request.transRmk(),
-            request.regUserId(),
+            request.getTransRmk(),
+            request.getRegUserId(),
             null,
             null, null, null, null, null, null, null, null
         );
         inventoryMapper.insertLocTransHis(hisDto);
     }
 }
+

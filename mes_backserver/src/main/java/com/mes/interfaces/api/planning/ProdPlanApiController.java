@@ -40,6 +40,6 @@ public class ProdPlanApiController {
     @PostMapping
     public ApiResponse<Void> createProdPlan(@Valid @RequestBody ProdPlanCreateRequest request) {
         prodPlanService.createProdPlan(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

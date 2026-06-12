@@ -36,15 +36,15 @@ public class PlantApiController {
     @PostMapping
     public ApiResponse<Void> createPlant(@Valid @RequestBody PlantUpsertRequest request) {
         plantService.createPlant(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 
     @PutMapping("/{plantCd}")
     public ApiResponse<Void> updatePlant(@PathVariable("plantCd") String plantCd, @Valid @RequestBody PlantUpsertRequest request) {
-        if (!plantCd.equals(request.plantCd())) {
+        if (!plantCd.equals(request.getPlantCd())) {
             throw new IllegalArgumentException("경로의 plantCd와 요청 본문의 plantCd가 일치하지 않습니다.");
         }
         plantService.updatePlant(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

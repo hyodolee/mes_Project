@@ -33,19 +33,19 @@ public class LocationService {
     @Transactional
     public Long createLocation(LocationDto locationDto) {
         // 중복 체크
-        locationMapper.selectLocationByCd(locationDto.zoneId(), locationDto.locationCd())
+        locationMapper.selectLocationByCd(locationDto.getZoneId(), locationDto.getLocationCd())
                 .ifPresent(l -> {
                     throw new BusinessException(ErrorCode.DUPLICATE_LOCATION_CD);
                 });
 
         locationMapper.insertLocation(locationDto);
-        return locationDto.locationId();
+        return locationDto.getLocationId();
     }
 
     @Transactional
     public void updateLocation(LocationDto locationDto) {
         // 존재 확인
-        getLocation(locationDto.locationId());
+        getLocation(locationDto.getLocationId());
         locationMapper.updateLocation(locationDto);
     }
 
@@ -57,3 +57,4 @@ public class LocationService {
         locationMapper.deleteLocation(locationId);
     }
 }
+

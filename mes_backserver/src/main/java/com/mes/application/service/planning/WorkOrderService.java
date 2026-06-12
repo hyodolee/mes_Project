@@ -35,9 +35,9 @@ public class WorkOrderService {
         this.mcsTransferClient = mcsTransferClient;
     }
 
-    public List<WorkOrderDto> getWorkOrders(String plantCd, String itemCd, String woStatus,
+    public List<WorkOrderDto> getWorkOrders(String woNo, String plantCd, String itemCd, String woStatus,
                                             LocalDate woFromDt, LocalDate woToDt) {
-        return workOrderMapper.selectWorkOrders(plantCd, itemCd, woStatus, woFromDt, woToDt);
+        return workOrderMapper.selectWorkOrders(woNo, plantCd, itemCd, woStatus, woFromDt, woToDt);
     }
 
     public PageResponse<WorkOrderDto> getWorkOrderList(WorkOrderSearchDto searchDto) {
@@ -56,8 +56,8 @@ public class WorkOrderService {
 
     @Transactional
     public void createWorkOrder(WorkOrderCreateRequest request) {
-        int dailySeq = workOrderMapper.selectWorkOrderCountByDate(request.woDt()) + 1;
-        String woNo = generateWoNo(request.woDt(), dailySeq);
+        int dailySeq = workOrderMapper.selectWorkOrderCountByDate(request.getWoDt()) + 1;
+        String woNo = generateWoNo(request.getWoDt(), dailySeq);
         WorkOrderCreateRequest requestWithLot = withGeneratedLotNo(request, dailySeq);
         int inserted = workOrderMapper.insertWorkOrder(requestWithLot, woNo, SYSTEM_USER);
         if (inserted != 1) {
@@ -68,7 +68,7 @@ public class WorkOrderService {
     @Transactional
     public void updateWorkOrderStatus(Long woId, String newStatus) {
         WorkOrderDto workOrder = getWorkOrder(woId);
-        validateStatusTransition(workOrder.woStatus(), newStatus);
+        validateStatusTransition(workOrder.getWoStatus(), newStatus);
 
         if ("취소".equals(newStatus)) {
             cancelActiveMaterialTransfers(workOrder);
@@ -99,35 +99,35 @@ public class WorkOrderService {
     @Transactional
     public MaterialTransferResponse requestMaterialTransfer(Long woId, MaterialTransferRequest request) {
         WorkOrderDto workOrder = getWorkOrder(woId);
-        String itemCd = request.itemCd() == null || request.itemCd().isBlank() ? workOrder.itemCd() : request.itemCd();
-        BigDecimal transferQty = request.transferQty() == null ? workOrder.woQty() : request.transferQty();
+        String itemCd = request.getItemCd() == null || request.getItemCd().isBlank() ? workOrder.getItemCd() : request.getItemCd();
+        BigDecimal transferQty = request.getTransferQty() == null ? workOrder.getWoQty() : request.getTransferQty();
         validateNoActiveMaterialTransfer(workOrder);
 
         McsTransferClient.McsMaterialRequestResult result = mcsTransferClient.createMaterialRequest(new McsTransferClient.McsMaterialRequestPayload(
                 "MES",
-                workOrder.woId(),
-                workOrder.woNo(),
-                workOrder.plantCd(),
+                workOrder.getWoId(),
+                workOrder.getWoNo(),
+                workOrder.getPlantCd(),
                 itemCd,
                 transferQty.doubleValue(),
-                workOrder.workcenterCd(),
-                normalizeOptimizeRule(request.optimizeRule()),
-                request.requestReason()
+                workOrder.getWorkcenterCd(),
+                normalizeOptimizeRule(request.getOptimizeRule()),
+                request.getRequestReason()
         ));
 
         return new MaterialTransferResponse(
-                workOrder.woId(),
-                workOrder.woNo(),
-                result.transferId(),
-                result.transferNo(),
-                result.fromLocationId(),
-                result.fromLocationCd(),
-                result.toLocationId(),
-                result.toLocationCd(),
-                result.itemCd(),
-                result.lotNo(),
-                result.transferQty(),
-                result.optimizeRule()
+                workOrder.getWoId(),
+                workOrder.getWoNo(),
+                result.getTransferId(),
+                result.getTransferNo(),
+                result.getFromLocationId(),
+                result.getFromLocationCd(),
+                result.getToLocationId(),
+                result.getToLocationCd(),
+                result.getItemCd(),
+                result.getLotNo(),
+                result.getTransferQty(),
+                result.getOptimizeRule()
         );
     }
 
@@ -137,21 +137,21 @@ public class WorkOrderService {
     }
 
     private void validateNoActiveMaterialTransfer(WorkOrderDto workOrder) {
-        mcsTransferClient.getTransfersByWorkOrder(workOrder.woId()).stream()
-                .filter(transfer -> !"CANCELLED".equals(transfer.transferStatus()))
+        mcsTransferClient.getTransfersByWorkOrder(workOrder.getWoId()).stream()
+                .filter(transfer -> !"CANCELLED".equals(transfer.getTransferStatus()))
                 .findFirst()
                 .ifPresent(transfer -> {
                     throw new BusinessException(ErrorCode.BUSINESS_ERROR,
                             "이미 생성된 MCS 자재 이동 요청이 있습니다. 이동번호="
-                                    + transfer.transferNo()
-                                    + ", 상태=" + transferStatusLabel(transfer.transferStatus(), transfer.transferStatusNm()));
+                                    + transfer.getTransferNo()
+                                    + ", 상태=" + transferStatusLabel(transfer.getTransferStatus(), transfer.getTransferStatusNm()));
                 });
     }
 
     private void validateMaterialTransfersCompleted(WorkOrderDto workOrder) {
-        List<McsTransferClient.McsTransferSummary> transfers = mcsTransferClient.getTransfersByWorkOrder(workOrder.woId());
+        List<McsTransferClient.McsTransferSummary> transfers = mcsTransferClient.getTransfersByWorkOrder(workOrder.getWoId());
         List<McsTransferClient.McsTransferSummary> activeTransfers = transfers.stream()
-                .filter(transfer -> !"CANCELLED".equals(transfer.transferStatus()))
+                .filter(transfer -> !"CANCELLED".equals(transfer.getTransferStatus()))
                 .toList();
         if (activeTransfers.isEmpty()) {
             throw new BusinessException(ErrorCode.BUSINESS_ERROR,
@@ -159,30 +159,30 @@ public class WorkOrderService {
         }
 
         activeTransfers.stream()
-                .filter(transfer -> !"COMPLETED".equals(transfer.transferStatus()))
+                .filter(transfer -> !"COMPLETED".equals(transfer.getTransferStatus()))
                 .findFirst()
                 .ifPresent(transfer -> {
                     throw new BusinessException(ErrorCode.BUSINESS_ERROR,
                             "MCS 자재 이동이 아직 완료되지 않았습니다. 이동번호="
-                                    + transfer.transferNo()
-                                    + ", 상태=" + transferStatusLabel(transfer.transferStatus(), transfer.transferStatusNm()));
+                                    + transfer.getTransferNo()
+                                    + ", 상태=" + transferStatusLabel(transfer.getTransferStatus(), transfer.getTransferStatusNm()));
                 });
     }
 
     private void cancelActiveMaterialTransfers(WorkOrderDto workOrder) {
-        mcsTransferClient.cancelMaterialRequestsByWorkOrder(workOrder.woId());
+        mcsTransferClient.cancelMaterialRequestsByWorkOrder(workOrder.getWoId());
     }
 
     private MaterialTransferStatusResponse buildMaterialTransferStatus(WorkOrderDto workOrder) {
-        List<McsTransferClient.McsTransferSummary> transfers = mcsTransferClient.getTransfersByWorkOrder(workOrder.woId());
+        List<McsTransferClient.McsTransferSummary> transfers = mcsTransferClient.getTransfersByWorkOrder(workOrder.getWoId());
         McsTransferClient.McsTransferSummary activeTransfer = transfers.stream()
-                .filter(transfer -> !"CANCELLED".equals(transfer.transferStatus()))
+                .filter(transfer -> !"CANCELLED".equals(transfer.getTransferStatus()))
                 .findFirst()
                 .orElse(null);
 
         if (activeTransfer == null) {
             return new MaterialTransferStatusResponse(
-                    workOrder.woId(),
+                    workOrder.getWoId(),
                     false,
                     false,
                     false,
@@ -196,19 +196,19 @@ public class WorkOrderService {
             );
         }
 
-        boolean completed = "COMPLETED".equals(activeTransfer.transferStatus());
-        boolean failed = "FAILED".equals(activeTransfer.transferStatus());
+        boolean completed = "COMPLETED".equals(activeTransfer.getTransferStatus());
+        boolean failed = "FAILED".equals(activeTransfer.getTransferStatus());
         return new MaterialTransferStatusResponse(
-                workOrder.woId(),
+                workOrder.getWoId(),
                 true,
                 completed,
                 completed,
-                activeTransfer.transferId(),
-                activeTransfer.transferNo(),
-                activeTransfer.transferStatus(),
-                transferStatusLabel(activeTransfer.transferStatus(), activeTransfer.transferStatusNm()),
-                activeTransfer.fromLocationCd(),
-                activeTransfer.toLocationCd(),
+                activeTransfer.getTransferId(),
+                activeTransfer.getTransferNo(),
+                activeTransfer.getTransferStatus(),
+                transferStatusLabel(activeTransfer.getTransferStatus(), activeTransfer.getTransferStatusNm()),
+                activeTransfer.getFromLocationCd(),
+                activeTransfer.getToLocationCd(),
                 completed ? "MCS 자재 이동 완료" : (failed ? "MCS 자재 이동 실패 - MCS에서 취소 후 재요청하세요." : "MCS 자재 이동 대기 중")
         );
     }
@@ -218,35 +218,35 @@ public class WorkOrderService {
     }
 
     private WorkOrderCreateRequest withGeneratedLotNo(WorkOrderCreateRequest request, int dailySeq) {
-        if (request.lotNo() != null && !request.lotNo().isBlank()) {
+        if (request.getLotNo() != null && !request.getLotNo().isBlank()) {
             return request;
         }
 
         return new WorkOrderCreateRequest(
-                request.plantCd(),
-                request.planId(),
-                request.woDt(),
-                request.itemCd(),
-                request.woQty(),
-                request.workcenterCd(),
-                request.equipmentCd(),
-                request.workerId(),
-                request.planStartDtm(),
-                request.planEndDtm(),
-                request.priority(),
+                request.getPlantCd(),
+                request.getPlanId(),
+                request.getWoDt(),
+                request.getItemCd(),
+                request.getWoQty(),
+                request.getWorkcenterCd(),
+                request.getEquipmentCd(),
+                request.getWorkerId(),
+                request.getPlanStartDtm(),
+                request.getPlanEndDtm(),
+                request.getPriority(),
                 generateProductionLotNo(request, dailySeq),
-                request.orderNo(),
-                request.deliveryDt(),
-                request.woRmk()
+                request.getOrderNo(),
+                request.getDeliveryDt(),
+                request.getWoRmk()
         );
     }
 
     private String generateProductionLotNo(WorkOrderCreateRequest request, int dailySeq) {
-        String itemPart = request.itemCd().replaceAll("[^A-Za-z0-9]", "");
+        String itemPart = request.getItemCd().replaceAll("[^A-Za-z0-9]", "");
         if (itemPart.length() > 16) {
             itemPart = itemPart.substring(0, 16);
         }
-        return "LOT-" + itemPart + "-" + request.woDt().format(WO_DATE_FMT) + "-" + String.format("%04d", dailySeq);
+        return "LOT-" + itemPart + "-" + request.getWoDt().format(WO_DATE_FMT) + "-" + String.format("%04d", dailySeq);
     }
 
     private String normalizeOptimizeRule(String optimizeRule) {

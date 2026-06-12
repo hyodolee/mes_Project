@@ -2,25 +2,30 @@ package com.mcs.domain.location.dto;
 
 import java.time.LocalDateTime;
 
-public record LocationDto(
-    Long locationId,
-    Long zoneId,
-    String locationCd,
-    String locationNm,
-    Double maxCapacity,
-    Double currentUsage,
-    String locationStatus,
-    String useYn,
-    String regUserId,
-    LocalDateTime regDtm,
-    String updUserId,
-    LocalDateTime updDtm,
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class LocationDto {
+    private Long locationId;
+    private Long zoneId;
+    private String locationCd;
+    private String locationNm;
+    private Double maxCapacity;
+    private Double currentUsage;
+    private String locationStatus;
+    private String useYn;
+    private String regUserId;
+    private LocalDateTime regDtm;
+    private String updUserId;
+    private LocalDateTime updDtm;
     // Join 필드
-    String plantCd,
-    String plantNm,
-    String warehouseCd,
-    String warehouseNm,
-    String zoneCd,
-    String zoneNm,
-    String locationStatusNm
-) {}
+    private String plantCd;
+    private String plantNm;
+    private String warehouseCd;
+    private String warehouseNm;
+    private String zoneCd;
+    private String zoneNm;
+    private String locationStatusNm;
+}
+

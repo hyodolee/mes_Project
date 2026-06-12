@@ -2,12 +2,17 @@ package com.mcs.domain.route.dto;
 
 import java.util.List;
 
-public record RouteOptimizeResultDto(
-        Boolean routeAvailable,
-        String message,
-        String optimizeRule,
-        Double totalDistanceM,
-        Integer totalTimeSec,
-        Double totalCost,
-        List<RouteStepDto> steps
-) {}
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class RouteOptimizeResultDto {
+    private Boolean routeAvailable;
+    private String message;
+    private String optimizeRule;
+    private Double totalDistanceM;
+    private Integer totalTimeSec;
+    private Double totalCost;
+    private List<RouteStepDto> steps;
+}
+

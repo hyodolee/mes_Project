@@ -4,28 +4,37 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public record WorkResultDto(
-    Long resultId,
-    String plantCd,
-    String resultNo,
-    Long woId,
-    LocalDate resultDt,
-    String shift,
-    String workerId,
-    String workcenterCd,
-    String equipmentCd,
-    String itemCd,
-    BigDecimal prodQty,
-    BigDecimal goodQty,
-    BigDecimal defectQty,
-    LocalDateTime startDtm,
-    LocalDateTime endDtm,
-    BigDecimal workTime,
-    BigDecimal setupTime,
-    BigDecimal downTime,
-    String lotNo,
-    String resultStatus,
-    String resultRmk,
-    String regUserId,
-    LocalDateTime regDtm
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class WorkResultDto {
+    private Long resultId;
+    private String plantCd;
+    private String resultNo;
+    private Long woId;
+    private LocalDate resultDt;
+    private String shift;
+    private String workerId;
+    private String workcenterCd;
+    private String equipmentCd;
+    private String itemCd;
+    private BigDecimal prodQty;
+    private BigDecimal goodQty;
+    private BigDecimal defectQty;
+    private LocalDateTime startDtm;
+    private LocalDateTime endDtm;
+    private BigDecimal workTime;
+    private BigDecimal setupTime;
+    private BigDecimal downTime;
+    private String lotNo;
+    private String resultStatus;
+    private String resultRmk;
+    private String regUserId;
+    private LocalDateTime regDtm;
+}

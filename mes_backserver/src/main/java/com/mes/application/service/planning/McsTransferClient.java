@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mes.global.exception.BusinessException;
 import com.mes.global.exception.ErrorCode;
+import com.mes.global.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -21,15 +24,29 @@ public class McsTransferClient {
     public McsTransferClient(
             RestClient.Builder builder,
             ObjectMapper objectMapper,
-            @Value("${mcs.api.base-url:http://127.0.0.1:8081}") String baseUrl
+            JwtTokenProvider jwtTokenProvider,
+            @Value("${mcs.api.base-url:http://127.0.0.1:8081}") String baseUrl,
+            @Value("${mcs.api.service-username:admin}") String serviceUsername
     ) {
-        this.restClient = builder.baseUrl(baseUrl).build();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(5000);
+
+        this.restClient = builder
+                .requestFactory(factory)
+                .baseUrl(baseUrl)
+                .requestInterceptor((request, body, execution) -> {
+                    request.getHeaders().set(HttpHeaders.AUTHORIZATION,
+                            "Bearer " + jwtTokenProvider.generateToken(serviceUsername, List.of("ROLE_ADMIN")));
+                    return execution.execute(request, body);
+                })
+                .build();
         this.objectMapper = objectMapper;
     }
 
     public Long createTransfer(McsTransferOrderPayload payload) {
         try {
-            ApiResponse<Long> response = restClient.post()
+            McsApiResponse<Long> response = restClient.post()
                     .uri("/api/transfers")
                     .body(payload)
                     .retrieve()
@@ -49,7 +66,7 @@ public class McsTransferClient {
 
     public void addTransferItem(Long transferId, McsTransferItemPayload payload) {
         try {
-            ApiResponse<Void> response = restClient.post()
+            McsApiResponse<Void> response = restClient.post()
                     .uri("/api/transfers/{transferId}/items", transferId)
                     .body(payload)
                     .retrieve()
@@ -67,7 +84,7 @@ public class McsTransferClient {
 
     public McsMaterialRequestResult createMaterialRequest(McsMaterialRequestPayload payload) {
         try {
-            ApiResponse<McsMaterialRequestResult> response = restClient.post()
+            McsApiResponse<McsMaterialRequestResult> response = restClient.post()
                     .uri("/api/material-requests")
                     .body(payload)
                     .retrieve()
@@ -87,7 +104,7 @@ public class McsTransferClient {
 
     public List<McsTransferSummary> getTransfersByWorkOrder(Long woId) {
         try {
-            ApiResponse<TransferPage> response = restClient.get()
+            McsApiResponse<TransferPage> response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/api/transfers")
                             .queryParam("transferNo", "MES-" + woId + "-")
@@ -109,9 +126,47 @@ public class McsTransferClient {
         }
     }
 
+    public List<McsTransferSummary> getAllTransfers(int size) {
+        try {
+            McsApiResponse<TransferPage> response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/transfers")
+                            .queryParam("page", 1)
+                            .queryParam("size", size)
+                            .build())
+                    .retrieve()
+                    .body(TransferListResponse.class);
+            if (response == null || !response.success() || response.data() == null) {
+                return List.of();
+            }
+            return response.data().content() == null ? List.of() : response.data().content();
+        } catch (RestClientResponseException | ResourceAccessException e) {
+            return List.of();
+        }
+    }
+
+    public List<McsPlcEventSummary> getRecentPlcEvents(int size) {
+        try {
+            McsApiResponse<PlcEventPage> response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/plc/events")
+                            .queryParam("page", 1)
+                            .queryParam("size", size)
+                            .build())
+                    .retrieve()
+                    .body(PlcEventListResponse.class);
+            if (response == null || !response.success() || response.data() == null) {
+                return List.of();
+            }
+            return response.data().content() == null ? List.of() : response.data().content();
+        } catch (RestClientResponseException | ResourceAccessException e) {
+            return List.of();
+        }
+    }
+
     public List<McsPlcEventSummary> getPlcEventsByTransfer(Long transferId, int size) {
         try {
-            ApiResponse<PlcEventPage> response = restClient.get()
+            McsApiResponse<PlcEventPage> response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/api/plc/events")
                             .queryParam("targetType", "TRANSFER")
@@ -132,7 +187,7 @@ public class McsTransferClient {
 
     public void cancelTransfer(Long transferId) {
         try {
-            ApiResponse<Void> response = restClient.post()
+            McsApiResponse<Void> response = restClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/api/transfers/{transferId}/status")
                             .queryParam("status", "CANCELLED")
@@ -152,7 +207,7 @@ public class McsTransferClient {
 
     public int cancelMaterialRequestsByWorkOrder(Long woId) {
         try {
-            ApiResponse<Integer> response = restClient.post()
+            McsApiResponse<Integer> response = restClient.post()
                     .uri("/api/material-requests/work-orders/{woId}/cancel", woId)
                     .retrieve()
                     .body(CancelMaterialRequestResponse.class);
@@ -182,97 +237,99 @@ public class McsTransferClient {
         return e.getStatusCode() + " " + e.getStatusText();
     }
 
-    public record McsTransferOrderPayload(
-            String plantCd,
-            String transferNo,
-            String transferStatus,
-            Long fromLocationId,
-            Long toLocationId,
-            String transferReason,
-            String optimizeRule
-    ) {
+    @lombok.Getter @lombok.Setter @lombok.NoArgsConstructor @lombok.AllArgsConstructor
+    public static class McsTransferOrderPayload {
+        private String plantCd;
+        private String transferNo;
+        private String transferStatus;
+        private Long fromLocationId;
+        private Long toLocationId;
+        private String transferReason;
+        private String optimizeRule;
     }
 
-    public record McsTransferItemPayload(
-            String itemCd,
-            String lotNo,
-            Double transferQty
-    ) {
+    @lombok.Getter @lombok.Setter @lombok.NoArgsConstructor @lombok.AllArgsConstructor
+    public static class McsTransferItemPayload {
+        private String itemCd;
+        private String lotNo;
+        private Double transferQty;
     }
 
-    public record McsMaterialRequestPayload(
-            String sourceSystem,
-            Long woId,
-            String woNo,
-            String plantCd,
-            String itemCd,
-            Double requestQty,
-            String workcenterCd,
-            String optimizeRule,
-            String requestReason
-    ) {
+    @lombok.Getter @lombok.Setter @lombok.NoArgsConstructor @lombok.AllArgsConstructor
+    public static class McsMaterialRequestPayload {
+        private String sourceSystem;
+        private Long woId;
+        private String woNo;
+        private String plantCd;
+        private String itemCd;
+        private Double requestQty;
+        private String workcenterCd;
+        private String optimizeRule;
+        private String requestReason;
     }
 
-    public record McsMaterialRequestResult(
-            Long transferId,
-            String transferNo,
-            Long fromLocationId,
-            String fromLocationCd,
-            Long toLocationId,
-            String toLocationCd,
-            String itemCd,
-            String lotNo,
-            Double transferQty,
-            String optimizeRule
-    ) {
+    @lombok.Getter @lombok.Setter @lombok.NoArgsConstructor @lombok.AllArgsConstructor
+    public static class McsMaterialRequestResult {
+        private Long transferId;
+        private String transferNo;
+        private Long fromLocationId;
+        private String fromLocationCd;
+        private Long toLocationId;
+        private String toLocationCd;
+        private String itemCd;
+        private String lotNo;
+        private Double transferQty;
+        private String optimizeRule;
     }
 
-    public record McsTransferSummary(
-            Long transferId,
-            String transferNo,
-            String transferStatus,
-            String transferStatusNm,
-            String fromLocationCd,
-            String toLocationCd,
-            String optimizeRule
-    ) {
+    @lombok.Getter @lombok.Setter @lombok.NoArgsConstructor @lombok.AllArgsConstructor
+    public static class McsTransferSummary {
+        private Long transferId;
+        private String transferNo;
+        private String transferStatus;
+        private String transferStatusNm;
+        private String fromLocationCd;
+        private String toLocationCd;
+        private String optimizeRule;
+        private String regDtm;
+        private String updDtm;
     }
 
-    public record McsPlcEventSummary(
-            Long eventId,
-            String equipmentCd,
-            String eventType,
-            String eventStatus,
-            String targetType,
-            Long targetId,
-            String locationCd,
-            String errorCode,
-            String eventMessage,
-            String rawPayload,
-            String eventDtm,
-            String processedYn,
-            String processResult,
-            String processMessage,
-            String processedDtm,
-            String regUserId,
-            String regDtm
-    ) {
+    @lombok.Getter @lombok.Setter @lombok.NoArgsConstructor @lombok.AllArgsConstructor
+    public static class McsPlcEventSummary {
+        private Long eventId;
+        private String equipmentCd;
+        private String eventType;
+        private String eventStatus;
+        private String targetType;
+        private Long targetId;
+        private String locationCd;
+        private String errorCode;
+        private String eventMessage;
+        private String rawPayload;
+        private String eventDtm;
+        private String processedYn;
+        private String processResult;
+        private String processMessage;
+        private String processedDtm;
+        private String regUserId;
+        private String regDtm;
     }
 
-    private interface ApiResponse<T> {
+    private interface McsApiResponse<T> {
         boolean success();
         String message();
         T data();
     }
 
-    private record TransferIdResponse(boolean success, String code, String message, Long data) implements ApiResponse<Long> {
+    private record TransferIdResponse(boolean success, String code, String message, Long data) implements McsApiResponse<Long> {
     }
 
-    private record VoidResponse(boolean success, String code, String message, Void data) implements ApiResponse<Void> {
+    private record VoidResponse(boolean success, String code, String message, Void data) implements McsApiResponse<Void> {
     }
 
     private record MaterialRequestResponse(boolean success, String code, String message, McsMaterialRequestResult data)
-            implements ApiResponse<McsMaterialRequestResult> {
+            implements McsApiResponse<McsMaterialRequestResult> {
     }
 
     private record TransferPage(
@@ -285,7 +342,7 @@ public class McsTransferClient {
     }
 
     private record TransferListResponse(boolean success, String code, String message, TransferPage data)
-            implements ApiResponse<TransferPage> {
+            implements McsApiResponse<TransferPage> {
     }
 
     private record PlcEventPage(
@@ -298,10 +355,10 @@ public class McsTransferClient {
     }
 
     private record PlcEventListResponse(boolean success, String code, String message, PlcEventPage data)
-            implements ApiResponse<PlcEventPage> {
+            implements McsApiResponse<PlcEventPage> {
     }
 
     private record CancelMaterialRequestResponse(boolean success, String code, String message, Integer data)
-            implements ApiResponse<Integer> {
+            implements McsApiResponse<Integer> {
     }
 }

@@ -61,8 +61,8 @@ public class OutboundWebController {
             String autoOutboundNo = "OB-" + System.currentTimeMillis();
             
             OutboundOrderDto dtoWithUser = new OutboundOrderDto(
-                null, orderDto.plantCd(), autoOutboundNo, "REQUESTED", orderDto.customerCd(), orderDto.warehouseCd(),
-                orderDto.requestDt(), null, orderDto.destination(), null, null, orderDto.outboundRmk(),
+                null, orderDto.getPlantCd(), autoOutboundNo, "REQUESTED", orderDto.getCustomerCd(), orderDto.getWarehouseCd(),
+                orderDto.getRequestDt(), null, orderDto.getDestination(), null, null, orderDto.getOutboundRmk(),
                 "SYSTEM", null, null, null, null, null, null
             );
             outboundService.createOutboundOrder(dtoWithUser);
@@ -93,8 +93,8 @@ public class OutboundWebController {
     public String updateOutbound(@PathVariable Long id, @ModelAttribute OutboundOrderDto orderDto, RedirectAttributes redirectAttributes) {
         try {
             OutboundOrderDto dtoWithId = new OutboundOrderDto(
-                id, orderDto.plantCd(), orderDto.outboundNo(), orderDto.outboundStatus(), orderDto.customerCd(), orderDto.warehouseCd(),
-                orderDto.requestDt(), orderDto.shippedDt(), orderDto.destination(), null, null, orderDto.outboundRmk(),
+                id, orderDto.getPlantCd(), orderDto.getOutboundNo(), orderDto.getOutboundStatus(), orderDto.getCustomerCd(), orderDto.getWarehouseCd(),
+                orderDto.getRequestDt(), orderDto.getShippedDt(), orderDto.getDestination(), null, null, orderDto.getOutboundRmk(),
                 null, null, "SYSTEM", null, null, null, null
             );
             outboundService.updateOutboundOrder(dtoWithId);
@@ -128,3 +128,4 @@ public class OutboundWebController {
         }
     }
 }
+

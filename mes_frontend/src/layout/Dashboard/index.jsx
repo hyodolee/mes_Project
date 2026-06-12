@@ -12,6 +12,7 @@ import Footer from './Footer';
 import Loader from 'components/Loader';
 import Breadcrumbs from 'components/@extended/Breadcrumbs';
 import ScrollTop from 'components/ScrollTop';
+import FloatingChatButton from 'components/AiChat/FloatingChatButton';
 
 import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
 
@@ -33,6 +34,7 @@ export default function DashboardLayout() {
       <ScrollTop />
       <Header />
       <Drawer />
+      <FloatingChatButton />
 
       <Box
         component="main"

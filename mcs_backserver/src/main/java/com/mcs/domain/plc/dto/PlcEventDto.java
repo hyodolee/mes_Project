@@ -2,23 +2,27 @@ package com.mcs.domain.plc.dto;
 
 import java.time.LocalDateTime;
 
-public record PlcEventDto(
-        Long eventId,
-        String equipmentCd,
-        String eventType,
-        String eventStatus,
-        String targetType,
-        Long targetId,
-        String locationCd,
-        String errorCode,
-        String eventMessage,
-        String rawPayload,
-        LocalDateTime eventDtm,
-        String processedYn,
-        String processResult,
-        String processMessage,
-        LocalDateTime processedDtm,
-        String regUserId,
-        LocalDateTime regDtm
-) {
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class PlcEventDto {
+    private Long eventId;
+    private String equipmentCd;
+    private String eventType;
+    private String eventStatus;
+    private String targetType;
+    private Long targetId;
+    private String locationCd;
+    private String errorCode;
+    private String eventMessage;
+    private String rawPayload;
+    private LocalDateTime eventDtm;
+    private String processedYn;
+    private String processResult;
+    private String processMessage;
+    private LocalDateTime processedDtm;
+    private String regUserId;
+    private LocalDateTime regDtm;
 }
+

@@ -28,6 +28,21 @@ MES owns the production work order. MCS owns material location, route selection,
 6. Operator cancels the failed transfer in MCS.
 7. MES material request can be retried after the failed transfer is cancelled.
 
+## PLC Payload Validation Flow
+
+1. Create a MES work order.
+2. Request material so that MCS creates a transfer order.
+3. Run PLC simulator with a payload validation scenario:
+   - `MissingTransferId`
+   - `MissingToLocation`
+   - `MissingLotNo`
+   - `InvalidPayload`
+4. MCS records the PLC event but does not trust it for physical status changes.
+5. `MCS_PLC_EVENT_LOG.PROCESS_RESULT` becomes `VALIDATION_FAILED`.
+6. `PROCESS_MESSAGE` contains the missing fields, for example `missingFields=toLocationCd,lotNo`.
+7. MCS PLC event screen shows `데이터 누락` and missing field chips.
+8. MES AI analysis explains the missing PLC payload fields as a data mismatch reason.
+
 ## Cancel Flow
 
 1. Create a MES work order.
@@ -78,4 +93,22 @@ Interlock:
 
 ```powershell
 powershell.exe -ExecutionPolicy Bypass -File "C:\dev\mes_project\scripts\plc\simulate-transfer.ps1" -TransferId 12 -Scenario InterlockBlocked -Mode PlcApi
+```
+
+Missing destination location:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File "C:\dev\mes_project\scripts\plc\simulate-transfer.ps1" -TransferId 12 -Scenario MissingToLocation -Mode PlcApi
+```
+
+Missing LOT number:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File "C:\dev\mes_project\scripts\plc\simulate-transfer.ps1" -TransferId 12 -Scenario MissingLotNo -Mode PlcApi
+```
+
+Invalid payload:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File "C:\dev\mes_project\scripts\plc\simulate-transfer.ps1" -TransferId 12 -Scenario InvalidPayload -Mode PlcApi
 ```

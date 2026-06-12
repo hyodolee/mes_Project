@@ -35,14 +35,14 @@ public class InboundApiController {
 
     @PostMapping
     public ApiResponse<Long> createInbound(@RequestBody InboundOrderDto orderDto) {
-        String inboundNo = orderDto.inboundNo();
+        String inboundNo = orderDto.getInboundNo();
         if (inboundNo == null || inboundNo.isBlank()) {
             inboundNo = "IB-" + System.currentTimeMillis();
         }
 
         InboundOrderDto dtoWithUser = new InboundOrderDto(
-                null, orderDto.plantCd(), inboundNo, "PLANNED", orderDto.vendorCd(), orderDto.warehouseCd(),
-                orderDto.expectedDt(), null, orderDto.receivePlanId(), orderDto.inboundRmk(),
+                null, orderDto.getPlantCd(), inboundNo, "PLANNED", orderDto.getVendorCd(), orderDto.getWarehouseCd(),
+                orderDto.getExpectedDt(), null, orderDto.getReceivePlanId(), orderDto.getInboundRmk(),
                 "SYSTEM", null, null, null, null, null, null, null
         );
         return ApiResponse.ok(inboundService.createInboundOrder(dtoWithUser));
@@ -51,8 +51,8 @@ public class InboundApiController {
     @PutMapping("/{inboundId}")
     public ApiResponse<Void> updateInbound(@PathVariable Long inboundId, @RequestBody InboundOrderDto orderDto) {
         InboundOrderDto dtoWithId = new InboundOrderDto(
-                inboundId, orderDto.plantCd(), orderDto.inboundNo(), orderDto.inboundStatus(), orderDto.vendorCd(), orderDto.warehouseCd(),
-                orderDto.expectedDt(), orderDto.actualDt(), orderDto.receivePlanId(), orderDto.inboundRmk(),
+                inboundId, orderDto.getPlantCd(), orderDto.getInboundNo(), orderDto.getInboundStatus(), orderDto.getVendorCd(), orderDto.getWarehouseCd(),
+                orderDto.getExpectedDt(), orderDto.getActualDt(), orderDto.getReceivePlanId(), orderDto.getInboundRmk(),
                 null, null, "SYSTEM", null, null, null, null, null
         );
         inboundService.updateInboundOrder(dtoWithId);
@@ -71,3 +71,4 @@ public class InboundApiController {
         return ApiResponse.ok();
     }
 }
+

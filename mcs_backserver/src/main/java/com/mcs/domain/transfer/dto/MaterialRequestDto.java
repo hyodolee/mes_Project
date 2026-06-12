@@ -1,14 +1,18 @@
 package com.mcs.domain.transfer.dto;
 
-public record MaterialRequestDto(
-        String sourceSystem,
-        Long woId,
-        String woNo,
-        String plantCd,
-        String itemCd,
-        Double requestQty,
-        String workcenterCd,
-        String optimizeRule,
-        String requestReason
-) {
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class MaterialRequestDto {
+    private String sourceSystem;
+    private Long woId;
+    private String woNo;
+    private String plantCd;
+    private String itemCd;
+    private Double requestQty;
+    private String workcenterCd;
+    private String optimizeRule;
+    private String requestReason;
 }
+

@@ -56,8 +56,8 @@ public class ZoneWebController {
     public String createZone(@ModelAttribute ZoneDto zoneDto, RedirectAttributes redirectAttributes) {
         try {
             ZoneDto dtoWithUser = new ZoneDto(
-                null, zoneDto.plantCd(), zoneDto.warehouseCd(), zoneDto.zoneCd(),
-                zoneDto.zoneNm(), zoneDto.zoneType(), zoneDto.sortSeq(), zoneDto.useYn(),
+                null, zoneDto.getPlantCd(), zoneDto.getWarehouseCd(), zoneDto.getZoneCd(),
+                zoneDto.getZoneNm(), zoneDto.getZoneType(), zoneDto.getSortSeq(), zoneDto.getUseYn(),
                 "SYSTEM", null, null, null, null, null, null
             );
             zoneService.createZone(dtoWithUser);
@@ -85,8 +85,8 @@ public class ZoneWebController {
     public String updateZone(@PathVariable Long id, @ModelAttribute ZoneDto zoneDto, RedirectAttributes redirectAttributes) {
         try {
             ZoneDto dtoWithId = new ZoneDto(
-                id, zoneDto.plantCd(), zoneDto.warehouseCd(), zoneDto.zoneCd(),
-                zoneDto.zoneNm(), zoneDto.zoneType(), zoneDto.sortSeq(), zoneDto.useYn(),
+                id, zoneDto.getPlantCd(), zoneDto.getWarehouseCd(), zoneDto.getZoneCd(),
+                zoneDto.getZoneNm(), zoneDto.getZoneType(), zoneDto.getSortSeq(), zoneDto.getUseYn(),
                 null, null, "SYSTEM", null, null, null, null
             );
             zoneService.updateZone(dtoWithId);
@@ -108,3 +108,4 @@ public class ZoneWebController {
         return "redirect:/zones";
     }
 }
+

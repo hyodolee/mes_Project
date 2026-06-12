@@ -66,8 +66,8 @@ public class TransferWebController {
             String autoTransferNo = "TF-" + System.currentTimeMillis();
             
             TransferOrderDto dtoWithUser = new TransferOrderDto(
-                null, orderDto.plantCd(), autoTransferNo, "REQUESTED", orderDto.fromLocationId(), orderDto.toLocationId(),
-                orderDto.transferReason(), "SYSTEM", null, null, null, null, null, null, null, orderDto.optimizeRule()
+                null, orderDto.getPlantCd(), autoTransferNo, "REQUESTED", orderDto.getFromLocationId(), orderDto.getToLocationId(),
+                orderDto.getTransferReason(), "SYSTEM", null, null, null, null, null, null, null, orderDto.getOptimizeRule()
             );
             transferService.createTransferOrder(dtoWithUser);
             redirectAttributes.addFlashAttribute("message", "이동 오더가 등록되었습니다.");
@@ -89,8 +89,8 @@ public class TransferWebController {
         List<TransferItemDto> items = transferService.getTransferItems(id);
         model.addAttribute("request", order);
         model.addAttribute("items", items);
-        model.addAttribute("itemList", mesItemMapper.selectItemList(order.plantCd(), null, null, null));
-        model.addAttribute("transferHistories", inventoryService.getTransferHistories(order.transferNo(), order.transferId()));
+        model.addAttribute("itemList", mesItemMapper.selectItemList(order.getPlantCd(), null, null, null));
+        model.addAttribute("transferHistories", inventoryService.getTransferHistories(order.getTransferNo(), order.getTransferId()));
         
         return "transfer/form";
     }
@@ -99,8 +99,8 @@ public class TransferWebController {
     public String updateTransfer(@PathVariable Long id, @ModelAttribute TransferOrderDto orderDto, RedirectAttributes redirectAttributes) {
         try {
             TransferOrderDto dtoWithId = new TransferOrderDto(
-                id, orderDto.plantCd(), orderDto.transferNo(), orderDto.transferStatus(), orderDto.fromLocationId(), orderDto.toLocationId(),
-                orderDto.transferReason(), null, null, "SYSTEM", null, null, null, null, null, orderDto.optimizeRule()
+                id, orderDto.getPlantCd(), orderDto.getTransferNo(), orderDto.getTransferStatus(), orderDto.getFromLocationId(), orderDto.getToLocationId(),
+                orderDto.getTransferReason(), null, null, "SYSTEM", null, null, null, null, null, orderDto.getOptimizeRule()
             );
             transferService.updateTransferOrder(dtoWithId);
             redirectAttributes.addFlashAttribute("message", "이동 오더가 수정되었습니다.");
@@ -155,3 +155,4 @@ public class TransferWebController {
         }
     }
 }
+

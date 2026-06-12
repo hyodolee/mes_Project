@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
+import RequireAuth from './RequireAuth';
 
 // render - operations
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -32,99 +33,104 @@ const AiOperations = Loadable(lazy(() => import('pages/ai/operations')));
 
 const MainRoutes = {
   path: '/',
-  element: <DashboardLayout />,
+  element: <RequireAuth />,
   children: [
     {
-      path: '/',
-      element: <DashboardDefault />
-    },
-    {
-      path: 'dashboard',
-      element: <DashboardDefault />
-    },
-    {
-      path: 'mcs/dashboard',
-      element: <McsDashboard />
-    },
-    {
-      path: 'mcs/zones',
-      element: <McsZones />
-    },
-    {
-      path: 'mcs/locations',
-      element: <McsLocations />
-    },
-    {
-      path: 'mcs/inbounds',
-      element: <McsInbounds />
-    },
-    {
-      path: 'mcs/outbounds',
-      element: <McsOutbounds />
-    },
-    {
-      path: 'mcs/transfers',
-      element: <McsTransfers />
-    },
-    {
-      path: 'mcs/route-management',
-      element: <McsRouteManagement />
-    },
-    {
-      path: 'mcs/route-optimizer',
-      element: <McsRouteOptimizer />
-    },
-    {
-      path: 'mcs/location-stock',
-      element: <McsLocationStock />
-    },
-    {
-      path: 'mcs/inventory-transactions',
-      element: <McsInventoryTransactions />
-    },
-    {
-      path: 'mcs/plc-events',
-      element: <McsPlcEvents />
-    },
-    {
-      path: 'mes/dashboard',
-      element: <MesDashboard />
-    },
-    {
-      path: 'mes/work-orders',
-      element: <MesWorkOrders />
-    },
-    {
-      path: 'mes/prod-plans',
-      element: <MesProdPlans />
-    },
-    {
-      path: 'mes/work-results',
-      element: <MesWorkResults />
-    },
-    {
-      path: 'mes/inventory',
-      element: <MesInventory />
-    },
-    {
-      path: 'mes/quality',
-      element: <MesQuality />
-    },
-    {
-      path: 'mes/defects',
-      element: <MesDefects />
-    },
-    {
-      path: 'mes/equipment',
-      element: <MesEquipment />
-    },
-    {
-      path: 'mes/master-data',
-      element: <MesMasterData />
-    },
-    {
-      path: 'ai/operations',
-      element: <AiOperations />
+      element: <DashboardLayout />,
+      children: [
+        {
+          path: '/',
+          element: <DashboardDefault />
+        },
+        {
+          path: 'dashboard',
+          element: <DashboardDefault />
+        },
+        {
+          path: 'mcs/dashboard',
+          element: <McsDashboard />
+        },
+        {
+          path: 'mcs/zones',
+          element: <McsZones />
+        },
+        {
+          path: 'mcs/locations',
+          element: <McsLocations />
+        },
+        {
+          path: 'mcs/inbounds',
+          element: <McsInbounds />
+        },
+        {
+          path: 'mcs/outbounds',
+          element: <McsOutbounds />
+        },
+        {
+          path: 'mcs/transfers',
+          element: <McsTransfers />
+        },
+        {
+          path: 'mcs/route-management',
+          element: <McsRouteManagement />
+        },
+        {
+          path: 'mcs/route-optimizer',
+          element: <McsRouteOptimizer />
+        },
+        {
+          path: 'mcs/location-stock',
+          element: <McsLocationStock />
+        },
+        {
+          path: 'mcs/inventory-transactions',
+          element: <McsInventoryTransactions />
+        },
+        {
+          path: 'mcs/plc-events',
+          element: <McsPlcEvents />
+        },
+        {
+          path: 'mes/dashboard',
+          element: <MesDashboard />
+        },
+        {
+          path: 'mes/work-orders',
+          element: <MesWorkOrders />
+        },
+        {
+          path: 'mes/prod-plans',
+          element: <MesProdPlans />
+        },
+        {
+          path: 'mes/work-results',
+          element: <MesWorkResults />
+        },
+        {
+          path: 'mes/inventory',
+          element: <MesInventory />
+        },
+        {
+          path: 'mes/quality',
+          element: <MesQuality />
+        },
+        {
+          path: 'mes/defects',
+          element: <MesDefects />
+        },
+        {
+          path: 'mes/equipment',
+          element: <MesEquipment />
+        },
+        {
+          path: 'mes/master-data',
+          element: <MesMasterData />
+        },
+        {
+          path: 'ai/operations',
+          element: <AiOperations />
+        }
+      ]
     }
   ]
 };

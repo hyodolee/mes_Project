@@ -47,20 +47,20 @@ public class RouteService {
     }
 
     public RouteOptimizeResultDto optimize(RouteOptimizeRequest request) {
-        String optimizeRule = normalizeOptimizeRule(request.optimizeRule());
+        String optimizeRule = normalizeOptimizeRule(request.getOptimizeRule());
         validateOptimizeRequest(request);
 
-        RouteNodeDto startNode = routeMapper.selectRouteNodeByLocation(request.plantCd(), request.fromLocationId())
+        RouteNodeDto startNode = routeMapper.selectRouteNodeByLocation(request.getPlantCd(), request.getFromLocationId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT, "출발 Location에 연결된 경로 노드가 없습니다."));
-        RouteNodeDto endNode = routeMapper.selectRouteNodeByLocation(request.plantCd(), request.toLocationId())
+        RouteNodeDto endNode = routeMapper.selectRouteNodeByLocation(request.getPlantCd(), request.getToLocationId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT, "도착 Location에 연결된 경로 노드가 없습니다."));
 
-        List<RouteEdgeDto> edges = routeMapper.selectUsableRouteEdges(request.plantCd()).stream()
-                .filter(edge -> !EXCLUDED_STATUSES.contains(edge.edgeStatus()))
+        List<RouteEdgeDto> edges = routeMapper.selectUsableRouteEdges(request.getPlantCd()).stream()
+                .filter(edge -> !EXCLUDED_STATUSES.contains(edge.getEdgeStatus()))
                 .toList();
 
         Map<Long, List<RouteLeg>> graph = buildGraph(edges, optimizeRule);
-        List<RouteLeg> path = findShortestPath(startNode.routeNodeId(), endNode.routeNodeId(), graph);
+        List<RouteLeg> path = findShortestPath(startNode.getRouteNodeId(), endNode.getRouteNodeId(), graph);
 
         if (path.isEmpty()) {
             return new RouteOptimizeResultDto(false, "사용 가능한 경로가 없습니다.", optimizeRule, 0.0, 0, 0.0, List.of());
@@ -74,25 +74,25 @@ public class RouteService {
         for (int i = 0; i < path.size(); i++) {
             RouteLeg leg = path.get(i);
             RouteEdgeDto edge = leg.edge();
-            totalDistance += defaultDouble(edge.distanceM());
-            totalTime += defaultInt(edge.travelTimeSec());
+            totalDistance += defaultDouble(edge.getDistanceM());
+            totalTime += defaultInt(edge.getTravelTimeSec());
             totalCost += leg.cost();
             steps.add(new RouteStepDto(
                     null,
                     null,
                     i + 1,
-                    edge.routeEdgeId(),
+                    edge.getRouteEdgeId(),
                     leg.fromNodeId(),
                     leg.toNodeId(),
                     "WAITING",
-                    edge.travelTimeSec(),
-                    edge.edgeCd(),
+                    edge.getTravelTimeSec(),
+                    edge.getEdgeCd(),
                     leg.fromNodeCd() + " -> " + leg.toNodeCd(),
                     leg.fromNodeCd(),
                     leg.fromNodeNm(),
                     leg.toNodeCd(),
                     leg.toNodeNm(),
-                    edge.edgeStatus()
+                    edge.getEdgeStatus()
             ));
         }
 
@@ -102,19 +102,19 @@ public class RouteService {
     public Optional<TransferRouteDto> getTransferRoute(Long transferId) {
         return routeMapper.selectTransferRoute(transferId)
                 .map(route -> new TransferRouteDto(
-                        route.transferRouteId(),
-                        route.transferId(),
-                        route.routeStatus(),
-                        route.totalDistanceM(),
-                        route.totalTimeSec(),
-                        route.totalCost(),
-                        route.optimizeRule(),
-                        route.replanCount(),
-                        route.regUserId(),
-                        route.regDtm(),
-                        route.updUserId(),
-                        route.updDtm(),
-                        routeMapper.selectTransferRouteSteps(route.transferRouteId())
+                        route.getTransferRouteId(),
+                        route.getTransferId(),
+                        route.getRouteStatus(),
+                        route.getTotalDistanceM(),
+                        route.getTotalTimeSec(),
+                        route.getTotalCost(),
+                        route.getOptimizeRule(),
+                        route.getReplanCount(),
+                        route.getRegUserId(),
+                        route.getRegDtm(),
+                        route.getUpdUserId(),
+                        route.getUpdDtm(),
+                        routeMapper.selectTransferRouteSteps(route.getTransferRouteId())
                 ));
     }
 
@@ -128,14 +128,14 @@ public class RouteService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRANSFER_NOT_FOUND));
 
         RouteOptimizeResultDto result = optimize(new RouteOptimizeRequest(
-                transfer.plantCd(),
-                transfer.fromLocationId(),
-                transfer.toLocationId(),
+                transfer.getPlantCd(),
+                transfer.getFromLocationId(),
+                transfer.getToLocationId(),
                 optimizeRule
         ));
 
-        if (!Boolean.TRUE.equals(result.routeAvailable())) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, result.message());
+        if (!Boolean.TRUE.equals(result.getRouteAvailable())) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, result.getMessage());
         }
 
         routeMapper.deleteTransferRouteStepsByTransferId(transferId);
@@ -145,10 +145,10 @@ public class RouteService {
                 null,
                 transferId,
                 "PLANNED",
-                result.totalDistanceM(),
-                result.totalTimeSec(),
-                result.totalCost(),
-                result.optimizeRule(),
+                result.getTotalDistanceM(),
+                result.getTotalTimeSec(),
+                result.getTotalCost(),
+                result.getOptimizeRule(),
                 0,
                 userId,
                 null,
@@ -160,16 +160,16 @@ public class RouteService {
         TransferRouteDto savedRoute = routeMapper.selectTransferRoute(transferId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
 
-        for (RouteStepDto step : result.steps()) {
+        for (RouteStepDto step : result.getSteps()) {
             routeMapper.insertTransferRouteStep(new RouteStepDto(
                     null,
-                    savedRoute.transferRouteId(),
-                    step.stepSeq(),
-                    step.routeEdgeId(),
-                    step.fromNodeId(),
-                    step.toNodeId(),
+                    savedRoute.getTransferRouteId(),
+                    step.getStepSeq(),
+                    step.getRouteEdgeId(),
+                    step.getFromNodeId(),
+                    step.getToNodeId(),
                     "WAITING",
-                    step.expectedTimeSec(),
+                    step.getExpectedTimeSec(),
                     null,
                     null,
                     null,
@@ -210,10 +210,10 @@ public class RouteService {
     }
 
     private void validateOptimizeRequest(RouteOptimizeRequest request) {
-        if (request.plantCd() == null || request.plantCd().isBlank()
-                || request.fromLocationId() == null
-                || request.toLocationId() == null
-                || request.fromLocationId().equals(request.toLocationId())) {
+        if (request.getPlantCd() == null || request.getPlantCd().isBlank()
+                || request.getFromLocationId() == null
+                || request.getToLocationId() == null
+                || request.getFromLocationId().equals(request.getToLocationId())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
     }
@@ -228,9 +228,9 @@ public class RouteService {
     private Map<Long, List<RouteLeg>> buildGraph(List<RouteEdgeDto> edges, String optimizeRule) {
         Map<Long, List<RouteLeg>> graph = new HashMap<>();
         for (RouteEdgeDto edge : edges) {
-            addLeg(graph, edge, edge.fromNodeId(), edge.toNodeId(), edge.fromNodeCd(), edge.fromNodeNm(), edge.toNodeCd(), edge.toNodeNm(), optimizeRule);
-            if ("Y".equals(edge.bidirectionalYn())) {
-                addLeg(graph, edge, edge.toNodeId(), edge.fromNodeId(), edge.toNodeCd(), edge.toNodeNm(), edge.fromNodeCd(), edge.fromNodeNm(), optimizeRule);
+            addLeg(graph, edge, edge.getFromNodeId(), edge.getToNodeId(), edge.getFromNodeCd(), edge.getFromNodeNm(), edge.getToNodeCd(), edge.getToNodeNm(), optimizeRule);
+            if ("Y".equals(edge.getBidirectionalYn())) {
+                addLeg(graph, edge, edge.getToNodeId(), edge.getFromNodeId(), edge.getToNodeCd(), edge.getToNodeNm(), edge.getFromNodeCd(), edge.getFromNodeNm(), optimizeRule);
             }
         }
         return graph;
@@ -298,15 +298,15 @@ public class RouteService {
 
     private double calculateCost(RouteEdgeDto edge, String optimizeRule) {
         double cost = switch (optimizeRule) {
-            case "SHORTEST_DISTANCE" -> defaultDouble(edge.distanceM());
-            case "AVOID_CONGESTION" -> defaultDouble(edge.baseCost()) + congestionPenalty(edge);
-            default -> defaultInt(edge.travelTimeSec());
+            case "SHORTEST_DISTANCE" -> defaultDouble(edge.getDistanceM());
+            case "AVOID_CONGESTION" -> defaultDouble(edge.getBaseCost()) + congestionPenalty(edge);
+            default -> defaultInt(edge.getTravelTimeSec());
         };
         return cost <= 0 ? 1 : cost;
     }
 
     private double congestionPenalty(RouteEdgeDto edge) {
-        return "CONGESTED".equals(edge.edgeStatus()) ? CONGESTION_AVOIDANCE_PENALTY : 0.0;
+        return "CONGESTED".equals(edge.getEdgeStatus()) ? CONGESTION_AVOIDANCE_PENALTY : 0.0;
     }
 
     private double defaultDouble(Double value) {
@@ -330,3 +330,4 @@ public class RouteService {
 
     private record RouteDistance(Long nodeId, double distance) {}
 }
+

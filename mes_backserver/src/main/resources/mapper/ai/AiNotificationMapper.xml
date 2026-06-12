@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.ai.AiNotificationMapper">
+
+    <insert id="insert">
+        INSERT INTO MES_AI_NOTIFICATION (title, message, severity, source_ref, is_read, created_at)
+        VALUES (#{title}, #{message}, #{severity}, #{sourceRef}, 0, NOW())
+    </insert>
+
+    <select id="findRecent" resultType="com.mes.domain.ai.dto.AiNotificationDto">
+        SELECT
+            id          AS id,
+            title       AS title,
+            message     AS message,
+            severity    AS severity,
+            source_ref  AS sourceRef,
+            is_read     AS `read`,
+            created_at  AS createdAt
+        FROM MES_AI_NOTIFICATION
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="countUnread" resultType="int">
+        SELECT COUNT(*) FROM MES_AI_NOTIFICATION WHERE is_read = 0
+    </select>
+
+    <update id="markAsRead">
+        UPDATE MES_AI_NOTIFICATION SET is_read = 1 WHERE id = #{id}
+    </update>
+
+    <update id="markAllAsRead">
+        UPDATE MES_AI_NOTIFICATION SET is_read = 1 WHERE is_read = 0
+    </update>
+
+    <select id="countBySourceRef" resultType="int">
+        SELECT COUNT(*) FROM MES_AI_NOTIFICATION WHERE source_ref = #{sourceRef}
+    </select>
+
+</mapper>

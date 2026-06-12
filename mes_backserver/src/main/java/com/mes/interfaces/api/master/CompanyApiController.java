@@ -35,15 +35,15 @@ public class CompanyApiController {
     @PostMapping
     public ApiResponse<Void> createCompany(@Valid @RequestBody CompanyUpsertRequest request) {
         companyService.createCompany(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 
     @PutMapping("/{companyCd}")
     public ApiResponse<Void> updateCompany(@PathVariable("companyCd") String companyCd, @Valid @RequestBody CompanyUpsertRequest request) {
-        if (!companyCd.equals(request.companyCd())) {
+        if (!companyCd.equals(request.getCompanyCd())) {
             throw new IllegalArgumentException("경로의 companyCd와 요청 본문의 companyCd가 일치하지 않습니다.");
         }
         companyService.updateCompany(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

@@ -1,3 +1,7 @@
 import { createHttpClient } from '../httpClient';
+import { getMesApiBaseUrl } from '../apiBaseUrl';
+import { authTokenStore } from '../authTokenStore';
 
-export const mesApi = createHttpClient(import.meta.env.VITE_MES_API_BASE_URL || 'http://localhost:8080');
+export const mesApi = createHttpClient(getMesApiBaseUrl(), {
+  getToken: authTokenStore.getMesToken
+});

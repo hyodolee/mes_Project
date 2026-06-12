@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import useSWR from 'swr';
 
 import Alert from '@mui/material/Alert';
@@ -102,12 +103,26 @@ function getEventStatusColor(status) {
 
 function getProcessResultColor(result) {
   if (result === 'SUCCESS') return 'success';
+  if (result === 'VALIDATION_FAILED') return 'warning';
   if (result === 'FAILED') return 'error';
   return 'default';
 }
 
+function getProcessResultLabel(result) {
+  if (result === 'SUCCESS') return '처리 완료';
+  if (result === 'VALIDATION_FAILED') return '데이터 누락';
+  if (result === 'FAILED') return '처리 실패';
+  return '대기';
+}
+
 export default function McsTransfers() {
-  const [search, setSearch] = useState({ plantCd: '', transferStatus: '', transferNo: '' });
+  const [urlSearchParams] = useSearchParams();
+  const initialSearch = {
+    plantCd: urlSearchParams.get('plantCd') || '',
+    transferStatus: urlSearchParams.get('transferStatus') || '',
+    transferNo: urlSearchParams.get('transferNo') || ''
+  };
+  const [search, setSearch] = useState(initialSearch);
   const [query, setQuery] = useState({ page: 1, size: 10 });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTransfer, setEditingTransfer] = useState(null);
@@ -632,7 +647,7 @@ export default function McsTransfers() {
                       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                         <Typography variant="subtitle2">{event.eventType}</Typography>
                         <Chip label={event.eventStatus} size="small" color={getEventStatusColor(event.eventStatus)} variant="light" />
-                        <Chip label={event.processResult || 'PENDING'} size="small" color={getProcessResultColor(event.processResult)} variant="outlined" />
+                        <Chip label={getProcessResultLabel(event.processResult)} size="small" color={getProcessResultColor(event.processResult)} variant="outlined" />
                       </Stack>
                       <Typography variant="caption" color="text.secondary">
                         {event.eventDtm} / {event.equipmentCd || '-'} / {event.locationCd || '-'}

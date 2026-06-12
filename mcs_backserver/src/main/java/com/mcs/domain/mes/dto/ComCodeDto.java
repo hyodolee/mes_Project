@@ -1,10 +1,15 @@
 package com.mcs.domain.mes.dto;
 
-public record ComCodeDto(
-    String grpCd,
-    String comCd,
-    String comNm,
-    Integer sortSeq,
-    String attr1,
-    String useYn
-) {}
+@lombok.Getter
+@lombok.Setter
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
+public class ComCodeDto {
+    private String grpCd;
+    private String comCd;
+    private String comNm;
+    private Integer sortSeq;
+    private String attr1;
+    private String useYn;
+}
+

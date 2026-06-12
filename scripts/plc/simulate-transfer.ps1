@@ -19,7 +19,7 @@ param(
     [Parameter(Mandatory = $true)]
     [long]$TransferId,
 
-    [ValidateSet("Success", "Error", "EquipmentError", "SensorMismatch", "InterlockBlocked", "Timeout")]
+    [ValidateSet("Success", "Error", "EquipmentError", "SensorMismatch", "InterlockBlocked", "Timeout", "MissingTransferId", "MissingToLocation", "MissingLotNo", "InvalidPayload")]
     [string]$Scenario = "Success",
 
     [ValidateSet("PlcApi", "DirectMcs")]
@@ -29,9 +29,11 @@ param(
 
     [string]$EquipmentCd = "CV-001",
 
-    [string]$StartLocationCd = "",
+    [string]$StartLocationCd = "NCM-01-01",
 
-    [string]$EndLocationCd = "",
+    [string]$EndLocationCd = "NCM-01-02",
+
+    [string]$LotNo = "LOT-SIM-001",
 
     [int]$DelaySeconds = 3,
 
@@ -60,8 +62,15 @@ function Send-PlcEvent {
         [string]$EventType,
         [string]$EventStatus = "NORMAL",
         [string]$LocationCd = "",
+        [string]$FromLocationCd = "",
+        [string]$ToLocationCd = "",
+        [string]$LotNoValue = $LotNo,
         [string]$ErrorCode = "",
-        [string]$Message = ""
+        [string]$Message = "",
+        [switch]$OmitTargetId,
+        [switch]$OmitEquipmentCd,
+        [switch]$OmitToLocationCd,
+        [switch]$OmitLotNo
     )
 
     $body = @{
@@ -71,9 +80,25 @@ function Send-PlcEvent {
         targetType = "TRANSFER"
         targetId = $TransferId
         locationCd = $LocationCd
+        fromLocationCd = $FromLocationCd
+        toLocationCd = $ToLocationCd
+        lotNo = $LotNoValue
         errorCode = $ErrorCode
         message = $Message
         eventDtm = (Get-Date).ToString("s")
+    }
+
+    if ($OmitTargetId) {
+        $body.Remove("targetId")
+    }
+    if ($OmitEquipmentCd) {
+        $body.Remove("equipmentCd")
+    }
+    if ($OmitToLocationCd) {
+        $body.Remove("toLocationCd")
+    }
+    if ($OmitLotNo) {
+        $body.Remove("lotNo")
     }
 
     $json = $body | ConvertTo-Json -Depth 5
@@ -170,6 +195,8 @@ function Start-Transfer {
     Send-PlcEvent `
         -EventType "TRANSFER_STARTED" `
         -LocationCd $StartLocationCd `
+        -FromLocationCd $StartLocationCd `
+        -ToLocationCd $EndLocationCd `
         -Message "Transfer $TransferId started"
 }
 
@@ -182,6 +209,8 @@ function Complete-Transfer {
     Send-PlcEvent `
         -EventType "TRANSFER_COMPLETED" `
         -LocationCd $EndLocationCd `
+        -FromLocationCd $StartLocationCd `
+        -ToLocationCd $EndLocationCd `
         -Message "Transfer $TransferId completed"
 }
 
@@ -194,6 +223,8 @@ function Send-Running {
     Send-PlcEvent `
         -EventType "EQUIPMENT_RUNNING" `
         -LocationCd $StartLocationCd `
+        -FromLocationCd $StartLocationCd `
+        -ToLocationCd $EndLocationCd `
         -Message "$EquipmentCd is running"
 }
 
@@ -207,6 +238,8 @@ function Send-EquipmentError {
         -EventType "EQUIPMENT_ERROR" `
         -EventStatus "ERROR" `
         -LocationCd $StartLocationCd `
+        -FromLocationCd $StartLocationCd `
+        -ToLocationCd $EndLocationCd `
         -ErrorCode "MOTOR_OVERLOAD" `
         -Message "$EquipmentCd motor overload"
 }
@@ -221,6 +254,8 @@ function Send-SensorMismatch {
         -EventType "ARRIVED_WRONG_LOCATION" `
         -EventStatus "INTERLOCK" `
         -LocationCd "WRONG-LOCATION" `
+        -FromLocationCd $StartLocationCd `
+        -ToLocationCd $EndLocationCd `
         -ErrorCode "SENSOR_LOCATION_MISMATCH" `
         -Message "Detected location is different from transfer destination"
 }
@@ -235,8 +270,50 @@ function Send-InterlockBlocked {
         -EventType "INTERLOCK_BLOCKED" `
         -EventStatus "INTERLOCK" `
         -LocationCd $EndLocationCd `
+        -FromLocationCd $StartLocationCd `
+        -ToLocationCd $EndLocationCd `
         -ErrorCode "DESTINATION_BLOCKED" `
         -Message "Transfer completion blocked by destination interlock"
+}
+
+function Send-MissingTransferId {
+    Send-PlcEvent `
+        -EventType "TRANSFER_STARTED" `
+        -LocationCd $StartLocationCd `
+        -FromLocationCd $StartLocationCd `
+        -ToLocationCd $EndLocationCd `
+        -Message "Transfer started but targetId is missing" `
+        -OmitTargetId
+}
+
+function Send-MissingToLocation {
+    Send-PlcEvent `
+        -EventType "TRANSFER_STARTED" `
+        -LocationCd $StartLocationCd `
+        -FromLocationCd $StartLocationCd `
+        -Message "Transfer started but toLocationCd is missing" `
+        -OmitToLocationCd
+}
+
+function Send-MissingLotNo {
+    Send-PlcEvent `
+        -EventType "TRANSFER_STARTED" `
+        -LocationCd $StartLocationCd `
+        -FromLocationCd $StartLocationCd `
+        -ToLocationCd $EndLocationCd `
+        -Message "Transfer started but lotNo is missing" `
+        -OmitLotNo
+}
+
+function Send-InvalidPayload {
+    Send-PlcEvent `
+        -EventType "TRANSFER_STARTED" `
+        -LocationCd $StartLocationCd `
+        -Message "Invalid PLC payload for validation test" `
+        -OmitTargetId `
+        -OmitEquipmentCd `
+        -OmitToLocationCd `
+        -OmitLotNo
 }
 
 $EffectiveScenario = $Scenario
@@ -281,6 +358,18 @@ switch ($EffectiveScenario) {
     "Timeout" {
         Start-Transfer
         Write-Step "Completion event is intentionally skipped for timeout testing."
+    }
+    "MissingTransferId" {
+        Send-MissingTransferId
+    }
+    "MissingToLocation" {
+        Send-MissingToLocation
+    }
+    "MissingLotNo" {
+        Send-MissingLotNo
+    }
+    "InvalidPayload" {
+        Send-InvalidPayload
     }
 }
 

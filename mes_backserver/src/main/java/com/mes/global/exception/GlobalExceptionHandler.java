@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +22,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
         ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ApiResponse.fail(errorCode.getCode(), e.getMessage(), null));
+                .body(ApiResponse.fail(errorCode.getCode(), e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -40,7 +41,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
         ErrorCode errorCode = ErrorCode.INVALID_INPUT;
         return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ApiResponse.fail(errorCode.getCode(), e.getMessage(), null));
+                .body(ApiResponse.fail(errorCode.getCode(), e.getMessage()));
+    }
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public ResponseEntity<Void> handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {
+        log.debug("Client disconnected before API response was written: {}", e.getMessage());
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(Exception.class)
@@ -51,6 +58,6 @@ public class GlobalExceptionHandler {
                 ? errorCode.getMessage()
                 : errorCode.getMessage() + " 원인: " + e.getMessage();
         return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ApiResponse.fail(errorCode.getCode(), message, null));
+                .body(ApiResponse.fail(errorCode.getCode(), message));
     }
 }

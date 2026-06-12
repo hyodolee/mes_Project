@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
         ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ApiResponse.fail(errorCode.getCode(), e.getMessage(), null));
+                .body(ApiResponse.fail(errorCode.getCode(), e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -36,13 +36,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
         ErrorCode errorCode = ErrorCode.INVALID_INPUT;
         return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ApiResponse.fail(errorCode.getCode(), e.getMessage(), null));
+                .body(ApiResponse.fail(errorCode.getCode(), e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
         return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ApiResponse.fail(errorCode.getCode(), errorCode.getMessage(), null));
+                .body(ApiResponse.fail(errorCode.getCode(), errorCode.getMessage()));
     }
 }

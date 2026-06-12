@@ -66,14 +66,14 @@ public class ItemWebController {
     public String editForm(@PathVariable("itemCd") String itemCd, Model model) {
         var item = itemService.getItem(itemCd);
         model.addAttribute("request", new ItemUpsertRequest(
-                item.itemCd(),
-                item.plantCd(),
-                item.itemNm(),
-                item.itemSpec(),
-                item.unit(),
-                item.itemType(),
-                item.itemGrp(),
-                item.useYn()
+                item.getItemCd(),
+                item.getPlantCd(),
+                item.getItemNm(),
+                item.getItemSpec(),
+                item.getUnit(),
+                item.getItemType(),
+                item.getItemGrp(),
+                item.getUseYn()
         ));
         model.addAttribute("plants", plantService.getPlants(null, null, "Y"));
         model.addAttribute("mode", "edit");
@@ -93,7 +93,7 @@ public class ItemWebController {
             model.addAttribute("active", "items");
             return "master/item/form";
         }
-        if (!itemCd.equals(request.itemCd())) {
+        if (!itemCd.equals(request.getItemCd())) {
             throw new IllegalArgumentException("경로의 itemCd와 폼의 itemCd가 일치하지 않습니다.");
         }
         itemService.updateItem(request);

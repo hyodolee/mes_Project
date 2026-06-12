@@ -27,6 +27,6 @@ public class ProcessResultApiController {
     @PostMapping
     public ApiResponse<Void> createProcessResult(@Valid @RequestBody ProcessResultCreateRequest request) {
         processResultService.createProcessResult(request);
-        return ApiResponse.ok(null);
+        return ApiResponse.ok();
     }
 }

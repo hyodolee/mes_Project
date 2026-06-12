@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -40,72 +42,77 @@ public class PlcEventService {
         plcEventMapper.insertPlcEvent(event);
 
         try {
+            PayloadValidation validation = validatePayload(request, event);
+            if (!validation.valid()) {
+                plcEventMapper.updateProcessResult(event.getEventId(), "VALIDATION_FAILED", validation.message());
+                return event;
+            }
             processEvent(event);
-            plcEventMapper.updateProcessResult(event.eventId(), "SUCCESS", "processed");
+            plcEventMapper.updateProcessResult(event.getEventId(), "SUCCESS", "processed");
         } catch (RuntimeException e) {
-            plcEventMapper.updateProcessResult(event.eventId(), "FAILED", e.getMessage());
+            plcEventMapper.updateProcessResult(event.getEventId(), "FAILED", e.getMessage());
         }
 
         return event;
     }
 
     private void processEvent(PlcEventDto event) {
-        if ("ROUTE_EDGE".equals(event.targetType()) || "EDGE".equals(event.targetType())) {
+        if ("ROUTE_EDGE".equals(event.getTargetType()) || "EDGE".equals(event.getTargetType())) {
             processRouteEdgeEvent(event);
             return;
         }
 
-        if (!"TRANSFER".equals(event.targetType())) {
+        if (!"TRANSFER".equals(event.getTargetType())) {
             return;
         }
-        if (event.targetId() == null) {
+        if (event.getTargetId() == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "targetId is required for transfer events.");
         }
 
-        switch (event.eventType()) {
+        switch (event.getEventType()) {
             case "TRANSFER_STARTED" ->
-                    transferService.changeOrderStatus(event.targetId(), "IN_PROGRESS", "PLC");
+                    transferService.changeOrderStatus(event.getTargetId(), "IN_PROGRESS", "PLC");
             case "TRANSFER_COMPLETED" ->
-                    transferService.changeOrderStatus(event.targetId(), "COMPLETED", "PLC");
+                    transferService.changeOrderStatus(event.getTargetId(), "COMPLETED", "PLC");
             case "EQUIPMENT_RUNNING" -> {
                 // Logged only. Status does not change.
             }
             case "EQUIPMENT_ERROR", "ARRIVED_WRONG_LOCATION", "INTERLOCK_BLOCKED" ->
-                    transferService.markOrderFailed(event.targetId(), event.eventMessage(), "PLC");
+                    transferService.markOrderFailed(event.getTargetId(), event.getEventMessage(), "PLC");
             default ->
-                    throw new BusinessException(ErrorCode.INVALID_INPUT, "Unsupported PLC event type: " + event.eventType());
+                    throw new BusinessException(ErrorCode.INVALID_INPUT, "Unsupported PLC event type: " + event.getEventType());
         }
     }
 
     private void processRouteEdgeEvent(PlcEventDto event) {
-        if (event.targetId() == null) {
+        if (event.getTargetId() == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "targetId is required for route edge events.");
         }
 
-        String edgeStatus = switch (event.eventType()) {
+        String edgeStatus = switch (event.getEventType()) {
             case "EDGE_BLOCKED" -> "BLOCKED";
             case "EDGE_RELEASED" -> "AVAILABLE";
             case "EDGE_CONGESTED" -> "CONGESTED";
             case "EDGE_INTERLOCKED" -> "INTERLOCKED";
             case "EDGE_MAINTENANCE" -> "MAINTENANCE";
-            default -> throw new BusinessException(ErrorCode.INVALID_INPUT, "Unsupported route edge event type: " + event.eventType());
+            default -> throw new BusinessException(ErrorCode.INVALID_INPUT, "Unsupported route edge event type: " + event.getEventType());
         };
-        routeService.changeEdgeStatus(event.targetId(), edgeStatus, "PLC");
+        routeService.changeEdgeStatus(event.getTargetId(), edgeStatus, "PLC");
     }
 
     private PlcEventDto toEventDto(PlcEventRequest request) {
         return new PlcEventDto(
                 nextEventId(),
-                required(request.equipmentCd(), "equipmentCd"),
-                required(request.eventType(), "eventType"),
-                defaultText(request.eventStatus(), "NORMAL"),
-                defaultText(request.targetType(), "TRANSFER"),
-                request.targetId(),
-                defaultText(request.locationCd(), ""),
-                defaultText(request.errorCode(), ""),
-                defaultText(request.message(), ""),
+                defaultText(request.getEquipmentCd(), ""),
+                defaultText(request.getEventType(), ""),
+                defaultText(request.getEventStatus(), "NORMAL"),
+                defaultText(request.getTargetType(), "TRANSFER"),
+                request.getTargetId(),
+                defaultText(request.getLocationCd(), ""),
+                defaultText(request.getErrorCode(), ""),
+                defaultText(request.getMessage(), ""),
                 toRawPayload(request),
-                request.eventDtm() == null ? LocalDateTime.now() : request.eventDtm(),
+                request.getEventDtm() == null ? LocalDateTime.now() : request.getEventDtm(),
                 "N",
                 null,
                 null,
@@ -115,19 +122,64 @@ public class PlcEventService {
         );
     }
 
+    private PayloadValidation validatePayload(PlcEventRequest request, PlcEventDto event) {
+        List<String> missingFields = new ArrayList<>();
+        requireText(missingFields, event.getEquipmentCd(), "equipmentCd");
+        requireText(missingFields, event.getEventType(), "eventType");
+
+        if ("TRANSFER".equals(event.getTargetType())) {
+            requireId(missingFields, event.getTargetId(), "targetId");
+        }
+
+        switch (event.getEventType()) {
+            case "TRANSFER_STARTED" -> {
+                requireText(missingFields, event.getLocationCd(), "locationCd");
+                requireText(missingFields, request.getToLocationCd(), "toLocationCd");
+                requireText(missingFields, request.getLotNo(), "lotNo");
+            }
+            case "TRANSFER_COMPLETED" -> {
+                requireText(missingFields, event.getLocationCd(), "locationCd");
+                requireText(missingFields, request.getLotNo(), "lotNo");
+            }
+            case "EQUIPMENT_ERROR", "ARRIVED_WRONG_LOCATION", "INTERLOCK_BLOCKED" -> {
+                requireText(missingFields, event.getErrorCode(), "errorCode");
+                requireText(missingFields, event.getEventMessage(), "message");
+            }
+            default -> {
+                // Unsupported event types are handled by processEvent after basic validation.
+            }
+        }
+
+        if (missingFields.isEmpty()) {
+            return new PayloadValidation(true, "OK");
+        }
+
+        return new PayloadValidation(
+                false,
+                "PLC payload validation failed. missingFields=" + String.join(",", missingFields)
+                        + ", eventType=" + defaultText(event.getEventType(), "-")
+                        + ". Check PLC payload mapping or communication definition."
+        );
+    }
+
+    private void requireText(List<String> missingFields, String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            missingFields.add(fieldName);
+        }
+    }
+
+    private void requireId(List<String> missingFields, Long value, String fieldName) {
+        if (value == null) {
+            missingFields.add(fieldName);
+        }
+    }
+
     private String toRawPayload(PlcEventRequest request) {
         try {
             return objectMapper.writeValueAsString(request);
         } catch (JsonProcessingException e) {
             return "{}";
         }
-    }
-
-    private String required(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, fieldName + " is required.");
-        }
-        return value.trim();
     }
 
     private String defaultText(String value, String defaultValue) {
@@ -140,4 +192,8 @@ public class PlcEventService {
     private Long nextEventId() {
         return System.currentTimeMillis() * 1000 + ThreadLocalRandom.current().nextInt(1000);
     }
+
+    private record PayloadValidation(boolean valid, String message) {
+    }
 }
+

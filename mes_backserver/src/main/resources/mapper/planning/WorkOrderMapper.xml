@@ -162,6 +162,9 @@
         JOIN MST_PLANT p ON p.PLANT_CD = wo.PLANT_CD
         LEFT JOIN MST_ITEM i ON i.ITEM_CD = wo.ITEM_CD
         WHERE 1 = 1
+        <if test="woNo != null and woNo != ''">
+            AND wo.WO_NO LIKE CONCAT('%', #{woNo}, '%')
+        </if>
         <if test="plantCd != null and plantCd != ''">
             AND wo.PLANT_CD = #{plantCd}
         </if>

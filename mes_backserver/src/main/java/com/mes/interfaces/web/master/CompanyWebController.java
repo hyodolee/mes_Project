@@ -56,13 +56,13 @@ public class CompanyWebController {
     public String editForm(@PathVariable("companyCd") String companyCd, Model model) {
         var company = companyService.getCompany(companyCd);
         model.addAttribute("request", new CompanyUpsertRequest(
-                company.companyCd(),
-                company.companyNm(),
-                company.bizNo(),
-                company.ceoNm(),
-                company.addr(),
-                company.telNo(),
-                company.useYn()));
+                company.getCompanyCd(),
+                company.getCompanyNm(),
+                company.getBizNo(),
+                company.getCeoNm(),
+                company.getAddr(),
+                company.getTelNo(),
+                company.getUseYn()));
         model.addAttribute("mode", "edit");
         return "master/company/form";
     }
@@ -75,7 +75,7 @@ public class CompanyWebController {
         if (bindingResult.hasErrors()) {
             return "master/company/form";
         }
-        if (!companyCd.equals(request.companyCd())) {
+        if (!companyCd.equals(request.getCompanyCd())) {
             throw new IllegalArgumentException("경로의 companyCd와 폼의 companyCd가 일치하지 않습니다.");
         }
         companyService.updateCompany(request);

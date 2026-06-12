@@ -43,7 +43,7 @@ public class ItemService {
 
     @Transactional
     public void createItem(ItemUpsertRequest request) {
-        if (itemMapper.getItem(request.itemCd()) != null) {
+        if (itemMapper.getItem(request.getItemCd()) != null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "이미 존재하는 품목 코드입니다.");
         }
         itemMapper.save(request);
@@ -51,7 +51,7 @@ public class ItemService {
 
     @Transactional
     public void updateItem(ItemUpsertRequest request) {
-        getItem(request.itemCd()); // 존재 여부 확인
+        getItem(request.getItemCd()); // 존재 여부 확인
         itemMapper.update(request);
     }
 }
