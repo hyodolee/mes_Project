@@ -1,9 +1,11 @@
 # MES/MCS 프로젝트 개발 가이드
 
 ## 프로젝트 구조
-- `mes_backserver/` : MES (포트 8080, 패키지 com.mes)
-- `mcs_backserver/` : MCS (포트 8081, 패키지 com.mcs) ← 현재 개발 중
-- **동일 DB 운영**: MES/MCS 모두 `MES_DB` 사용, MCS 테이블은 `MCS_` 접두어로 구분
+- `mes_backserver/` : MES + MCS 통합 단일 백엔드 (포트 8080)
+  - MES 코드: `com.mes` / 병합된 MCS 코드: `com.mes.mcs` (빈 이름은 `mcs` 접두어로 충돌 회피)
+  - **MCS는 별도 서버(구 8081, com.mcs)에서 `mes_backserver`로 병합 완료** — 단일 8080에서 실행
+  - 구 `mcs_backserver/`는 제거됨 (이력은 git 참조). 병합 경위: `docs/MCS_MERGE_PLAN.md`
+- **동일 DB 운영**: `MES_DB` 사용, MCS 테이블은 `MCS_` 접두어로 구분
 - MCS 테이블에서 MES 마스터 테이블 FK 참조 (MST_PLANT, MST_WAREHOUSE, MST_ITEM, MST_VENDOR)
 - COM_CODE_GRP/COM_CODE는 MES 기존 테이블 공유, MCS 전용 그룹은 `MCS_` 접두어
 
@@ -27,5 +29,5 @@ Windows 10, Java 21, Spring Boot 3.3.5, MyBatis 3.0.3, MariaDB, Thymeleaf, Gradl
 
 ## 빌드 명령
 ```
-powershell.exe -Command "Set-Location 'C:\dev\mes_project\mcs_backserver'; & .\gradlew.bat build -x test 2>&1"
+powershell.exe -Command "Set-Location 'C:\dev\mes_project\mes_backserver'; & .\gradlew.bat build -x test 2>&1"
 ```

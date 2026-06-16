@@ -2,171 +2,130 @@ package com.mes.application.service.ai.query;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 /**
- * 운영 문서 근거 검색.
+ * Chroma에 색인된 운영 문서를 검색한다.
  *
- * <p>1차 구현은 로컬 Markdown 문서를 키워드로 검색한다.
- * 이후 VectorStore 기반 RAG로 교체할 때도 외부 계약은 유지한다.</p>
+ * <p>여기서는 로컬 Markdown 파일을 fallback으로 검색하지 않는다.
+ * RAG 업로드/색인 상태를 검증해야 하므로, Chroma에 문서가 없으면 빈 결과를 그대로 반환한다.</p>
  */
+@Slf4j
 @Service
 public class OperationDocumentSearchService {
 
     private static final int MAX_RESULTS = 5;
-    private static final Pattern SPLIT_PATTERN = Pattern.compile("[\\s,./:;()\\[\\]{}\"'`|]+");
+    private static final int SEARCH_TOP_K = 8;
 
-    private final Path docsRoot;
+    private final VectorStore vectorStore;
 
-    public OperationDocumentSearchService(
-            @Value("${ai.rag.docs-root:../docs}") String docsRoot
-    ) {
-        this.docsRoot = Path.of(docsRoot).normalize();
+    public OperationDocumentSearchService(VectorStore vectorStore) {
+        this.vectorStore = vectorStore;
     }
 
+    /**
+     * Chroma에서 질문과 관련된 문서 조각을 찾는다.
+     * 결과가 없으면 등록된 RAG 문서가 없거나 아직 색인되지 않은 상태로 판단한다.
+     */
     public List<DocumentSnippet> search(String query) {
-        Set<String> tokens = tokenize(query);
-        if (tokens.isEmpty()) {
-            return List.of();
-        }
-
-        List<DocumentSnippet> snippets = new ArrayList<>();
-        for (Path path : documentPaths()) {
-            snippets.addAll(searchDocument(path, tokens));
-        }
-
-        return snippets.stream()
-                .sorted(Comparator.comparingInt(DocumentSnippet::getScore).reversed())
-                .limit(MAX_RESULTS)
-                .map(DocumentSnippet::withoutScore)
-                .toList();
-    }
-
-    private List<Path> documentPaths() {
-        return List.of(
-                docsRoot.resolve("rag/plc-mcs-communication-spec.md").normalize(),
-                docsRoot.resolve("rag/plc-tag-mapping.md").normalize(),
-                docsRoot.resolve("rag/plc-troubleshooting-sop.md").normalize(),
-                docsRoot.resolve("design/PLC_MCS_COMMUNICATION_REFERENCE.md").normalize()
-        );
-    }
-
-    private List<DocumentSnippet> searchDocument(Path path, Set<String> tokens) {
-        if (!Files.exists(path)) {
+        if (query == null || query.isBlank()) {
             return List.of();
         }
 
         try {
-            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            List<DocumentSnippet> results = new ArrayList<>();
-            String currentSection = "";
-
-            for (int i = 0; i < lines.size(); i++) {
-                String line = lines.get(i);
-                if (line.startsWith("#")) {
-                    currentSection = line.replaceFirst("^#+\\s*", "").trim();
-                }
-
-                int score = score(line, tokens);
-                if (score <= 0) {
-                    continue;
-                }
-
-                String snippet = buildSnippet(lines, i);
-                results.add(new DocumentSnippet(
-                        path.getFileName().toString(),
-                        currentSection,
-                        i + 1,
-                        compact(snippet, 700),
-                        score
-                ));
-            }
-            return results;
-        } catch (IOException e) {
+            List<Document> docs = vectorStore.similaritySearch(
+                    SearchRequest.builder()
+                            .query(expandQuery(query))
+                            .topK(SEARCH_TOP_K)
+                            .build()
+            );
+            return docs.stream()
+                    .map(this::toSnippet)
+                    .sorted((left, right) -> Integer.compare(right.getScore(), left.getScore()))
+                    .limit(MAX_RESULTS)
+                    .toList();
+        } catch (Exception e) {
+            log.warn("[RAG] Chroma 검색 실패: {}", e.getMessage());
             return List.of();
         }
     }
 
-    private Set<String> tokenize(String query) {
-        Set<String> tokens = new LinkedHashSet<>();
-        if (query == null || query.isBlank()) {
-            return tokens;
-        }
-
-        for (String token : SPLIT_PATTERN.split(query.toLowerCase(Locale.ROOT))) {
-            if (token.length() >= 2) {
-                tokens.add(token);
-            }
-        }
-
-        addDomainSynonyms(tokens);
-        return tokens;
+    public String vectorStoreClassName() {
+        return vectorStore.getClass().getName();
     }
 
-    private void addDomainSynonyms(Set<String> tokens) {
-        if (tokens.contains("도착") || tokens.contains("도착지")) {
-            tokens.add("tolocationcd");
-            tokens.add("to_location_cd");
-        }
-        if (tokens.contains("로트") || tokens.contains("lot")) {
-            tokens.add("lotno");
-            tokens.add("lot_no");
-        }
-        if (tokens.contains("이동") || tokens.contains("반송")) {
-            tokens.add("transfer");
-        }
-        if (tokens.contains("설비") || tokens.contains("장비")) {
-            tokens.add("equipment");
-        }
-        if (tokens.contains("인터락")) {
-            tokens.add("interlock");
-        }
-        if (tokens.contains("오류") || tokens.contains("에러")) {
-            tokens.add("error");
-        }
+    private DocumentSnippet toSnippet(Document doc) {
+        Map<String, Object> meta = doc.getMetadata();
+        Object lineObj = meta.getOrDefault("line", 0);
+        int line = lineObj instanceof Number ? ((Number) lineObj).intValue() : 0;
+
+        return new DocumentSnippet(
+                String.valueOf(meta.getOrDefault("document", "unknown")),
+                String.valueOf(meta.getOrDefault("section", "")),
+                line,
+                doc.getText(),
+                score(doc)
+        );
     }
 
-    private int score(String line, Set<String> tokens) {
-        String normalized = line.toLowerCase(Locale.ROOT)
-                .replace("_", "")
-                .replace("-", "");
+    private String expandQuery(String query) {
+        String normalized = normalize(query);
+        StringBuilder expanded = new StringBuilder(query);
+
+        if (normalized.contains("tolocationcd") || normalized.contains("to_location_cd") || normalized.contains("목적지")) {
+            expanded.append(" TO_LOCATION_CD toLocationCd DEST_ADDR DEST_SENSOR_OK I0.3 DB120.DBX0.0");
+            expanded.append(" FC_BUILD_TRANSFER_STARTED 목적지 센서 목적지 설정부 목적지 미확정");
+        }
+        if (normalized.contains("lotno") || normalized.contains("lot_no") || normalized.contains("로트")) {
+            expanded.append(" LOT_NO lotNo LOT_REG SCAN_OK M10.0 DB120.DBX22.0 바코드 스캐너");
+        }
+        if (normalized.contains("transferstarted") || normalized.contains("transfer_started") || normalized.contains("이동시작")) {
+            expanded.append(" TRANSFER_STARTED FC_BUILD_TRANSFER_STARTED payload JSON VALIDATION_FAILED");
+        }
+        if (normalized.contains("코드") || normalized.contains("어디") || normalized.contains("위치")) {
+            expanded.append(" 코드 위치 함수 조건 분기 확인 순서 PLC 온라인 모니터");
+        }
+
+        return expanded.toString();
+    }
+
+    private int score(Document doc) {
+        String text = normalize(doc.getText());
+        String documentName = normalize(String.valueOf(doc.getMetadata().getOrDefault("document", "")));
         int score = 0;
-        for (String token : tokens) {
-            String normalizedToken = token.toLowerCase(Locale.ROOT)
-                    .replace("_", "")
-                    .replace("-", "");
-            if (normalized.contains(normalizedToken)) {
-                score += normalizedToken.length() >= 6 ? 3 : 1;
-            }
-        }
+
+        score += contains(text, "fc_build_transfer_started") ? 8 : 0;
+        score += contains(text, "dest_sensor_ok") ? 7 : 0;
+        score += contains(text, "dest_addr") ? 6 : 0;
+        score += contains(text, "i03") ? 5 : 0;
+        score += contains(text, "db120dbx00") ? 5 : 0;
+        score += contains(text, "tolocationcd") ? 4 : 0;
+        score += contains(text, "validation_failed") ? 3 : 0;
+        score += contains(documentName, "cv001") ? 3 : 0;
+
         return score;
     }
 
-    private String buildSnippet(List<String> lines, int index) {
-        int from = Math.max(0, index - 2);
-        int to = Math.min(lines.size(), index + 3);
-        return String.join("\n", lines.subList(from, to));
+    private boolean contains(String value, String token) {
+        return value.contains(normalize(token));
     }
 
-    private String compact(String text, int maxLength) {
-        if (text == null) {
+    private String normalize(String value) {
+        if (value == null) {
             return "";
         }
-        String trimmed = text.trim();
-        return trimmed.length() <= maxLength ? trimmed : trimmed.substring(0, maxLength);
+        return value.toLowerCase(Locale.ROOT)
+                .replace("_", "")
+                .replace("-", "")
+                .replace(".", "");
     }
 
     @Getter
@@ -177,9 +136,5 @@ public class OperationDocumentSearchService {
         private int line;
         private String snippet;
         private int score;
-
-        private DocumentSnippet withoutScore() {
-            return new DocumentSnippet(document, section, line, snippet, 0);
-        }
     }
 }

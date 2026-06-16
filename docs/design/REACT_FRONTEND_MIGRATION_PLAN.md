@@ -42,8 +42,8 @@ React 화면은 MES/MCS/PLC/AI 기능을 하나의 운영 대시보드에서 다
 
 ```text
 mes_project/
-├─ mes_backserver/      # MES API 서버, port 8080
-├─ mcs_backserver/      # MCS API 서버, port 8081
+├─ mes_backserver/      # MES/MCS 통합 API 서버, port 8080
+├─ mcs_backserver/      # 통합 검증 후 제거/보관 예정인 이전 MCS 서버
 ├─ mes_frontend/        # React + Mantis 프론트엔드
 ├─ scripts/plc/         # PLC 시뮬레이터
 └─ docs/

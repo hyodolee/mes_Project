@@ -1,0 +1,3 @@
+ALTER TABLE MES_AI_RAG_DOCUMENT
+    ADD COLUMN document_category VARCHAR(50) NOT NULL DEFAULT 'ETC' AFTER content_type,
+    ADD COLUMN tags VARCHAR(500) AFTER document_type;

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.ai.RagDocumentMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="documentId">
+        INSERT INTO MES_AI_RAG_DOCUMENT (
+            original_file_name,
+            stored_file_name,
+            stored_file_path,
+            content_type,
+            document_category,
+            document_type,
+            tags,
+            status,
+            chunk_count,
+            error_message,
+            created_at,
+            updated_at
+        )
+        VALUES (
+            #{originalFileName},
+            #{storedFileName},
+            #{storedFilePath},
+            #{contentType},
+            #{documentCategory},
+            #{documentType},
+            #{tags},
+            #{status},
+            #{chunkCount},
+            #{errorMessage},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <select id="findAll" resultType="com.mes.domain.ai.dto.RagDocumentDto">
+        SELECT
+            document_id        AS documentId,
+            original_file_name AS originalFileName,
+            stored_file_name   AS storedFileName,
+            stored_file_path   AS storedFilePath,
+            content_type       AS contentType,
+            document_category  AS documentCategory,
+            document_type      AS documentType,
+            tags               AS tags,
+            status             AS status,
+            chunk_count        AS chunkCount,
+            error_message      AS errorMessage,
+            created_at         AS createdAt,
+            updated_at         AS updatedAt
+        FROM MES_AI_RAG_DOCUMENT
+        WHERE status != 'DELETED'
+        ORDER BY created_at DESC, document_id DESC
+    </select>
+
+    <select id="findById" resultType="com.mes.domain.ai.dto.RagDocumentDto">
+        SELECT
+            document_id        AS documentId,
+            original_file_name AS originalFileName,
+            stored_file_name   AS storedFileName,
+            stored_file_path   AS storedFilePath,
+            content_type       AS contentType,
+            document_category  AS documentCategory,
+            document_type      AS documentType,
+            tags               AS tags,
+            status             AS status,
+            chunk_count        AS chunkCount,
+            error_message      AS errorMessage,
+            created_at         AS createdAt,
+            updated_at         AS updatedAt
+        FROM MES_AI_RAG_DOCUMENT
+        WHERE document_id = #{documentId}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE MES_AI_RAG_DOCUMENT
+        SET
+            status = #{status},
+            chunk_count = #{chunkCount},
+            error_message = #{errorMessage},
+            updated_at = NOW()
+        WHERE document_id = #{documentId}
+    </update>
+
+</mapper>

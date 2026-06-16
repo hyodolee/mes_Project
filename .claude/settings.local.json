@@ -38,7 +38,16 @@
       "Bash(./node_modules/.bin/eslint src/pages/ai/operations.jsx)",
       "Bash(echo \"exit: $?\")",
       "Bash(node_modules/.bin/vite build *)",
-      "Bash(node_modules/.bin/eslint src/sections/operations/operationsDashboard.jsx src/pages/ai/operations.jsx src/pages/dashboard/mes.jsx src/pages/dashboard/mcs.jsx --quiet)"
+      "Bash(node_modules/.bin/eslint src/sections/operations/operationsDashboard.jsx src/pages/ai/operations.jsx src/pages/dashboard/mes.jsx src/pages/dashboard/mcs.jsx --quiet)",
+      "Bash(git commit *)",
+      "Bash(echo \"=== commit done, exit $? ===\")",
+      "Bash(./gradlew.bat test *)",
+      "Bash(node -e ' *)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "Bash(docker start *)",
+      "Bash(docker stop *)",
+      "Bash(cd /c/dev/mes_project/mes_frontend && grep -rn \"끝나기 전에\\\\|연결이 종료\\\\|다시 시도\" src/ 2>/dev/null | head)"
     ]
   }
 }

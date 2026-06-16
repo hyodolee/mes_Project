@@ -1,0 +1,105 @@
+(*
+ ============================================================================
+  CV-001 Conveyor Transfer Control
+  Siemens S7-1500 / TIA Portal SCL source export
+  Equipment : CV-001  (NCM-01 zone conveyor)
+  Author    : Automation Team
+  Updated   : 2026-05-10
+  Purpose   : Build and send TRANSFER_STARTED / TRANSFER_COMPLETED /
+              EQUIPMENT_ERROR events to MCS via FC_SEND_TO_MCS.
+
+  PLC tag reference (from CV001_tags):
+    DEST_SENSOR_OK  I0.3           BOOL        destination select confirmed
+    SCAN_OK         M10.0          BOOL        barcode scan success
+    DEST_ADDR       DB120.DBX0.0   STRING[20]  destination location (toLocationCd)
+    LOT_REG         DB120.DBX22.0  STRING[40]  transfer lot no (lotNo)
+    CURRENT_LOC     DB120.DBX64.0  STRING[20]  current location (locationCd)
+ ============================================================================
+*)
+
+FUNCTION "FC_BUILD_TRANSFER_STARTED" : Void
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 1.0
+   VAR_INPUT
+      transferId : DInt;          // MCS transfer order id
+      currentLoc : String[20];    // current location code (from CURRENT_LOC)
+   END_VAR
+
+   VAR_TEMP
+      payload : String[500];
+      destLoc : String[20];
+      lotNo   : String[40];
+   END_VAR
+
+BEGIN
+    // Destination is only latched when the select sensor I0.3 is HIGH.
+    // When I0.3 is LOW the destination address is not yet confirmed,
+    // so destLoc is left empty and sent as-is.
+    IF "DEST_SENSOR_OK" THEN
+        destLoc := "DEST_ADDR";
+    ELSE
+        destLoc := '';
+    END_IF;
+
+    // Lot number comes from the barcode scanner register.
+    // If the scanner did not report a successful read (M10.0 LOW),
+    // the lot register is empty and the empty value is forwarded.
+    IF "SCAN_OK" THEN
+        lotNo := "LOT_REG";
+    ELSE
+        lotNo := '';
+    END_IF;
+
+    // Assemble JSON payload (SCL has no '+' for STRING, use CONCAT).
+    payload := CONCAT(IN1 := '{"equipmentCd":"CV-001",',
+                      IN2 := '"eventType":"TRANSFER_STARTED",');
+    payload := CONCAT(IN1 := payload, IN2 := '"eventStatus":"NORMAL",');
+    payload := CONCAT(IN1 := payload, IN2 := '"targetType":"TRANSFER",');
+    payload := CONCAT(IN1 := payload,
+                      IN2 := CONCAT(IN1 := '"targetId":',
+                                    IN2 := CONCAT(IN1 := DINT_TO_STRING(transferId), IN2 := ',')));
+    payload := CONCAT(IN1 := payload,
+                      IN2 := CONCAT(IN1 := '"locationCd":"',
+                                    IN2 := CONCAT(IN1 := currentLoc, IN2 := '",')));
+    payload := CONCAT(IN1 := payload,
+                      IN2 := CONCAT(IN1 := '"toLocationCd":"',
+                                    IN2 := CONCAT(IN1 := destLoc, IN2 := '",')));
+    payload := CONCAT(IN1 := payload,
+                      IN2 := CONCAT(IN1 := '"lotNo":"',
+                                    IN2 := CONCAT(IN1 := lotNo, IN2 := '"}')));
+
+    "FC_SEND_TO_MCS"(payload := payload);
+
+END_FUNCTION
+
+
+FUNCTION "FC_BUILD_TRANSFER_COMPLETED" : Void
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 1.0
+   VAR_INPUT
+      transferId : DInt;
+      arrivedLoc : String[20];    // measured arrival location
+   END_VAR
+
+   VAR_TEMP
+      payload : String[500];
+   END_VAR
+
+BEGIN
+    // Completion event requires locationCd and lotNo.
+    payload := CONCAT(IN1 := '{"equipmentCd":"CV-001",',
+                      IN2 := '"eventType":"TRANSFER_COMPLETED",');
+    payload := CONCAT(IN1 := payload, IN2 := '"targetType":"TRANSFER",');
+    payload := CONCAT(IN1 := payload,
+                      IN2 := CONCAT(IN1 := '"targetId":',
+                                    IN2 := CONCAT(IN1 := DINT_TO_STRING(transferId), IN2 := ',')));
+    payload := CONCAT(IN1 := payload,
+                      IN2 := CONCAT(IN1 := '"locationCd":"',
+                                    IN2 := CONCAT(IN1 := arrivedLoc, IN2 := '",')));
+    payload := CONCAT(IN1 := payload,
+                      IN2 := CONCAT(IN1 := '"lotNo":"',
+                                    IN2 := CONCAT(IN1 := "LOT_REG", IN2 := '"}')));
+
+    "FC_SEND_TO_MCS"(payload := payload);
+
+END_FUNCTION

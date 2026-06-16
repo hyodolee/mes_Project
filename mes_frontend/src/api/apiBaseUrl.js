@@ -11,5 +11,5 @@ export function getMesApiBaseUrl() {
 }
 
 export function getMcsApiBaseUrl() {
-  return import.meta.env.VITE_MCS_API_BASE_URL || createLocalApiBaseUrl(8081);
+  return import.meta.env.VITE_MCS_API_BASE_URL || getMesApiBaseUrl();
 }

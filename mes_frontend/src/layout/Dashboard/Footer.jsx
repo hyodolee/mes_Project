@@ -13,7 +13,7 @@ export default function Footer() {
           MES 8080
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          MCS 8081
+          MCS 통합
         </Typography>
         <Typography variant="caption" color="text.secondary">
           React Frontend

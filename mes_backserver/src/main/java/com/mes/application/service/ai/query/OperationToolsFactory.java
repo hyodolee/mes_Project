@@ -9,6 +9,10 @@ import com.mes.application.service.planning.ProdPlanService;
 import com.mes.application.service.planning.WorkOrderService;
 import com.mes.application.service.production.DefectHistoryService;
 import com.mes.application.service.quality.InspectResultService;
+import com.mes.mcs.infra.persistence.mybatis.mapper.inventory.InventoryMapper;
+import com.mes.mcs.infra.persistence.mybatis.mapper.location.LocationMapper;
+import com.mes.mcs.infra.persistence.mybatis.mapper.plc.PlcEventMapper;
+import com.mes.mcs.infra.persistence.mybatis.mapper.route.RouteMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -32,6 +36,10 @@ public class OperationToolsFactory {
     private final DefectHistoryService defectHistoryService;
     private final InspectResultService inspectResultService;
     private final OperationDocumentSearchService documentSearchService;
+    private final RouteMapper mcsRouteMapper;
+    private final LocationMapper mcsLocationMapper;
+    private final InventoryMapper mcsInventoryMapper;
+    private final PlcEventMapper mcsPlcEventMapper;
 
     public OperationToolsFactory(
             McsTransferClient mcsTransferClient,
@@ -43,7 +51,11 @@ public class OperationToolsFactory {
             ProdPlanService prodPlanService,
             DefectHistoryService defectHistoryService,
             InspectResultService inspectResultService,
-            OperationDocumentSearchService documentSearchService
+            OperationDocumentSearchService documentSearchService,
+            RouteMapper mcsRouteMapper,
+            LocationMapper mcsLocationMapper,
+            InventoryMapper mcsInventoryMapper,
+            PlcEventMapper mcsPlcEventMapper
     ) {
         this.mcsTransferClient = mcsTransferClient;
         this.workOrderService = workOrderService;
@@ -55,6 +67,10 @@ public class OperationToolsFactory {
         this.defectHistoryService = defectHistoryService;
         this.inspectResultService = inspectResultService;
         this.documentSearchService = documentSearchService;
+        this.mcsRouteMapper = mcsRouteMapper;
+        this.mcsLocationMapper = mcsLocationMapper;
+        this.mcsInventoryMapper = mcsInventoryMapper;
+        this.mcsPlcEventMapper = mcsPlcEventMapper;
     }
 
     public OperationTools create(List<String> dataPoints) {
@@ -70,6 +86,10 @@ public class OperationToolsFactory {
                 defectHistoryService,
                 inspectResultService,
                 documentSearchService,
+                mcsRouteMapper,
+                mcsLocationMapper,
+                mcsInventoryMapper,
+                mcsPlcEventMapper,
                 dataPoints
         );
     }

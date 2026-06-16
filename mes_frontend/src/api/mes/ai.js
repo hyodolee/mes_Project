@@ -2,6 +2,15 @@ import { mesApi } from './client';
 import { getMesApiBaseUrl } from '../apiBaseUrl';
 import { authTokenStore } from '../authTokenStore';
 
+export class AiStreamError extends Error {
+  constructor(message, { status, code } = {}) {
+    super(message);
+    this.name = 'AiStreamError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 function parseSseBlock(block) {
   const eventLines = block.split(/\r?\n/);
   let eventName = 'message';
@@ -42,31 +51,100 @@ function dispatchSseEvent(block, handlers) {
   return eventName;
 }
 
+async function parseApiResponse(response) {
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      window.dispatchEvent(new CustomEvent('app:unauthorized'));
+    }
+    throw new Error(data?.message || `HTTP ${response.status}`);
+  }
+
+  if (data?.success === false) {
+    throw new Error(data.message || data.code || 'Request failed');
+  }
+
+  return data;
+}
+
 export const aiApi = {
   getSummary: (refresh = false) => mesApi.get(`/api/v1/ai/operations/summary${refresh ? '?refresh=true' : ''}`),
   query: (question, pageContext, history = [], conversationId = '') =>
     mesApi.post('/api/v1/ai/query', { question, conversationId, pageContext, history }),
+  getRagDocuments: () => mesApi.get('/api/v1/ai/rag/documents'),
+  uploadRagDocument: async ({ file, documentCategory, documentType, tags }) => {
+    const base = getMesApiBaseUrl();
+    const token = authTokenStore.getMesToken();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('documentCategory', documentCategory);
+    formData.append('documentType', documentType);
+    formData.append('tags', tags || '');
+
+    const response = await fetch(`${base}/api/v1/ai/rag/documents`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: formData
+    });
+
+    return parseApiResponse(response);
+  },
+  reindexRagDocument: (documentId) => mesApi.post(`/api/v1/ai/rag/documents/${documentId}/reindex`, {}),
+  reindexAllRagDocuments: () => mesApi.post('/api/v1/ai/rag/documents/reindex-all', {}),
+  deleteRagDocument: (documentId) => mesApi.delete(`/api/v1/ai/rag/documents/${documentId}`),
   streamQuery: async (question, pageContext, history = [], conversationId = '', handlers = {}) => {
     const base = getMesApiBaseUrl();
     const token = authTokenStore.getMesToken();
-    const response = await fetch(`${base}/api/v1/ai/query/stream`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        Accept: 'text/event-stream',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ question, conversationId, pageContext, history })
-    });
+    let response;
+
+    try {
+      response = await fetch(`${base}/api/v1/ai/query/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          Accept: 'text/event-stream',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ question, conversationId, pageContext, history })
+      });
+    } catch {
+      throw new AiStreamError('MES 서버에 접속할 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.', {
+        code: 'NETWORK_ERROR'
+      });
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
         window.dispatchEvent(new CustomEvent('app:unauthorized'));
+        throw new AiStreamError('로그인 정보가 만료되었습니다. 다시 로그인한 뒤 질문해 주세요.', {
+          status: response.status,
+          code: 'UNAUTHORIZED'
+        });
       }
-      throw new Error(`HTTP ${response.status}`);
+
+      let detail = '';
+      try {
+        detail = await response.text();
+      } catch {
+        detail = '';
+      }
+
+      throw new AiStreamError(
+        detail || `AI 요청 처리 중 서버 오류가 발생했습니다. HTTP ${response.status}`,
+        {
+          status: response.status,
+          code: 'HTTP_ERROR'
+        }
+      );
     }
     if (!response.body) {
-      throw new Error('Streaming response is not available.');
+      throw new AiStreamError('브라우저에서 스트리밍 응답을 읽을 수 없습니다.', {
+        code: 'STREAM_UNAVAILABLE'
+      });
     }
 
     const reader = response.body.getReader();
@@ -101,7 +179,16 @@ export const aiApi = {
     }
 
     if (buffer.trim()) {
-      dispatchSseEvent(buffer, handlers);
+      const eventName = dispatchSseEvent(buffer, handlers);
+      if (eventName === 'done') {
+        doneReceived = true;
+      }
+    }
+
+    if (!doneReceived) {
+      throw new AiStreamError('AI 응답이 끝나기 전에 연결이 종료되었습니다. 다시 시도해 주세요.', {
+        code: 'STREAM_CLOSED'
+      });
     }
   },
   clearQueryMemory: (conversationId) =>

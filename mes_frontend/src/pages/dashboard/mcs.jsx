@@ -31,17 +31,7 @@ const workAreas = [
 ];
 
 export default function McsDashboard() {
-  const {
-    dashboard,
-    isLoading,
-    errors,
-    detail,
-    setDetail,
-    openTransfers,
-    openSignals,
-    openWorkOrders
-  } = useOperationsDashboard();
-
+  const { dashboard, isLoading, errors, detail, setDetail, openTransfers, openSignals, openWorkOrders } = useOperationsDashboard();
   const hasTrend = dashboard.trend.labels.length > 0;
 
   return (
@@ -49,13 +39,15 @@ export default function McsDashboard() {
       <Stack spacing={0.75}>
         <Typography variant="h2">MCS 대시보드</Typography>
         <Typography variant="body1" color="text.secondary">
-          물류 이동, 입출고, 로케이션 재고, PLC 이벤트를 MCS 관점에서 분리해 확인합니다.
+          물류 이동, 입출고, 로케이션 재고, PLC 이벤트를 MCS 관점에서 확인합니다.
         </Typography>
       </Stack>
 
       {isLoading && <LinearProgress />}
       {errors.map((error, index) => (
-        <Alert key={index} severity="error">{error.message}</Alert>
+        <Alert key={index} severity="error">
+          {error.message}
+        </Alert>
       ))}
 
       <Grid container spacing={2}>
@@ -85,10 +77,7 @@ export default function McsDashboard() {
         onOpenSignals={openSignals}
       />
 
-      <MainCard
-        title="MCS 업무 화면"
-        secondary={<Chip label="8081 / MCS API" size="small" color="primary" variant="light" />}
-      >
+      <MainCard title="MCS 업무 화면" secondary={<Chip label="MES 8080 통합 API" size="small" color="primary" variant="light" />}>
         <Grid container spacing={2}>
           {workAreas.map((area) => (
             <Grid key={area.title} size={{ xs: 12, md: 6, xl: 4 }}>

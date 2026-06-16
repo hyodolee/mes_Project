@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.mcs.infra.persistence.mybatis.mapper.mes.MesVendorMapper">
+    <select id="selectVendorList" resultType="com.mes.mcs.domain.mes.dto.VendorDto">
+        SELECT
+            VENDOR_CD,
+            VENDOR_NM,
+            VENDOR_TYPE,
+            BIZ_NO,
+            USE_YN
+        FROM MST_VENDOR
+        <where>
+            <if test="vendorCd != null and vendorCd != ''">AND VENDOR_CD LIKE CONCAT('%', #{vendorCd}, '%')</if>
+            <if test="vendorNm != null and vendorNm != ''">AND VENDOR_NM LIKE CONCAT('%', #{vendorNm}, '%')</if>
+            <if test="useYn != null and useYn != ''">AND USE_YN = #{useYn}</if>
+        </where>
+        ORDER BY VENDOR_CD
+    </select>
+</mapper>

@@ -24,7 +24,7 @@ import {
   UserOutlined
 } from '@ant-design/icons';
 
-import { aiApi } from 'api/mes/ai';
+import { AiStreamError, aiApi } from 'api/mes/ai';
 import { useChatStore } from 'stores/chatStore';
 
 const MIN_DRAWER_WIDTH = 320;
@@ -64,6 +64,13 @@ function formatAiText(text) {
     .replace(/(현황|원인|확인할 화면|조치):/g, '\n$1:')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+function getAiErrorMessage(error) {
+  if (error instanceof AiStreamError) {
+    return error.message;
+  }
+  return '서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.';
 }
 
 function UserBubble({ text }) {
@@ -296,9 +303,12 @@ export default function ChatDrawer() {
           updateAiMessage(aiMessageId, { text: '응답 생성 중 오류가 발생했습니다. 다시 시도해 주세요.' });
         }
       });
-    } catch {
+    } catch (error) {
+      const errorMessage = getAiErrorMessage(error);
       if (!receivedToken && !completed) {
-        updateAiMessage(aiMessageId, { text: '서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' });
+        updateAiMessage(aiMessageId, { text: errorMessage });
+      } else if (receivedToken && !completed) {
+        appendAiMessageText(aiMessageId, `\n\n${errorMessage}`);
       }
     } finally {
       setLoading(false);

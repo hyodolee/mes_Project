@@ -1,240 +1,218 @@
 package com.mes.application.service.planning;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mes.global.exception.BusinessException;
 import com.mes.global.exception.ErrorCode;
-import com.mes.global.security.JwtTokenProvider;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import com.mes.mcs.application.service.plc.PlcEventService;
+import com.mes.mcs.application.service.transfer.MaterialRequestService;
+import com.mes.mcs.application.service.transfer.TransferService;
+import com.mes.mcs.domain.plc.dto.PlcEventDto;
+import com.mes.mcs.domain.plc.dto.PlcEventSearchDto;
+import com.mes.mcs.domain.transfer.dto.MaterialRequestDto;
+import com.mes.mcs.domain.transfer.dto.MaterialRequestResultDto;
+import com.mes.mcs.domain.transfer.dto.TransferItemDto;
+import com.mes.mcs.domain.transfer.dto.TransferOrderDto;
+import com.mes.mcs.domain.transfer.dto.TransferSearchDto;
 import org.springframework.stereotype.Component;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientResponseException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * MES 업무에서 MCS 기능을 호출하는 어댑터.
+ *
+ * <p>예전에는 별도 MCS 서버(8081)를 HTTP로 호출했지만, 지금은 MCS 기능이 MES 서버 안으로 통합되었다.
+ * 그래서 이 클래스는 기존 MES 코드가 쓰던 메서드 이름과 DTO는 유지하고, 내부에서는 통합된 MCS 서비스를 직접 호출한다.</p>
+ */
 @Component
 public class McsTransferClient {
 
-    private final RestClient restClient;
-    private final ObjectMapper objectMapper;
+    private static final String SYSTEM_USER = "SYSTEM";
+
+    private final TransferService transferService;
+    private final MaterialRequestService materialRequestService;
+    private final PlcEventService plcEventService;
 
     public McsTransferClient(
-            RestClient.Builder builder,
-            ObjectMapper objectMapper,
-            JwtTokenProvider jwtTokenProvider,
-            @Value("${mcs.api.base-url:http://127.0.0.1:8081}") String baseUrl,
-            @Value("${mcs.api.service-username:admin}") String serviceUsername
+            TransferService transferService,
+            MaterialRequestService materialRequestService,
+            PlcEventService plcEventService
     ) {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(3000);
-        factory.setReadTimeout(5000);
-
-        this.restClient = builder
-                .requestFactory(factory)
-                .baseUrl(baseUrl)
-                .requestInterceptor((request, body, execution) -> {
-                    request.getHeaders().set(HttpHeaders.AUTHORIZATION,
-                            "Bearer " + jwtTokenProvider.generateToken(serviceUsername, List.of("ROLE_ADMIN")));
-                    return execution.execute(request, body);
-                })
-                .build();
-        this.objectMapper = objectMapper;
+        this.transferService = transferService;
+        this.materialRequestService = materialRequestService;
+        this.plcEventService = plcEventService;
     }
 
     public Long createTransfer(McsTransferOrderPayload payload) {
-        try {
-            McsApiResponse<Long> response = restClient.post()
-                    .uri("/api/transfers")
-                    .body(payload)
-                    .retrieve()
-                    .body(TransferIdResponse.class);
-            if (response == null || !response.success() || response.data() == null) {
-                throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                        response == null ? "MCS 이동 오더 생성에 실패했습니다." : response.message());
-            }
-            return response.data();
-        } catch (RestClientResponseException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "MCS 이동 오더 생성 실패: " + extractMessage(e));
-        } catch (ResourceAccessException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                    "MCS 서버에 연결할 수 없습니다. MCS 백엔드(8081)가 실행 중인지 확인하세요.");
+        String transferNo = payload.getTransferNo();
+        if (transferNo == null || transferNo.isBlank()) {
+            transferNo = "TF-" + System.currentTimeMillis();
         }
+
+        return transferService.createTransferOrder(new TransferOrderDto(
+                null,
+                payload.getPlantCd(),
+                transferNo,
+                defaultText(payload.getTransferStatus(), "REQUESTED"),
+                payload.getFromLocationId(),
+                payload.getToLocationId(),
+                payload.getTransferReason(),
+                SYSTEM_USER,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                payload.getOptimizeRule()
+        ));
     }
 
     public void addTransferItem(Long transferId, McsTransferItemPayload payload) {
-        try {
-            McsApiResponse<Void> response = restClient.post()
-                    .uri("/api/transfers/{transferId}/items", transferId)
-                    .body(payload)
-                    .retrieve()
-                    .body(VoidResponse.class);
-            if (response != null && !response.success()) {
-                throw new BusinessException(ErrorCode.BUSINESS_ERROR, response.message());
-            }
-        } catch (RestClientResponseException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "MCS 이동 품목 추가 실패: " + extractMessage(e));
-        } catch (ResourceAccessException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                    "MCS 서버에 연결할 수 없습니다. MCS 백엔드(8081)가 실행 중인지 확인하세요.");
-        }
+        transferService.createTransferItem(transferId, new TransferItemDto(
+                null,
+                transferId,
+                payload.getItemCd(),
+                normalizeLotNo(payload.getLotNo()),
+                payload.getTransferQty(),
+                "REQUESTED",
+                SYSTEM_USER,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        ));
     }
 
     public McsMaterialRequestResult createMaterialRequest(McsMaterialRequestPayload payload) {
-        try {
-            McsApiResponse<McsMaterialRequestResult> response = restClient.post()
-                    .uri("/api/material-requests")
-                    .body(payload)
-                    .retrieve()
-                    .body(MaterialRequestResponse.class);
-            if (response == null || !response.success() || response.data() == null) {
-                throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                        response == null ? "MCS 자재 요청 생성에 실패했습니다." : response.message());
-            }
-            return response.data();
-        } catch (RestClientResponseException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "MCS 자재 요청 생성 실패: " + extractMessage(e));
-        } catch (ResourceAccessException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                    "MCS 서버에 연결할 수 없습니다. MCS 백엔드(8081)가 실행 중인지 확인하세요.");
-        }
+        MaterialRequestResultDto result = materialRequestService.createMaterialRequest(new MaterialRequestDto(
+                payload.getSourceSystem(),
+                payload.getWoId(),
+                payload.getWoNo(),
+                payload.getPlantCd(),
+                payload.getItemCd(),
+                payload.getRequestQty(),
+                payload.getWorkcenterCd(),
+                payload.getOptimizeRule(),
+                payload.getRequestReason()
+        ));
+        return toMaterialRequestResult(result);
     }
 
     public List<McsTransferSummary> getTransfersByWorkOrder(Long woId) {
-        try {
-            McsApiResponse<TransferPage> response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/transfers")
-                            .queryParam("transferNo", "MES-" + woId + "-")
-                            .queryParam("page", 1)
-                            .queryParam("size", 100)
-                            .build())
-                    .retrieve()
-                    .body(TransferListResponse.class);
-            if (response == null || !response.success() || response.data() == null) {
-                throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                        response == null ? "MCS 이동 오더 조회에 실패했습니다." : response.message());
-            }
-            return response.data().content() == null ? List.of() : response.data().content();
-        } catch (RestClientResponseException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "MCS 이동 오더 조회 실패: " + extractMessage(e));
-        } catch (ResourceAccessException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                    "MCS 서버에 연결할 수 없습니다. MCS 백엔드(8081)가 실행 중인지 확인하세요.");
-        }
+        TransferSearchDto searchDto = new TransferSearchDto();
+        searchDto.setTransferNo("MES-" + woId + "-");
+        searchDto.setPage(1);
+        searchDto.setSize(100);
+        return transferService.getTransferList(searchDto).getContent().stream()
+                .map(this::toTransferSummary)
+                .toList();
     }
 
     public List<McsTransferSummary> getAllTransfers(int size) {
-        try {
-            McsApiResponse<TransferPage> response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/transfers")
-                            .queryParam("page", 1)
-                            .queryParam("size", size)
-                            .build())
-                    .retrieve()
-                    .body(TransferListResponse.class);
-            if (response == null || !response.success() || response.data() == null) {
-                return List.of();
-            }
-            return response.data().content() == null ? List.of() : response.data().content();
-        } catch (RestClientResponseException | ResourceAccessException e) {
-            return List.of();
-        }
+        TransferSearchDto searchDto = new TransferSearchDto();
+        searchDto.setPage(1);
+        searchDto.setSize(size);
+        return transferService.getTransferList(searchDto).getContent().stream()
+                .map(this::toTransferSummary)
+                .toList();
     }
 
     public List<McsPlcEventSummary> getRecentPlcEvents(int size) {
-        try {
-            McsApiResponse<PlcEventPage> response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/plc/events")
-                            .queryParam("page", 1)
-                            .queryParam("size", size)
-                            .build())
-                    .retrieve()
-                    .body(PlcEventListResponse.class);
-            if (response == null || !response.success() || response.data() == null) {
-                return List.of();
-            }
-            return response.data().content() == null ? List.of() : response.data().content();
-        } catch (RestClientResponseException | ResourceAccessException e) {
-            return List.of();
-        }
+        PlcEventSearchDto searchDto = new PlcEventSearchDto();
+        searchDto.setPage(1);
+        searchDto.setSize(size);
+        return plcEventService.getEventList(searchDto).getContent().stream()
+                .map(this::toPlcEventSummary)
+                .toList();
     }
 
     public List<McsPlcEventSummary> getPlcEventsByTransfer(Long transferId, int size) {
-        try {
-            McsApiResponse<PlcEventPage> response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/plc/events")
-                            .queryParam("targetType", "TRANSFER")
-                            .queryParam("targetId", transferId)
-                            .queryParam("page", 1)
-                            .queryParam("size", size)
-                            .build())
-                    .retrieve()
-                    .body(PlcEventListResponse.class);
-            if (response == null || !response.success() || response.data() == null) {
-                return List.of();
-            }
-            return response.data().content() == null ? List.of() : response.data().content();
-        } catch (RestClientResponseException | ResourceAccessException e) {
-            return List.of();
-        }
+        PlcEventSearchDto searchDto = new PlcEventSearchDto();
+        searchDto.setTargetType("TRANSFER");
+        searchDto.setTargetId(transferId);
+        searchDto.setPage(1);
+        searchDto.setSize(size);
+        return plcEventService.getEventList(searchDto).getContent().stream()
+                .map(this::toPlcEventSummary)
+                .toList();
     }
 
     public void cancelTransfer(Long transferId) {
-        try {
-            McsApiResponse<Void> response = restClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/transfers/{transferId}/status")
-                            .queryParam("status", "CANCELLED")
-                            .build(transferId))
-                    .retrieve()
-                    .body(VoidResponse.class);
-            if (response != null && !response.success()) {
-                throw new BusinessException(ErrorCode.BUSINESS_ERROR, response.message());
-            }
-        } catch (RestClientResponseException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "MCS 이동 오더 취소 실패: " + extractMessage(e));
-        } catch (ResourceAccessException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                    "MCS 서버에 연결할 수 없습니다. MCS 백엔드(8081)가 실행 중인지 확인하세요.");
-        }
+        transferService.changeOrderStatus(transferId, "CANCELLED", SYSTEM_USER);
     }
 
     public int cancelMaterialRequestsByWorkOrder(Long woId) {
-        try {
-            McsApiResponse<Integer> response = restClient.post()
-                    .uri("/api/material-requests/work-orders/{woId}/cancel", woId)
-                    .retrieve()
-                    .body(CancelMaterialRequestResponse.class);
-            if (response == null || !response.success() || response.data() == null) {
-                throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                        response == null ? "MCS 자재 이동 요청 취소에 실패했습니다." : response.message());
-            }
-            return response.data();
-        } catch (RestClientResponseException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "MCS 자재 이동 요청 취소 실패: " + extractMessage(e));
-        } catch (ResourceAccessException e) {
-            throw new BusinessException(ErrorCode.BUSINESS_ERROR,
-                    "MCS 서버에 연결할 수 없습니다. MCS 백엔드(8081)가 실행 중인지 확인하세요.");
-        }
+        return materialRequestService.cancelMaterialRequestsByWorkOrder(woId);
     }
 
-    private String extractMessage(RestClientResponseException e) {
-        try {
-            JsonNode root = objectMapper.readTree(e.getResponseBodyAsString());
-            JsonNode message = root.get("message");
-            if (message != null && !message.asText().isBlank()) {
-                return message.asText();
-            }
-        } catch (Exception ignored) {
-            // Fall through to the HTTP status text below.
+    private McsMaterialRequestResult toMaterialRequestResult(MaterialRequestResultDto result) {
+        if (result == null) {
+            throw new BusinessException(ErrorCode.BUSINESS_ERROR, "MCS 자재 요청 생성 결과가 비어 있습니다.");
         }
-        return e.getStatusCode() + " " + e.getStatusText();
+        return new McsMaterialRequestResult(
+                result.getTransferId(),
+                result.getTransferNo(),
+                result.getFromLocationId(),
+                result.getFromLocationCd(),
+                result.getToLocationId(),
+                result.getToLocationCd(),
+                result.getItemCd(),
+                result.getLotNo(),
+                result.getTransferQty(),
+                result.getOptimizeRule()
+        );
+    }
+
+    private McsTransferSummary toTransferSummary(TransferOrderDto dto) {
+        return new McsTransferSummary(
+                dto.getTransferId(),
+                dto.getTransferNo(),
+                dto.getTransferStatus(),
+                dto.getTransferStatusNm(),
+                dto.getFromLocationCd(),
+                dto.getToLocationCd(),
+                dto.getOptimizeRule(),
+                format(dto.getRegDtm()),
+                format(dto.getUpdDtm())
+        );
+    }
+
+    private McsPlcEventSummary toPlcEventSummary(PlcEventDto dto) {
+        return new McsPlcEventSummary(
+                dto.getEventId(),
+                dto.getEquipmentCd(),
+                dto.getEventType(),
+                dto.getEventStatus(),
+                dto.getTargetType(),
+                dto.getTargetId(),
+                dto.getLocationCd(),
+                dto.getErrorCode(),
+                dto.getEventMessage(),
+                dto.getRawPayload(),
+                format(dto.getEventDtm()),
+                dto.getProcessedYn(),
+                dto.getProcessResult(),
+                dto.getProcessMessage(),
+                format(dto.getProcessedDtm()),
+                dto.getRegUserId(),
+                format(dto.getRegDtm())
+        );
+    }
+
+    private String defaultText(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value.trim();
+    }
+
+    private String normalizeLotNo(String lotNo) {
+        return lotNo == null ? "" : lotNo.trim();
+    }
+
+    private String format(LocalDateTime value) {
+        return value == null ? null : value.toString();
     }
 
     @lombok.Getter @lombok.Setter @lombok.NoArgsConstructor @lombok.AllArgsConstructor
@@ -314,51 +292,5 @@ public class McsTransferClient {
         private String processedDtm;
         private String regUserId;
         private String regDtm;
-    }
-
-    private interface McsApiResponse<T> {
-        boolean success();
-        String message();
-        T data();
-    }
-
-    private record TransferIdResponse(boolean success, String code, String message, Long data) implements McsApiResponse<Long> {
-    }
-
-    private record VoidResponse(boolean success, String code, String message, Void data) implements McsApiResponse<Void> {
-    }
-
-    private record MaterialRequestResponse(boolean success, String code, String message, McsMaterialRequestResult data)
-            implements McsApiResponse<McsMaterialRequestResult> {
-    }
-
-    private record TransferPage(
-            List<McsTransferSummary> content,
-            long totalElements,
-            int totalPages,
-            int currentPage,
-            int size
-    ) {
-    }
-
-    private record TransferListResponse(boolean success, String code, String message, TransferPage data)
-            implements McsApiResponse<TransferPage> {
-    }
-
-    private record PlcEventPage(
-            List<McsPlcEventSummary> content,
-            long totalElements,
-            int totalPages,
-            int currentPage,
-            int size
-    ) {
-    }
-
-    private record PlcEventListResponse(boolean success, String code, String message, PlcEventPage data)
-            implements McsApiResponse<PlcEventPage> {
-    }
-
-    private record CancelMaterialRequestResponse(boolean success, String code, String message, Integer data)
-            implements McsApiResponse<Integer> {
     }
 }

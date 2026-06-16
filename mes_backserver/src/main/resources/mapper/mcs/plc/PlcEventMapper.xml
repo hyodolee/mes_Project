@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.mcs.infra.persistence.mybatis.mapper.plc.PlcEventMapper">
+
+    <sql id="plcEventWhere">
+        <where>
+            <if test="eventId != null">
+                AND EVENT_ID = #{eventId}
+            </if>
+            <if test="equipmentCd != null and equipmentCd != ''">
+                AND EQUIPMENT_CD LIKE CONCAT('%', #{equipmentCd}, '%')
+            </if>
+            <if test="eventType != null and eventType != ''">
+                AND EVENT_TYPE = #{eventType}
+            </if>
+            <if test="eventStatus != null and eventStatus != ''">
+                AND EVENT_STATUS = #{eventStatus}
+            </if>
+            <if test="processResult != null and processResult != ''">
+                AND PROCESS_RESULT = #{processResult}
+            </if>
+            <if test="targetType != null and targetType != ''">
+                AND TARGET_TYPE = #{targetType}
+            </if>
+            <if test="targetId != null">
+                AND TARGET_ID = #{targetId}
+            </if>
+            <if test="fromDate != null and fromDate != ''">
+                AND EVENT_DTM &gt;= CONCAT(#{fromDate}, ' 00:00:00')
+            </if>
+            <if test="toDate != null and toDate != ''">
+                AND EVENT_DTM &lt;= CONCAT(#{toDate}, ' 23:59:59')
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectPlcEventList" resultType="com.mes.mcs.domain.plc.dto.PlcEventDto">
+        SELECT
+            EVENT_ID AS eventId,
+            EQUIPMENT_CD AS equipmentCd,
+            EVENT_TYPE AS eventType,
+            EVENT_STATUS AS eventStatus,
+            TARGET_TYPE AS targetType,
+            TARGET_ID AS targetId,
+            LOCATION_CD AS locationCd,
+            ERROR_CODE AS errorCode,
+            EVENT_MESSAGE AS eventMessage,
+            RAW_PAYLOAD AS rawPayload,
+            EVENT_DTM AS eventDtm,
+            PROCESSED_YN AS processedYn,
+            PROCESS_RESULT AS processResult,
+            PROCESS_MESSAGE AS processMessage,
+            PROCESSED_DTM AS processedDtm,
+            REG_USER_ID AS regUserId,
+            REG_DTM AS regDtm
+        FROM MCS_PLC_EVENT_LOG
+        <include refid="plcEventWhere"/>
+        ORDER BY EVENT_DTM DESC, EVENT_ID DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectPlcEventCount" resultType="long">
+        SELECT COUNT(*)
+        FROM MCS_PLC_EVENT_LOG
+        <include refid="plcEventWhere"/>
+    </select>
+
+    <insert id="insertPlcEvent" parameterType="com.mes.mcs.domain.plc.dto.PlcEventDto">
+        INSERT INTO MCS_PLC_EVENT_LOG (
+            EVENT_ID,
+            EQUIPMENT_CD,
+            EVENT_TYPE,
+            EVENT_STATUS,
+            TARGET_TYPE,
+            TARGET_ID,
+            LOCATION_CD,
+            ERROR_CODE,
+            EVENT_MESSAGE,
+            RAW_PAYLOAD,
+            EVENT_DTM,
+            PROCESSED_YN,
+            REG_USER_ID,
+            REG_DTM
+        ) VALUES (
+            #{eventId},
+            #{equipmentCd},
+            #{eventType},
+            #{eventStatus},
+            #{targetType},
+            #{targetId},
+            #{locationCd},
+            #{errorCode},
+            #{eventMessage},
+            #{rawPayload},
+            #{eventDtm},
+            'N',
+            #{regUserId},
+            NOW()
+        )
+    </insert>
+
+    <update id="updateProcessResult">
+        UPDATE MCS_PLC_EVENT_LOG
+        SET PROCESSED_YN = 'Y',
+            PROCESS_RESULT = #{processResult},
+            PROCESS_MESSAGE = #{processMessage},
+            PROCESSED_DTM = NOW()
+        WHERE EVENT_ID = #{eventId}
+    </update>
+
+</mapper>

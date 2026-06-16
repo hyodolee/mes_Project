@@ -38,9 +38,16 @@ public class SseEmitterService {
         emitters.forEach(emitter -> {
             try {
                 emitter.send(SseEmitter.event().name("notification").data("new"));
-            } catch (IOException e) {
+            } catch (Exception e) {
+                // 브라우저가 연결을 끊은 경우(IOException) 또는 이미 완료된 emitter(IllegalStateException) 등.
+                // 죽은 연결이므로 목록에서 제거한다. (Tomcat 비동기 쓰기 실패 로그는 컨테이너가 별도로 남길 수 있음)
                 emitters.remove(emitter);
-                log.debug("SSE emitter 제거 (전송 실패)");
+                try {
+                    emitter.complete();
+                } catch (Exception ignored) {
+                    // 이미 종료된 경우 무시
+                }
+                log.debug("SSE emitter 제거 (전송 실패): {}", e.getMessage());
             }
         });
     }

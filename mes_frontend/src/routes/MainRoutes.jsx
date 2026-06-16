@@ -28,6 +28,7 @@ const MesDefects = Loadable(lazy(() => import('pages/mes/defects')));
 const MesEquipment = Loadable(lazy(() => import('pages/mes/equipment')));
 const MesMasterData = Loadable(lazy(() => import('pages/mes/master-data')));
 const AiOperations = Loadable(lazy(() => import('pages/ai/operations')));
+const AiRagDocuments = Loadable(lazy(() => import('pages/ai/rag-documents')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -129,6 +130,10 @@ const MainRoutes = {
         {
           path: 'ai/operations',
           element: <AiOperations />
+        },
+        {
+          path: 'ai/rag-documents',
+          element: <AiRagDocuments />
         }
       ]
     }

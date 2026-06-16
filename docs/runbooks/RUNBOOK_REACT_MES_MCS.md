@@ -2,7 +2,7 @@
 
 ## 목적
 
-React 전환 후 MES(8080), MCS(8081), React(3000)을 같이 실행하고 API 연결을 확인한다.
+React 전환 후 통합 MES/MCS 백엔드(8080)와 React(3000)을 실행하고 API 연결을 확인한다.
 
 ## 주의
 
@@ -14,7 +14,7 @@ DB 비밀번호는 Git에 저장하지 않는다. `application-local.yml`은 `${
 powershell.exe -ExecutionPolicy Bypass -File .\scripts\dev\start-backends.ps1
 ```
 
-프롬프트에 `MES_DB_PASSWORD`를 입력하면 MES/MCS 백엔드가 현재 소스로 재기동된다.
+프롬프트에 `MES_DB_PASSWORD`를 입력하면 MES/MCS 통합 백엔드가 현재 소스로 재기동된다.
 
 React 서버가 꺼져 있으면:
 
@@ -28,8 +28,8 @@ corepack yarn dev --host 127.0.0.1 --port 3000
 - React: `http://127.0.0.1:3000`
 - MES ping: `http://127.0.0.1:8080/api/v1/ping`
 - MES plants: `http://127.0.0.1:8080/api/v1/master/plants?useYn=Y`
-- MCS plants: `http://127.0.0.1:8081/api/references/plants`
-- MCS transfers: `http://127.0.0.1:8081/api/transfers?page=1&size=5`
+- MCS plants: `http://127.0.0.1:8080/api/references/plants`
+- MCS transfers: `http://127.0.0.1:8080/api/transfers?page=1&size=5`
 
 ## 시나리오 점검 순서
 

@@ -10,6 +10,14 @@ import com.mes.application.service.planning.WorkOrderService;
 import com.mes.application.service.production.DefectHistoryService;
 import com.mes.application.service.quality.InspectResultService;
 import com.mes.domain.inventory.stock.dto.StockSearchDto;
+import com.mes.mcs.domain.inventory.dto.LocStockSearchDto;
+import com.mes.mcs.domain.location.dto.LocationSearchDto;
+import com.mes.mcs.domain.plc.dto.PlcEventSearchDto;
+import com.mes.mcs.domain.route.dto.RouteSearchDto;
+import com.mes.mcs.infra.persistence.mybatis.mapper.inventory.InventoryMapper;
+import com.mes.mcs.infra.persistence.mybatis.mapper.location.LocationMapper;
+import com.mes.mcs.infra.persistence.mybatis.mapper.plc.PlcEventMapper;
+import com.mes.mcs.infra.persistence.mybatis.mapper.route.RouteMapper;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
@@ -42,6 +50,10 @@ public class OperationTools {
     private final DefectHistoryService defectHistoryService;
     private final InspectResultService inspectResultService;
     private final OperationDocumentSearchService documentSearchService;
+    private final RouteMapper mcsRouteMapper;
+    private final LocationMapper mcsLocationMapper;
+    private final InventoryMapper mcsInventoryMapper;
+    private final PlcEventMapper mcsPlcEventMapper;
     private final List<String> dataPoints;
 
     public OperationTools(
@@ -55,6 +67,10 @@ public class OperationTools {
             DefectHistoryService defectHistoryService,
             InspectResultService inspectResultService,
             OperationDocumentSearchService documentSearchService,
+            RouteMapper mcsRouteMapper,
+            LocationMapper mcsLocationMapper,
+            InventoryMapper mcsInventoryMapper,
+            PlcEventMapper mcsPlcEventMapper,
             List<String> dataPoints
     ) {
         this.mcsTransferClient = mcsTransferClient;
@@ -67,6 +83,10 @@ public class OperationTools {
         this.defectHistoryService = defectHistoryService;
         this.inspectResultService = inspectResultService;
         this.documentSearchService = documentSearchService;
+        this.mcsRouteMapper = mcsRouteMapper;
+        this.mcsLocationMapper = mcsLocationMapper;
+        this.mcsInventoryMapper = mcsInventoryMapper;
+        this.mcsPlcEventMapper = mcsPlcEventMapper;
         this.dataPoints = dataPoints;
     }
 
@@ -101,6 +121,111 @@ public class OperationTools {
         long errors = events.stream().filter(e -> "ERROR".equals(e.getEventStatus())).count();
         dataPoints.add("최근 PLC 이벤트 " + events.size() + "건 조회 (오류 " + errors + "건)");
         return events.stream().map(this::toPlcView).toList();
+    }
+
+    @Tool(description = "MCS 경로 구간을 조회한다. 막힌 경로, 혼잡 경로, 인터록 경로, 출발/도착 노드 확인 질문에 사용한다.")
+    public List<RouteEdgeView> getRouteEdges() {
+        RouteSearchDto searchDto = new RouteSearchDto();
+        var edges = mcsRouteMapper.selectRouteEdges(searchDto);
+        dataPoints.add("MCS 경로 구간 " + edges.size() + "건 조회");
+        return edges.stream()
+                .map(e -> new RouteEdgeView(e.getRouteEdgeId(), safe(e.getEdgeCd()), safe(e.getEdgeNm()),
+                        safe(e.getFromNodeCd()), safe(e.getToNodeCd()), safe(e.getEdgeStatus()), e.getTravelTimeSec()))
+                .toList();
+    }
+
+    @Tool(description = "현재 사용할 수 없거나 주의가 필요한 MCS 경로 구간을 조회한다. BLOCKED, CONGESTED, INTERLOCKED, MAINTENANCE 상태를 중심으로 본다.")
+    public List<RouteEdgeView> getBlockedRoutes() {
+        var edges = getRouteEdges().stream()
+                .filter(e -> hasAny(e.getEdgeStatus(), "BLOCKED", "CONGESTED", "INTERLOCKED", "MAINTENANCE"))
+                .toList();
+        dataPoints.add("주의 경로 구간 " + edges.size() + "건 필터링");
+        return edges;
+    }
+
+    @Tool(description = "특정 자재 이동의 MCS 이동 경로 요약을 조회한다. transferId는 getTransfers 결과에서 얻는다.")
+    public TransferRouteView getTransferRoute(
+            @ToolParam(description = "조회할 자재 이동 ID") Long transferId
+    ) {
+        var route = mcsRouteMapper.selectTransferRoute(transferId).orElse(null);
+        if (route == null) {
+            dataPoints.add("이동 ID " + transferId + "의 경로 없음");
+            return null;
+        }
+        dataPoints.add("이동 ID " + transferId + "의 경로 1건 조회");
+        return new TransferRouteView(route.getTransferRouteId(), route.getTransferId(), safe(route.getRouteStatus()),
+                route.getTotalDistanceM(), route.getTotalTimeSec(), safe(route.getOptimizeRule()), route.getReplanCount());
+    }
+
+    @Tool(description = "특정 자재 이동의 MCS 경로 단계 목록을 조회한다. 어느 구간에서 막히는지 확인할 때 사용한다.")
+    public List<RouteStepView> getTransferRouteSteps(
+            @ToolParam(description = "조회할 자재 이동 ID") Long transferId
+    ) {
+        var route = mcsRouteMapper.selectTransferRoute(transferId).orElse(null);
+        if (route == null) {
+            dataPoints.add("이동 ID " + transferId + "의 경로 단계 없음");
+            return List.of();
+        }
+        var steps = mcsRouteMapper.selectTransferRouteSteps(route.getTransferRouteId());
+        dataPoints.add("이동 ID " + transferId + "의 경로 단계 " + steps.size() + "건 조회");
+        return steps.stream()
+                .map(s -> new RouteStepView(s.getStepSeq(), safe(s.getEdgeCd()), safe(s.getFromNodeCd()),
+                        safe(s.getToNodeCd()), safe(s.getStepStatus()), safe(s.getEdgeStatus()), s.getExpectedTimeSec()))
+                .toList();
+    }
+
+    @Tool(description = "MCS 로케이션 목록을 조회한다. 특정 위치, 사용 가능 위치, 로케이션 상태 질문에 사용한다.")
+    public List<LocationView> getLocations() {
+        LocationSearchDto searchDto = new LocationSearchDto();
+        searchDto.setPage(1);
+        searchDto.setSize(100);
+        var locations = mcsLocationMapper.selectLocationList(searchDto);
+        dataPoints.add("MCS 로케이션 " + locations.size() + "건 조회");
+        return locations.stream()
+                .map(l -> new LocationView(l.getLocationId(), safe(l.getLocationCd()), safe(l.getLocationNm()),
+                        safe(l.getWarehouseNm()), safe(l.getZoneNm()), safe(l.getLocationStatus()),
+                        l.getCurrentUsage(), l.getMaxCapacity()))
+                .toList();
+    }
+
+    @Tool(description = "MCS 로케이션 재고를 조회한다. 로케이션별 품목/LOT/가용수량 질문에 사용한다.")
+    public List<LocationStockView> getLocationStocks() {
+        LocStockSearchDto searchDto = new LocStockSearchDto();
+        searchDto.setPage(1);
+        searchDto.setSize(100);
+        searchDto.setExcludeZeroStock(true);
+        var stocks = mcsInventoryMapper.selectLocStockList(searchDto);
+        dataPoints.add("MCS 로케이션 재고 " + stocks.size() + "건 조회");
+        return stocks.stream()
+                .map(s -> new LocationStockView(s.getLocStockId(), safe(s.getLocationCd()), safe(s.getItemCd()),
+                        safe(s.getItemNm()), safe(s.getLotNo()), s.getStockQty(), s.getAvailableQty()))
+                .toList();
+    }
+
+    @Tool(description = "PLC 이벤트 중 검증 실패 또는 처리 실패 이벤트를 조회한다. payload 필드 누락, toLocationCd 누락, 인터록 문제 확인에 사용한다.")
+    public List<PlcEventView> getPlcValidationFailures() {
+        PlcEventSearchDto searchDto = new PlcEventSearchDto();
+        searchDto.setPage(1);
+        searchDto.setSize(50);
+        var events = mcsPlcEventMapper.selectPlcEventList(searchDto).stream()
+                .filter(e -> hasAny(e.getProcessResult(), "VALIDATION_FAILED", "FAILED")
+                        || hasAny(e.getEventStatus(), "ERROR", "FAILED"))
+                .map(e -> new PlcEventView(safe(e.getEquipmentCd()), safe(e.getEventType()), safe(e.getEventStatus()),
+                        safe(e.getLocationCd()), safe(e.getErrorCode()), safe(e.getEventMessage()),
+                        safe(e.getProcessResult()), safe(e.getProcessMessage()), str(e.getEventDtm())))
+                .toList();
+        dataPoints.add("PLC 검증/처리 실패 " + events.size() + "건 조회");
+        return events;
+    }
+
+    @Tool(description = "자재 이동 실패 원인을 종합 조회한다. 이동 목록, PLC 실패 이벤트, 막힌 경로를 함께 보고 짧은 원인 후보를 만든다.")
+    public TransferBlockerSummary analyzeTransferBlockers() {
+        var transfers = getTransfers();
+        var failedTransfers = transfers.stream().filter(t -> "FAILED".equals(t.getStatus())).toList();
+        var plcFailures = getPlcValidationFailures();
+        var blockedRoutes = getBlockedRoutes();
+        dataPoints.add("자재 이동 장애 요약 생성");
+        return new TransferBlockerSummary(failedTransfers.size(), plcFailures.size(), blockedRoutes.size());
     }
 
     // === MES: 작업지시 / 생산계획 ============================================
@@ -244,6 +369,19 @@ public class OperationTools {
         return value == null ? "-" : value.toString();
     }
 
+    private boolean hasAny(String value, String... keywords) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String upper = value.toUpperCase();
+        for (String keyword : keywords) {
+            if (upper.contains(keyword.toUpperCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // === AI에게 넘기는 경량 뷰 (대용량/불필요 필드 제외) ======================
 
     @lombok.Getter @lombok.AllArgsConstructor
@@ -353,5 +491,68 @@ public class OperationTools {
         private Double defectQty;
         private String defectCause;
         private String equipmentCd;
+    }
+
+    @lombok.Getter @lombok.AllArgsConstructor
+    public static class RouteEdgeView {
+        private Long routeEdgeId;
+        private String edgeCd;
+        private String edgeNm;
+        private String fromNodeCd;
+        private String toNodeCd;
+        private String edgeStatus;
+        private Integer travelTimeSec;
+    }
+
+    @lombok.Getter @lombok.AllArgsConstructor
+    public static class TransferRouteView {
+        private Long transferRouteId;
+        private Long transferId;
+        private String routeStatus;
+        private Double totalDistanceM;
+        private Integer totalTimeSec;
+        private String optimizeRule;
+        private Integer replanCount;
+    }
+
+    @lombok.Getter @lombok.AllArgsConstructor
+    public static class RouteStepView {
+        private Integer stepSeq;
+        private String edgeCd;
+        private String fromNodeCd;
+        private String toNodeCd;
+        private String stepStatus;
+        private String edgeStatus;
+        private Integer expectedTimeSec;
+    }
+
+    @lombok.Getter @lombok.AllArgsConstructor
+    public static class LocationView {
+        private Long locationId;
+        private String locationCd;
+        private String locationNm;
+        private String warehouseNm;
+        private String zoneNm;
+        private String locationStatus;
+        private Double currentUsage;
+        private Double maxCapacity;
+    }
+
+    @lombok.Getter @lombok.AllArgsConstructor
+    public static class LocationStockView {
+        private Long locStockId;
+        private String locationCd;
+        private String itemCd;
+        private String itemNm;
+        private String lotNo;
+        private Double stockQty;
+        private Double availableQty;
+    }
+
+    @lombok.Getter @lombok.AllArgsConstructor
+    public static class TransferBlockerSummary {
+        private long failedTransferCount;
+        private long plcFailureCount;
+        private long blockedRouteCount;
     }
 }

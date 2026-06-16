@@ -25,8 +25,7 @@ MES(Manufacturing Execution System)와 MCS(Material Control System)를 연동하
 
 | 영역 | 경로 | 포트 | 역할 |
 |---|---|---:|---|
-| MES backend | `mes_backserver/` | 8080 | 생산/기준정보 중심 API |
-| MCS backend | `mcs_backserver/` | 8081 | 자재 이동/로케이션 재고 중심 API |
+| MES+MCS backend | `mes_backserver/` | 8080 | 생산/기준정보 + 자재 이동/로케이션 재고 통합 API (MCS는 `com.mes.mcs`로 병합) |
 | React frontend | `mes_frontend/` | 3000 | MES/MCS 운영 화면 |
 | MCS schema | `mcs/` | - | MCS 기준 설치 SQL과 설계 문서 |
 | Documents | `docs/` | - | 설계, 시연, 실행, DB 파일 정리 |
@@ -61,17 +60,10 @@ DB 비밀번호와 API Key는 Git에 저장하지 않습니다. MES/MCS backend 
 $env:MES_DB_PASSWORD = "your-password"
 ```
 
-MES:
+MES+MCS (단일 백엔드):
 
 ```powershell
 Set-Location 'C:\dev\mes_project\mes_backserver'
-.\gradlew.bat bootRun
-```
-
-MCS:
-
-```powershell
-Set-Location 'C:\dev\mes_project\mcs_backserver'
 .\gradlew.bat bootRun
 ```
 

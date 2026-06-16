@@ -7,7 +7,7 @@
 준비:
 
 - MES backend: `http://localhost:8080`
-- MCS backend: `http://localhost:8081`
+- MES/MCS 통합 backend: `http://localhost:8080`
 - React frontend: `http://localhost:3000`
 
 확인 화면:
@@ -115,7 +115,7 @@ PLC 오류 또는 이동 실패 이벤트 발생
 ## 7. 데모 전 체크리스트
 
 - MES backend가 8080에서 실행 중입니다.
-- MCS backend가 8081에서 실행 중입니다.
+- MCS API도 통합 MES backend 8080에서 응답합니다.
 - React frontend가 3000에서 실행 중입니다.
 - 로그인 토큰이 만료되지 않았습니다.
 - `OPENAI_API_KEY`가 설정되어 있거나, AI fallback 동작을 설명할 준비가 되어 있습니다.

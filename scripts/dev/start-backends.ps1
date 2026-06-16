@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 
 $root = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $mesDir = Join-Path $root "mes_backserver"
-$mcsDir = Join-Path $root "mcs_backserver"
+# MCS는 mes_backserver(com.mes.mcs)로 병합되어 단일 8080에서 실행됩니다.
 
 if (-not $DbPassword) {
     $DbPassword = $env:MES_DB_PASSWORD
@@ -79,11 +79,8 @@ function Start-Backend {
 }
 
 Stop-PortProcess -Port 8080
-Stop-PortProcess -Port 8081
 
 Start-Backend -Name "MES" -Directory $mesDir -Port 8080
-Start-Backend -Name "MCS" -Directory $mcsDir -Port 8081
 
 Write-Output "Logs:"
 Write-Output "  MES: $mesDir\bootRun.out.log / $mesDir\bootRun.err.log"
-Write-Output "  MCS: $mcsDir\bootRun.out.log / $mcsDir\bootRun.err.log"

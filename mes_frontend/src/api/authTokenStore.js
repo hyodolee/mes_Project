@@ -1,5 +1,4 @@
 const MES_TOKEN_KEY = 'mesAccessToken';
-const MCS_TOKEN_KEY = 'mcsAccessToken';
 
 function getItem(key) {
   if (typeof window === 'undefined') {
@@ -21,14 +20,11 @@ function setItem(key, value) {
 
 export const authTokenStore = {
   getMesToken: () => getItem(MES_TOKEN_KEY),
-  getMcsToken: () => getItem(MCS_TOKEN_KEY),
-  setTokens: ({ mesToken, mcsToken }) => {
+  setTokens: ({ mesToken }) => {
     setItem(MES_TOKEN_KEY, mesToken);
-    setItem(MCS_TOKEN_KEY, mcsToken);
   },
   clear: () => {
     setItem(MES_TOKEN_KEY, null);
-    setItem(MCS_TOKEN_KEY, null);
   },
-  hasTokens: () => Boolean(getItem(MES_TOKEN_KEY) && getItem(MCS_TOKEN_KEY))
+  hasTokens: () => Boolean(getItem(MES_TOKEN_KEY))
 };

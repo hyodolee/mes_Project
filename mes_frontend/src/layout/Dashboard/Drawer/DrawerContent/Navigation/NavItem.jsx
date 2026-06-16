@@ -29,6 +29,11 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
     itemTarget = '_blank';
   }
 
+  // 외부 링크(백엔드 페이지 등)는 React Router Link 대신 일반 <a>로 연결한다.
+  const linkProps = item.external
+    ? { component: 'a', href: item.url, target: itemTarget }
+    : { component: Link, to: item.url, target: itemTarget };
+
   const itemHandler = () => {
     if (downLG) handlerDrawerOpen(false);
 
@@ -59,9 +64,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
     <>
       <Box sx={{ position: 'relative' }}>
         <ListItemButton
-          component={Link}
-          to={item.url}
-          target={itemTarget}
+          {...linkProps}
           disabled={item.disabled}
           selected={isSelected}
           sx={(theme) => ({

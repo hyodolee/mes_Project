@@ -25,7 +25,7 @@ const systems = [
   },
   {
     title: 'AI 운영 분석',
-    caption: '운영 현황 요약, 이상 징후, 알림 후보, 인수인계 관점을 정리합니다.',
+    caption: '운영 현황 요약, 이상 징후, 알림 후보, 원인 관계를 정리합니다.',
     status: 'AI',
     url: '/ai/operations'
   }
@@ -35,9 +35,9 @@ export default function DashboardDefault() {
   return (
     <Stack spacing={3}>
       <Stack spacing={0.75}>
-        <Typography variant="h2">운영 포털 홈</Typography>
+        <Typography variant="h2">운영 포털</Typography>
         <Typography variant="body1" color="text.secondary">
-          MES와 MCS는 별도 시스템으로 운영하고, 필요한 화면으로 바로 이동할 수 있는 포털 화면입니다.
+          MES와 MCS 기능을 하나의 백엔드로 통합하고, 필요한 업무 화면으로 바로 이동할 수 있는 포털 화면입니다.
         </Typography>
       </Stack>
 
@@ -67,13 +67,13 @@ export default function DashboardDefault() {
           <Grid size={{ xs: 12, md: 4 }}>
             <Typography variant="subtitle1">MES</Typography>
             <Typography variant="body2" color="text.secondary">
-              생산 실행과 품질, 설비, 기준 정보 중심으로 구성합니다.
+              생산 실행, 품질, 설비, 기준 정보를 담당합니다.
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <Typography variant="subtitle1">MCS</Typography>
             <Typography variant="body2" color="text.secondary">
-              물류 이동, 로케이션 재고, 입출고, PLC 이벤트 중심으로 구성합니다.
+              물류 이동, 로케이션 재고, 입출고, PLC 이벤트를 담당합니다.
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -82,7 +82,7 @@ export default function DashboardDefault() {
               <Typography variant="subtitle1">AI</Typography>
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              두 시스템의 운영 데이터를 읽어 분석과 알림을 제공하는 보조 영역으로 둡니다.
+              두 업무 영역의 운영 데이터를 읽어 분석과 알림을 제공합니다.
             </Typography>
           </Grid>
         </Grid>

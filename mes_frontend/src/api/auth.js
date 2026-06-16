@@ -1,5 +1,4 @@
 import { mesApi } from './mes/client';
-import { mcsApi } from './mcs/client';
 import { authTokenStore } from './authTokenStore';
 
 async function safeMe(api) {
@@ -21,45 +20,32 @@ export const authApi = {
       };
     }
 
-    const [mes, mcs] = await Promise.all([safeMe(mesApi), safeMe(mcsApi)]);
+    const mes = await safeMe(mesApi);
     const mesUser = mes?.data;
-    const mcsUser = mcs?.data;
 
     return {
-      authenticated: Boolean(mesUser?.authenticated && mcsUser?.authenticated),
+      authenticated: Boolean(mesUser?.authenticated),
       mes: mesUser,
-      mcs: mcsUser,
-      user: mesUser || mcsUser
+      mcs: mesUser,
+      user: mesUser
     };
   },
   login: async ({ username, password }) => {
     authTokenStore.clear();
     const payload = { username, password };
     const mes = await mesApi.post('/api/auth/login', payload);
-    let mcs;
-    try {
-      mcs = await mcsApi.post('/api/auth/login', payload);
-    } catch (error) {
-      await mesApi.post('/api/auth/logout', {}).catch(() => {});
-      authTokenStore.clear();
-      throw error;
-    }
     authTokenStore.setTokens({
-      mesToken: mes.data?.accessToken,
-      mcsToken: mcs.data?.accessToken
+      mesToken: mes.data?.accessToken
     });
     return {
       authenticated: true,
       mes: mes.data,
-      mcs: mcs.data,
+      mcs: mes.data,
       user: mes.data
     };
   },
   logout: async () => {
-    await Promise.allSettled([
-      mesApi.post('/api/auth/logout', {}),
-      mcsApi.post('/api/auth/logout', {})
-    ]);
+    await mesApi.post('/api/auth/logout', {}).catch(() => {});
     authTokenStore.clear();
   }
 };

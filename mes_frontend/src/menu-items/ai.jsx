@@ -1,6 +1,7 @@
-import { RobotOutlined } from '@ant-design/icons';
+import { FileTextOutlined, RobotOutlined } from '@ant-design/icons';
 
 const icons = {
+  FileTextOutlined,
   RobotOutlined
 };
 
@@ -21,6 +22,14 @@ const ai = {
           type: 'item',
           url: '/ai/operations',
           icon: icons.RobotOutlined,
+          breadcrumbs: false
+        },
+        {
+          id: 'ai-rag-documents',
+          title: 'RAG 문서 관리',
+          type: 'item',
+          url: '/ai/rag-documents',
+          icon: icons.FileTextOutlined,
           breadcrumbs: false
         }
       ]

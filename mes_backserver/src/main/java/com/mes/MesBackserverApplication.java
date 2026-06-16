@@ -7,7 +7,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@MapperScan(basePackages = "com.mes.infra.persistence.mybatis.mapper")
+@MapperScan(basePackages = {
+        "com.mes.infra.persistence.mybatis.mapper",
+        "com.mes.mcs.infra.persistence.mybatis.mapper"
+})
 public class MesBackserverApplication {
 
     public static void main(String[] args) {
