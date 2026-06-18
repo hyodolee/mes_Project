@@ -19,7 +19,7 @@ services:
     depends_on:
       - chroma
     volumes:
-      - /etc/letsencrypt/live/hyodo.kro.kr:/certs:ro
+      - /etc/letsencrypt/live/hyodo.duckdns.org:/certs:ro
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_AI_VECTORSTORE_CHROMA_CLIENT_HOST: http://chroma

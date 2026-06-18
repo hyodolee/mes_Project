@@ -22,3 +22,14 @@ nul
 tmp/
 *.tmp
 docs/ai/fine-tuning/generated/
+
+# Terraform secrets (토큰/키 포함)
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+
+# Frontend env
+mes_frontend/.env.local
+mes_frontend/.env
