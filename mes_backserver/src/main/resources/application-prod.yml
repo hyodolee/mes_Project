@@ -1,6 +1,20 @@
 spring:
+  flyway:
+    enabled: true
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: ${MES_DB_URL}
-    username: ${MES_DB_USERNAME}
+    url: jdbc:mariadb://mysql-hd-mes.j.aivencloud.com:10483/MES_DB?allowPublicKeyRetrieval=true&useSSL=true&trustServerCertificate=true&sslMode=trust
+    username: avnadmin
     password: ${MES_DB_PASSWORD}
+
+server:
+  port: ${SERVER_PORT:8080}
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    certificate: /certs/fullchain.pem
+    certificate-private-key: /certs/privkey.pem
+
+logging:
+  level:
+    root: INFO
+    com.mes: INFO

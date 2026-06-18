@@ -15,9 +15,13 @@ services:
     container_name: mes-backend
     ports:
       - "8080:8080"
+      - "443:8443"
     depends_on:
       - chroma
+    volumes:
+      - /etc/letsencrypt/live/hyodo.kro.kr:/certs:ro
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_AI_VECTORSTORE_CHROMA_CLIENT_HOST: http://chroma
       SPRING_AI_VECTORSTORE_CHROMA_CLIENT_PORT: "8000"
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -31,6 +35,8 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       NOTIFICATION_EMAIL_FROM: ${NOTIFICATION_EMAIL_FROM:-}
       NOTIFICATION_EMAIL_TO: ${NOTIFICATION_EMAIL_TO:-}
+      SSL_ENABLED: ${SSL_ENABLED:-false}
+      SERVER_PORT: ${SERVER_PORT:-8080}
     restart: unless-stopped
 
 volumes:

@@ -35,7 +35,9 @@ jobs:
             OPENAI_MODEL=gpt-5-mini
             CHROMA_HOST=http://chroma
             CHROMA_PORT=8000
-            SECURITY_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+            SECURITY_ALLOWED_ORIGINS=https://hyodo.kro.kr,http://localhost:3000
+            SSL_ENABLED=${{ secrets.SSL_ENABLED }}
+            SERVER_PORT=${{ secrets.SERVER_PORT }}
             PLC_SIM_ENABLED=false
             NOTIFICATION_EMAIL_ENABLED=true
             MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
