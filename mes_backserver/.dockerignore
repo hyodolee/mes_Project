@@ -1,0 +1,10 @@
+# 빌드 산출물·로컬 파일은 이미지에 넣지 않는다 (빌드는 컨테이너 안에서 다시 함)
+build/
+.gradle/
+bin/
+.vscode/
+*.log
+.git/
+.idea/
+.env
+gradle.properties
