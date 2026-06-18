@@ -18,8 +18,8 @@ services:
     depends_on:
       - chroma
     environment:
-      CHROMA_HOST: http://chroma # 같은 compose 안의 chroma 서비스 주소
-      CHROMA_PORT: "8000"
+      SPRING_AI_VECTORSTORE_CHROMA_CLIENT_HOST: http://chroma
+      SPRING_AI_VECTORSTORE_CHROMA_CLIENT_PORT: "8000"
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
       MES_DB_PASSWORD: ${MES_DB_PASSWORD}
