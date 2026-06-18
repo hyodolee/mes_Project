@@ -1,6 +1,7 @@
 package com.mes.application.service.ai.query;
 
 import com.mes.application.service.ai.support.AiClientGateway;
+import com.mes.application.service.ai.support.SensitiveDataSanitizer;
 import com.mes.application.service.planning.McsTransferClient;
 import com.mes.application.service.planning.WorkOrderService;
 import com.mes.domain.ai.dto.NaturalLanguageQueryRequest;
@@ -49,6 +50,7 @@ public class OperationQueryService {
     private final AiClientGateway aiClientGateway;
     private final ChatMemory chatMemory;
     private final MessageChatMemoryAdvisor chatMemoryAdvisor;
+    private final SensitiveDataSanitizer sensitiveDataSanitizer;
 
     public OperationQueryService(
             WorkOrderService workOrderService,
@@ -56,7 +58,8 @@ public class OperationQueryService {
             OperationToolsFactory operationToolsFactory,
             AiClientGateway aiClientGateway,
             ChatMemory chatMemory,
-            MessageChatMemoryAdvisor chatMemoryAdvisor
+            MessageChatMemoryAdvisor chatMemoryAdvisor,
+            SensitiveDataSanitizer sensitiveDataSanitizer
     ) {
         this.workOrderService = workOrderService;
         this.mcsTransferClient = mcsTransferClient;
@@ -64,6 +67,7 @@ public class OperationQueryService {
         this.aiClientGateway = aiClientGateway;
         this.chatMemory = chatMemory;
         this.chatMemoryAdvisor = chatMemoryAdvisor;
+        this.sensitiveDataSanitizer = sensitiveDataSanitizer;
     }
 
     public NaturalLanguageQueryResponse query(NaturalLanguageQueryRequest request) {
@@ -214,11 +218,11 @@ public class OperationQueryService {
             request.getHistory().stream()
                     .skip(Math.max(0, request.getHistory().size() - 6))
                     .forEach(turn -> user.append("user".equals(turn.getRole()) ? "담당자: " : "도우미: ")
-                            .append(turn.getText()).append("\n"));
+                            .append(sensitiveDataSanitizer.mask(turn.getText())).append("\n"));
             user.append("\n");
         }
 
-        user.append("질문: ").append(request.getQuestion());
+        user.append("질문: ").append(sensitiveDataSanitizer.mask(request.getQuestion()));
         return user.toString();
     }
 

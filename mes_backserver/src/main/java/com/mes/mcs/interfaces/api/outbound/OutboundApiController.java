@@ -24,12 +24,12 @@ public class OutboundApiController {
     }
 
     @GetMapping("/{outboundId}")
-    public ApiResponse<OutboundOrderDto> getOutbound(@PathVariable Long outboundId) {
+    public ApiResponse<OutboundOrderDto> getOutbound(@PathVariable("outboundId") Long outboundId) {
         return ApiResponse.ok(outboundService.getOutboundOrder(outboundId));
     }
 
     @GetMapping("/{outboundId}/items")
-    public ApiResponse<List<OutboundItemDto>> getOutboundItems(@PathVariable Long outboundId) {
+    public ApiResponse<List<OutboundItemDto>> getOutboundItems(@PathVariable("outboundId") Long outboundId) {
         return ApiResponse.ok(outboundService.getOutboundItems(outboundId));
     }
 
@@ -49,7 +49,7 @@ public class OutboundApiController {
     }
 
     @PutMapping("/{outboundId}")
-    public ApiResponse<Void> updateOutbound(@PathVariable Long outboundId, @RequestBody OutboundOrderDto orderDto) {
+    public ApiResponse<Void> updateOutbound(@PathVariable("outboundId") Long outboundId, @RequestBody OutboundOrderDto orderDto) {
         OutboundOrderDto dtoWithId = new OutboundOrderDto(
                 outboundId, orderDto.getPlantCd(), orderDto.getOutboundNo(), orderDto.getOutboundStatus(), orderDto.getCustomerCd(), orderDto.getWarehouseCd(),
                 orderDto.getRequestDt(), orderDto.getShippedDt(), orderDto.getDestination(), orderDto.getIssuePlanId(), orderDto.getWoId(), orderDto.getOutboundRmk(),
@@ -60,13 +60,13 @@ public class OutboundApiController {
     }
 
     @PostMapping("/{outboundId}/status")
-    public ApiResponse<Void> changeStatus(@PathVariable Long outboundId, @RequestParam String status) {
+    public ApiResponse<Void> changeStatus(@PathVariable("outboundId") Long outboundId, @RequestParam("status") String status) {
         outboundService.changeOrderStatus(outboundId, status, "SYSTEM");
         return ApiResponse.ok();
     }
 
     @DeleteMapping("/{outboundId}")
-    public ApiResponse<Void> deleteOutbound(@PathVariable Long outboundId) {
+    public ApiResponse<Void> deleteOutbound(@PathVariable("outboundId") Long outboundId) {
         outboundService.deleteOutboundOrder(outboundId);
         return ApiResponse.ok();
     }

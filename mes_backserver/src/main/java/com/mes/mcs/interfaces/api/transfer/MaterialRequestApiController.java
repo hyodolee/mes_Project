@@ -20,7 +20,7 @@ public class MaterialRequestApiController {
     }
 
     @PostMapping("/work-orders/{woId}/cancel")
-    public ApiResponse<Integer> cancelMaterialRequestsByWorkOrder(@PathVariable Long woId) {
+    public ApiResponse<Integer> cancelMaterialRequestsByWorkOrder(@PathVariable("woId") Long woId) {
         return ApiResponse.ok(materialRequestService.cancelMaterialRequestsByWorkOrder(woId));
     }
 }

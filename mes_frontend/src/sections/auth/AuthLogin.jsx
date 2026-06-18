@@ -46,7 +46,7 @@ export default function AuthLogin({ isDemo = false }) {
     <Formik
       initialValues={{
         username: 'admin',
-        password: 'admin123',
+        password: 'admin1234',
         submit: null
       }}
       validationSchema={Yup.object().shape({
@@ -122,7 +122,7 @@ export default function AuthLogin({ isDemo = false }) {
                       </IconButton>
                     </InputAdornment>
                   }
-                  placeholder="admin123"
+                  placeholder="admin1234"
                 />
               </Stack>
               {touched.password && errors.password && (
@@ -133,7 +133,7 @@ export default function AuthLogin({ isDemo = false }) {
             </Grid>
             <Grid sx={{ mt: -1 }} size={12}>
               <Alert severity="info" variant="outlined">
-                개발 기본 계정은 admin / admin123 입니다. 실제 값은 백엔드 환경변수로 변경할 수 있습니다.
+                개발 기본 계정: 관리자 admin / admin1234, 일반 사용자 user / user1234. 실제 값은 백엔드 환경변수로 변경할 수 있습니다.
               </Alert>
             </Grid>
             <Grid size={12}>

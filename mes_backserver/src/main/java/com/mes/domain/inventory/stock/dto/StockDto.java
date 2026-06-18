@@ -26,6 +26,7 @@ public class StockDto {
     private BigDecimal availableQty;
     private String unit;
     private String stockStatus;
+    private BigDecimal safetyStockQty; // 안전재고(기준치) — MST_ITEM 조인
     private LocalDate expireDt;
     private LocalDateTime regDtm;
 }

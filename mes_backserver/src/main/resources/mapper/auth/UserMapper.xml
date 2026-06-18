@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.auth.UserMapper">
+
+    <select id="findByUserId" resultType="com.mes.domain.auth.dto.UserAccount">
+        SELECT USER_ID      as userId,
+               PASSWORD     as password,
+               DISPLAY_NAME as displayName,
+               ROLE         as role,
+               USE_YN       as useYn
+        FROM MST_USER
+        WHERE USER_ID = #{userId}
+          AND USE_YN = 'Y'
+    </select>
+
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM MST_USER
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <insert id="insertUser">
+        INSERT INTO MST_USER (USER_ID, PASSWORD, DISPLAY_NAME, ROLE, USE_YN)
+        VALUES (#{userId}, #{password}, #{displayName}, #{role}, COALESCE(#{useYn}, 'Y'))
+    </insert>
+
+</mapper>

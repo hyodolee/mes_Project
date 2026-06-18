@@ -15,4 +15,5 @@ public class GlobalOperationEvidenceDto {
     private WorkOrderSummaryDto workOrders;
     private McsTransferSummaryDto transfers;
     private List<CriticalEventDto> criticalEvents;
+    private OperationDomainSummaryDto domains;
 }

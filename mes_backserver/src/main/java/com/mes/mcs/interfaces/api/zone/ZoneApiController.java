@@ -28,7 +28,7 @@ public class ZoneApiController {
     }
 
     @GetMapping("/{zoneId}")
-    public ApiResponse<ZoneDto> getZone(@PathVariable Long zoneId) {
+    public ApiResponse<ZoneDto> getZone(@PathVariable("zoneId") Long zoneId) {
         return ApiResponse.ok(zoneService.getZone(zoneId));
     }
 
@@ -43,7 +43,7 @@ public class ZoneApiController {
     }
 
     @PutMapping("/{zoneId}")
-    public ApiResponse<Void> updateZone(@PathVariable Long zoneId, @RequestBody ZoneDto zoneDto) {
+    public ApiResponse<Void> updateZone(@PathVariable("zoneId") Long zoneId, @RequestBody ZoneDto zoneDto) {
         ZoneDto dtoWithId = new ZoneDto(
                 zoneId, null, null, null,
                 zoneDto.getZoneNm(), zoneDto.getZoneType(), zoneDto.getSortSeq(), zoneDto.getUseYn(),
@@ -54,7 +54,7 @@ public class ZoneApiController {
     }
 
     @DeleteMapping("/{zoneId}")
-    public ApiResponse<Void> deleteZone(@PathVariable Long zoneId) {
+    public ApiResponse<Void> deleteZone(@PathVariable("zoneId") Long zoneId) {
         zoneService.deleteZone(zoneId);
         return ApiResponse.ok();
     }

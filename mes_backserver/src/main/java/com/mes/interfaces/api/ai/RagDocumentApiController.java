@@ -40,7 +40,7 @@ public class RagDocumentApiController {
     }
 
     @PostMapping("/{documentId}/reindex")
-    public ApiResponse<RagDocumentUploadResponse> reindex(@PathVariable Long documentId) {
+    public ApiResponse<RagDocumentUploadResponse> reindex(@PathVariable("documentId") Long documentId) {
         return ApiResponse.ok(ragDocumentService.reindex(documentId));
     }
 
@@ -50,7 +50,7 @@ public class RagDocumentApiController {
     }
 
     @DeleteMapping("/{documentId}")
-    public ApiResponse<Void> delete(@PathVariable Long documentId) {
+    public ApiResponse<Void> delete(@PathVariable("documentId") Long documentId) {
         ragDocumentService.delete(documentId);
         return ApiResponse.ok();
     }

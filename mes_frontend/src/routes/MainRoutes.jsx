@@ -19,6 +19,7 @@ const McsRouteOptimizer = Loadable(lazy(() => import('pages/mcs/route-optimizer'
 const McsLocationStock = Loadable(lazy(() => import('pages/mcs/location-stock')));
 const McsInventoryTransactions = Loadable(lazy(() => import('pages/mcs/inventory-transactions')));
 const McsPlcEvents = Loadable(lazy(() => import('pages/mcs/plc-events')));
+const McsPlcSimulator = Loadable(lazy(() => import('pages/mcs/plc-simulator')));
 const MesWorkOrders = Loadable(lazy(() => import('pages/mes/work-orders')));
 const MesProdPlans = Loadable(lazy(() => import('pages/mes/prod-plans')));
 const MesWorkResults = Loadable(lazy(() => import('pages/mes/work-results')));
@@ -27,6 +28,7 @@ const MesQuality = Loadable(lazy(() => import('pages/mes/quality')));
 const MesDefects = Loadable(lazy(() => import('pages/mes/defects')));
 const MesEquipment = Loadable(lazy(() => import('pages/mes/equipment')));
 const MesMasterData = Loadable(lazy(() => import('pages/mes/master-data')));
+const MesBom = Loadable(lazy(() => import('pages/mes/bom')));
 const AiOperations = Loadable(lazy(() => import('pages/ai/operations')));
 const AiRagDocuments = Loadable(lazy(() => import('pages/ai/rag-documents')));
 
@@ -92,6 +94,10 @@ const MainRoutes = {
           element: <McsPlcEvents />
         },
         {
+          path: 'mcs/plc-simulator',
+          element: <McsPlcSimulator />
+        },
+        {
           path: 'mes/dashboard',
           element: <MesDashboard />
         },
@@ -126,6 +132,10 @@ const MainRoutes = {
         {
           path: 'mes/master-data',
           element: <MesMasterData />
+        },
+        {
+          path: 'mes/bom',
+          element: <MesBom />
         },
         {
           path: 'ai/operations',

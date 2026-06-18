@@ -1,5 +1,6 @@
 package com.mes.application.service.ai.query;
 
+import com.mes.application.service.ai.support.SensitiveDataSanitizer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +27,11 @@ public class OperationDocumentSearchService {
     private static final int SEARCH_TOP_K = 8;
 
     private final VectorStore vectorStore;
+    private final SensitiveDataSanitizer sensitiveDataSanitizer;
 
-    public OperationDocumentSearchService(VectorStore vectorStore) {
+    public OperationDocumentSearchService(VectorStore vectorStore, SensitiveDataSanitizer sensitiveDataSanitizer) {
         this.vectorStore = vectorStore;
+        this.sensitiveDataSanitizer = sensitiveDataSanitizer;
     }
 
     /**
@@ -71,7 +74,7 @@ public class OperationDocumentSearchService {
                 String.valueOf(meta.getOrDefault("document", "unknown")),
                 String.valueOf(meta.getOrDefault("section", "")),
                 line,
-                doc.getText(),
+                sensitiveDataSanitizer.mask(doc.getText()),
                 score(doc)
         );
     }

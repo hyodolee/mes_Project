@@ -2,6 +2,7 @@ package com.mes.application.service.ai.notification;
 
 import com.mes.application.service.ai.support.AiClientGateway;
 import com.mes.application.service.ai.support.AiTextSupport;
+import com.mes.application.service.ai.support.SensitiveDataSanitizer;
 import com.mes.domain.ai.dto.AiNotificationDto;
 import com.mes.infra.persistence.mybatis.mapper.ai.AiNotificationMapper;
 import org.slf4j.Logger;
@@ -35,17 +36,23 @@ public class AiNotificationService {
     private final SseEmitterService sseEmitterService;
     private final com.mes.application.service.planning.McsTransferClient mcsTransferClient;
     private final AiClientGateway aiClientGateway;
+    private final NotificationEmailSender emailSender;
+    private final SensitiveDataSanitizer sensitiveDataSanitizer;
 
     public AiNotificationService(
             AiNotificationMapper mapper,
             SseEmitterService sseEmitterService,
             com.mes.application.service.planning.McsTransferClient mcsTransferClient,
-            AiClientGateway aiClientGateway
+            AiClientGateway aiClientGateway,
+            NotificationEmailSender emailSender,
+            SensitiveDataSanitizer sensitiveDataSanitizer
     ) {
         this.mapper = mapper;
         this.sseEmitterService = sseEmitterService;
         this.mcsTransferClient = mcsTransferClient;
         this.aiClientGateway = aiClientGateway;
+        this.emailSender = emailSender;
+        this.sensitiveDataSanitizer = sensitiveDataSanitizer;
     }
 
     @Scheduled(fixedDelay = 60_000)
@@ -87,8 +94,8 @@ public class AiNotificationService {
     private void createNotification(com.mes.application.service.planning.McsTransferClient.McsPlcEventSummary event) {
         try {
             String sourceRef = "PLC_EVENT#" + event.getEventId();
-            String eventInfo = String.format("설비: %s, 유형: %s, 오류코드: %s, 메시지: %s",
-                    event.getEquipmentCd(), event.getEventType(), event.getErrorCode(), event.getEventMessage());
+            String eventInfo = sensitiveDataSanitizer.mask(String.format("설비: %s, 유형: %s, 오류코드: %s, 메시지: %s",
+                    event.getEquipmentCd(), event.getEventType(), event.getErrorCode(), event.getEventMessage()));
 
             String title;
             String message;
@@ -118,6 +125,7 @@ public class AiNotificationService {
             AiNotificationDto dto = new AiNotificationDto(null, title, message, severity, sourceRef, false, null);
             mapper.insert(dto);
             sseEmitterService.pushNewNotification();
+            emailSender.send(title, message, severity);
             log.info("AI 알림 생성: [{}] {}", severity, title);
 
         } catch (Exception e) {

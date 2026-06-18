@@ -1,5 +1,6 @@
 package com.mes.application.service.ai.query;
 
+import com.mes.application.service.ai.support.SensitiveDataSanitizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ class OperationDocumentSearchServiceTest {
 
     private final VectorStore mockVectorStore = Mockito.mock(VectorStore.class);
     private final OperationDocumentSearchService documentSearchService =
-            new OperationDocumentSearchService(mockVectorStore);
+            new OperationDocumentSearchService(mockVectorStore, new SensitiveDataSanitizer());
 
     @BeforeEach
     void setup() {

@@ -32,12 +32,12 @@ public class InventoryApiController {
     }
 
     @GetMapping("/stocks/{locStockId}")
-    public ApiResponse<LocStockDto> getLocStock(@PathVariable Long locStockId) {
+    public ApiResponse<LocStockDto> getLocStock(@PathVariable("locStockId") Long locStockId) {
         return ApiResponse.ok(inventoryService.getLocStock(locStockId));
     }
 
     @PostMapping("/stocks/{locStockId}/adjust")
-    public ApiResponse<Void> adjustStock(@PathVariable Long locStockId, @RequestBody StockAdjustRequest request) {
+    public ApiResponse<Void> adjustStock(@PathVariable("locStockId") Long locStockId, @RequestBody StockAdjustRequest request) {
         double adjustQty = request.getAdjustQty() == null ? 0 : request.getAdjustQty();
         if ("ADJ_MINUS".equals(request.getAdjustType())) {
             adjustQty = -Math.abs(adjustQty);

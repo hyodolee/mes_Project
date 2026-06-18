@@ -7,7 +7,7 @@ spring:
       chat:
         options:
           model: ${OPENAI_MODEL:gpt-4o-mini}
-          # gpt-5 계열은 temperature=1만 허용 (다른 값이면 API 400 에러로 폴백됨)
+          # gpt-5 family only allows temperature=1 (other values cause API 400)
           temperature: ${OPENAI_TEMPERATURE:1}
       embedding:
         options:
@@ -15,10 +15,21 @@ spring:
     vectorstore:
       chroma:
         client:
-          host: http://localhost
-          port: 8000
+          host: ${CHROMA_HOST:http://localhost}
+          port: ${CHROMA_PORT:8000}
         collection-name: mes-rag-docs
         initialize-schema: true
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   profiles:
     active: local
   flyway:
@@ -47,12 +58,29 @@ management:
       show-details: always
 
 app:
+  # PLC event simulator (demo/test only). Set false in production.
+  plc-sim:
+    enabled: ${PLC_SIM_ENABLED:true}
+  notification:
+    email:
+      # To enable: NOTIFICATION_EMAIL_ENABLED=true + MAIL_* + from/to
+      enabled: ${NOTIFICATION_EMAIL_ENABLED:false}
+      from: ${NOTIFICATION_EMAIL_FROM:}
+      to: ${NOTIFICATION_EMAIL_TO:}            # comma-separated recipients
+      # Send mail only at/above this severity (INFO < WARNING < ERROR)
+      min-severity: ${NOTIFICATION_EMAIL_MIN_SEVERITY:WARNING}
   security:
-    username: ${MES_AUTH_USERNAME:admin}
-    password: ${MES_AUTH_PASSWORD:admin123}
-    display-name: ${MES_AUTH_DISPLAY_NAME:MES/MCS Admin}
-    role: ${MES_AUTH_ROLE:ADMIN}
     allowed-origins: ${SECURITY_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
     jwt:
       secret: ${JWT_SECRET:mes-mcs-dev-jwt-secret-change-me-please}
       expiration-seconds: ${JWT_EXPIRATION_SECONDS:7200}
+    # 최초 기동 시 MST_USER에 없는 계정만 생성한다(멱등). 비밀번호는 BCrypt로 저장됨.
+    seed-users:
+      - username: ${MES_ADMIN_USERNAME:admin}
+        password: ${MES_ADMIN_PASSWORD:admin1234}
+        display-name: ${MES_ADMIN_DISPLAY_NAME:관리자}
+        role: ADMIN
+      - username: ${MES_USER_USERNAME:user}
+        password: ${MES_USER_PASSWORD:user1234}
+        display-name: ${MES_USER_DISPLAY_NAME:일반 사용자}
+        role: USER

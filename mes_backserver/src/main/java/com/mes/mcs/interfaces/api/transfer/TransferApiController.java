@@ -24,12 +24,12 @@ public class TransferApiController {
     }
 
     @GetMapping("/{transferId}")
-    public ApiResponse<TransferOrderDto> getTransfer(@PathVariable Long transferId) {
+    public ApiResponse<TransferOrderDto> getTransfer(@PathVariable("transferId") Long transferId) {
         return ApiResponse.ok(transferService.getTransferOrder(transferId));
     }
 
     @GetMapping("/{transferId}/items")
-    public ApiResponse<List<TransferItemDto>> getTransferItems(@PathVariable Long transferId) {
+    public ApiResponse<List<TransferItemDto>> getTransferItems(@PathVariable("transferId") Long transferId) {
         return ApiResponse.ok(transferService.getTransferItems(transferId));
     }
 
@@ -48,7 +48,7 @@ public class TransferApiController {
     }
 
     @PutMapping("/{transferId}")
-    public ApiResponse<Void> updateTransfer(@PathVariable Long transferId, @RequestBody TransferOrderDto orderDto) {
+    public ApiResponse<Void> updateTransfer(@PathVariable("transferId") Long transferId, @RequestBody TransferOrderDto orderDto) {
         TransferOrderDto dtoWithId = new TransferOrderDto(
                 transferId, orderDto.getPlantCd(), orderDto.getTransferNo(), orderDto.getTransferStatus(), orderDto.getFromLocationId(), orderDto.getToLocationId(),
                 orderDto.getTransferReason(), null, null, "SYSTEM", null, null, null, null, null, orderDto.getOptimizeRule()
@@ -58,25 +58,28 @@ public class TransferApiController {
     }
 
     @PostMapping("/{transferId}/status")
-    public ApiResponse<Void> changeStatus(@PathVariable Long transferId, @RequestParam String status) {
+    public ApiResponse<Void> changeStatus(@PathVariable("transferId") Long transferId, @RequestParam("status") String status) {
         transferService.changeOrderStatus(transferId, status, "SYSTEM");
         return ApiResponse.ok();
     }
 
     @PostMapping("/{transferId}/items")
-    public ApiResponse<Void> createTransferItem(@PathVariable Long transferId, @RequestBody TransferItemDto itemDto) {
+    public ApiResponse<Void> createTransferItem(@PathVariable("transferId") Long transferId, @RequestBody TransferItemDto itemDto) {
         transferService.createTransferItem(transferId, itemDto);
         return ApiResponse.ok();
     }
 
     @DeleteMapping("/{transferId}/items/{transferItemId}")
-    public ApiResponse<Void> deleteTransferItem(@PathVariable Long transferId, @PathVariable Long transferItemId) {
+    public ApiResponse<Void> deleteTransferItem(
+            @PathVariable("transferId") Long transferId,
+            @PathVariable("transferItemId") Long transferItemId
+    ) {
         transferService.deleteTransferItem(transferId, transferItemId);
         return ApiResponse.ok();
     }
 
     @DeleteMapping("/{transferId}")
-    public ApiResponse<Void> deleteTransfer(@PathVariable Long transferId) {
+    public ApiResponse<Void> deleteTransfer(@PathVariable("transferId") Long transferId) {
         transferService.deleteTransferOrder(transferId);
         return ApiResponse.ok();
     }

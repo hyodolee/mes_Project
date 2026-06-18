@@ -12,286 +12,302 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import {
-  AlertOutlined,
   CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  ThunderboltOutlined,
+  DatabaseOutlined,
+  ExperimentOutlined,
+  RobotOutlined,
+  SettingOutlined,
+  SwapOutlined,
+  ToolOutlined,
   WarningOutlined
 } from '@ant-design/icons';
 
 import MainCard from 'components/MainCard';
 import { aiApi } from 'api/mes/ai';
-import { StatCard, getApiData, useOperationsDashboard } from 'sections/operations/operationsDashboard';
+import { getApiData, useOperationsDashboard } from 'sections/operations/operationsDashboard';
 
 const AI_OPERATIONS_SUMMARY_STORAGE_KEY = 'mes.ai.operations.summary.v1';
 
-function loadSavedAiSummary() {
-  if (typeof window === 'undefined') return null;
-
+function loadSaved() {
+  if (typeof window === 'undefined') return { summary: null, savedAt: null };
   try {
     const raw = window.localStorage.getItem(AI_OPERATIONS_SUMMARY_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw)?.summary || null;
+    if (!raw) return { summary: null, savedAt: null };
+    const parsed = JSON.parse(raw);
+    return { summary: parsed?.summary || null, savedAt: parsed?.savedAt || null };
   } catch {
-    return null;
+    return { summary: null, savedAt: null };
   }
 }
 
-function saveAiSummary(summary) {
-  if (typeof window === 'undefined' || !summary) return;
-
-  window.localStorage.setItem(
-    AI_OPERATIONS_SUMMARY_STORAGE_KEY,
-    JSON.stringify({
-      savedAt: new Date().toISOString(),
-      summary
-    })
-  );
+function saveSummary(summary) {
+  if (typeof window === 'undefined' || !summary) return new Date().toISOString();
+  const savedAt = new Date().toISOString();
+  window.localStorage.setItem(AI_OPERATIONS_SUMMARY_STORAGE_KEY, JSON.stringify({ savedAt, summary }));
+  return savedAt;
 }
 
-function AiBriefingSection({ summaryData, loading, error, refreshing, onRefresh }) {
-  if (loading) return <LinearProgress sx={{ mb: 2 }} />;
+function timeAgo(iso) {
+  if (!iso) return null;
+  const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min < 1) return '방금 전';
+  if (min < 60) return `${min}분 전`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}시간 전`;
+  return `${Math.floor(hr / 24)}일 전`;
+}
+
+const SEVERITY = {
+  CRITICAL: { color: 'error', label: '긴급' },
+  WARNING: { color: 'warning', label: '주의' },
+  NORMAL: { color: 'success', label: '정상' }
+};
+
+// ── ① AI 운영 브리핑 (AI 종합 판단) ───────────────────────────────────────────
+function AiBriefingSection({ summaryData, savedAt, loading, error, refreshing, onRefresh }) {
+  if (loading) return <LinearProgress sx={{ mb: 1 }} />;
+
+  const sev = SEVERITY[summaryData?.severity] || SEVERITY.NORMAL;
 
   if (!summaryData) {
     return (
-      <MainCard sx={{ mb: 2 }}>
+      <MainCard>
         <Stack spacing={1.5}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-            <Box sx={{ color: 'warning.main', fontSize: 20 }}><AlertOutlined /></Box>
-            <Typography variant="h5" sx={{ flex: 1 }}>AI 실시간 운영 브리핑</Typography>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Box sx={{ color: 'warning.main', fontSize: 18 }}><RobotOutlined /></Box>
+            <Typography variant="h5" sx={{ flex: 1 }}>AI 운영 브리핑</Typography>
             <Button size="small" variant="contained" onClick={onRefresh} disabled={refreshing}>
               {refreshing ? '분석 중' : '분석 시작'}
             </Button>
           </Stack>
           <Alert severity={error ? 'error' : 'info'}>
             {error
-              ? '운영 브리핑을 불러오지 못했습니다. 분석 시작 버튼으로 다시 요청하세요.'
-              : '아직 저장된 운영 브리핑이 없습니다. 분석 시작 버튼을 누르면 현재 운영 데이터를 한 번 분석합니다.'}
+              ? '브리핑을 불러오지 못했습니다. 분석 시작 버튼으로 다시 요청하세요.'
+              : '분석 시작 버튼을 누르면 AI가 작업·이송·품질·재고·설비를 종합 분석합니다.'}
           </Alert>
         </Stack>
       </MainCard>
     );
   }
 
-  const severityColor = summaryData.severity === 'CRITICAL' ? 'error' : summaryData.severity === 'WARNING' ? 'warning' : 'success';
-  const severityLabel = summaryData.severity === 'CRITICAL' ? '긴급' : summaryData.severity === 'WARNING' ? '주의' : '정상';
-
-  const evidence = summaryData.evidence || {};
-  const wo = evidence.workOrders || {};
-  const tr = evidence.transfers || {};
-  const criticalEvents = evidence.criticalEvents || [];
-  const metrics = [
-    { label: '전체 작업', value: wo.total ?? 0 },
-    { label: '진행', value: wo.inProgress ?? 0 },
-    { label: '대기', value: wo.pending ?? 0 },
-    { label: '지연', value: wo.delayed ?? 0, warn: (wo.delayed ?? 0) > 0 },
-    { label: '오늘 완료', value: wo.completedToday ?? 0 },
-    { label: '이송 진행', value: tr.active ?? 0 },
-    { label: '이송 실패', value: tr.failed ?? 0, warn: (tr.failed ?? 0) > 0 },
-    { label: '이송 완료', value: tr.completedToday ?? 0 }
-  ];
+  const issues = (summaryData.keyIssues || []).slice(0, 6);
+  const actions = (summaryData.recommendedActions || []).slice(0, 5);
 
   return (
-    <MainCard sx={{ borderLeft: '4px solid', borderLeftColor: `${severityColor}.main`, mb: 2 }}>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 2, flexWrap: 'wrap', rowGap: 1 }}>
-        <Box sx={{ color: `${severityColor}.main`, fontSize: 20 }}>
+    <MainCard sx={{ borderLeft: '4px solid', borderLeftColor: `${sev.color}.main` }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
+        <Box sx={{ color: `${sev.color}.main`, fontSize: 18 }}>
           {summaryData.severity === 'NORMAL' ? <CheckCircleOutlined /> : <WarningOutlined />}
         </Box>
-        <Typography variant="h5" sx={{ flex: 1 }}>AI 실시간 운영 브리핑</Typography>
-        <Chip label={severityLabel} size="small" color={severityColor} />
-        {summaryData.aiGenerated && (
-          <Typography variant="caption" color="text.secondary">
-            AI 분석 · {summaryData.model}
-          </Typography>
-        )}
+        <Typography variant="h5">AI 운영 브리핑</Typography>
+        <Chip label={sev.label} size="small" color={sev.color} />
+        <Box sx={{ flex: 1 }} />
+        <Typography variant="caption" color="text.secondary">
+          마지막 분석: {timeAgo(savedAt) || '방금 전'}
+          {summaryData.aiGenerated ? ` · ${summaryData.model}` : ''}
+        </Typography>
         <Button size="small" variant="outlined" onClick={onRefresh} disabled={refreshing}>
           {refreshing ? '분석 중' : '다시 분석'}
         </Button>
       </Stack>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+        AI가 작업·이송·품질·재고·설비를 모두 종합해 핵심 문제와 조치를 알려줍니다
+      </Typography>
 
-      <Typography variant="h6" color={`${severityColor}.main`} gutterBottom>
+      {/* 종합 요약 */}
+      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mt: 2 }}>
+        종합 요약
+      </Typography>
+      <Typography variant="h6" color={`${sev.color}.main`} sx={{ mt: 0.5, lineHeight: 1.55 }}>
         {summaryData.summary}
       </Typography>
-      {summaryData.inference && summaryData.inference !== '-' && (
-        <Typography variant="body2" color="text.secondary">
-          {summaryData.inference}
-        </Typography>
-      )}
-      {summaryData.productionImpact && summaryData.productionImpact !== '-' && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {summaryData.productionImpact}
-        </Typography>
-      )}
 
-      {/* 운영 지표 요약 */}
-      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mt: 2 }}>
-        운영 지표
-      </Typography>
-      <Grid container spacing={0.75} sx={{ mt: 0.25 }}>
-        {metrics.map((m) => (
-          <Grid key={m.label} size={{ xs: 6, sm: 4, md: 3 }}>
-            <Box
-              sx={{
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
-                px: 1.25,
-                py: 0.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {m.label}
-              </Typography>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }} color={m.warn ? 'warning.main' : 'text.primary'}>
-                {m.value}
-              </Typography>
-            </Box>
+      {/* 원인 추정 / 생산 영향 */}
+      <Grid container spacing={2} sx={{ mt: 0.5 }}>
+        {summaryData.inference && summaryData.inference !== '-' && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>원인 추정</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{summaryData.inference}</Typography>
           </Grid>
-        ))}
+        )}
+        {summaryData.productionImpact && summaryData.productionImpact !== '-' && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>생산 영향</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{summaryData.productionImpact}</Typography>
+          </Grid>
+        )}
       </Grid>
 
       <Divider sx={{ my: 2 }} />
 
+      {/* 핵심 이슈 / 권장 조치 */}
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-            주요 이슈
-          </Typography>
-          <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.75 }}>
-            {(summaryData.keyIssues || []).slice(0, 6).map((issue, idx) => (
-              <Chip key={idx} label={issue} size="small" variant="outlined" color={severityColor} />
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>핵심 이슈</Typography>
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.75 }}>
+            {issues.length === 0 && <Typography variant="body2" color="text.secondary">특이 이슈 없음</Typography>}
+            {issues.map((issue, idx) => (
+              <Chip key={idx} label={issue} size="small" variant="outlined" color={sev.color} />
             ))}
           </Stack>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-            권장 조치
-          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>권장 조치 (우선순위)</Typography>
           <Stack spacing={0.5} sx={{ mt: 0.75 }}>
-            {(summaryData.recommendedActions || []).slice(0, 5).map((action, idx) => (
+            {actions.map((action, idx) => (
               <Typography key={idx} variant="body2">{idx + 1}. {action}</Typography>
             ))}
           </Stack>
         </Grid>
       </Grid>
-
-      {/* 최근 주요 이벤트 */}
-      {criticalEvents.length > 0 && (
-        <>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block' }}>
-            최근 주요 이벤트 (최근 1시간 {criticalEvents.length}건)
-          </Typography>
-          <Stack spacing={0.75} sx={{ mt: 0.75 }}>
-            {criticalEvents.slice(0, 5).map((ev, idx) => (
-              <Stack key={idx} direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
-                <Chip label={ev.type} size="small" color={severityColor} variant="outlined" />
-                <Typography variant="body2" sx={{ flex: 1, minWidth: 0 }}>
-                  {ev.location && ev.location !== '-' ? `${ev.location} · ` : ''}{ev.message}
-                </Typography>
-                {ev.time && ev.time !== '-' && (
-                  <Typography variant="caption" color="text.secondary">{ev.time}</Typography>
-                )}
-              </Stack>
-            ))}
-          </Stack>
-        </>
-      )}
     </MainCard>
   );
+}
+
+// ── ② 영역별 진단 카드 ────────────────────────────────────────────────────────
+function AreaCard({ icon, name, status, value, unit, comment }) {
+  const sev = SEVERITY[status] || SEVERITY.NORMAL;
+  return (
+    <MainCard contentSX={{ p: 1.75 }} sx={{ borderTop: '3px solid', borderTopColor: `${sev.color}.main`, height: '100%' }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <Box sx={{ width: 28, height: 28, borderRadius: 1, bgcolor: 'secondary.lighter', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'text.secondary' }}>
+          {icon}
+        </Box>
+        <Typography variant="subtitle2" sx={{ flex: 1 }}>{name}</Typography>
+        <Chip label={sev.label} size="small" color={sev.color} variant={status === 'NORMAL' ? 'outlined' : 'filled'} />
+      </Stack>
+      <Typography variant="h4" sx={{ mt: 1.25, color: status === 'NORMAL' ? 'text.primary' : `${sev.color}.main` }}>
+        {value}
+        <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>{unit}</Typography>
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, lineHeight: 1.5 }}>
+        {comment}
+      </Typography>
+    </MainCard>
+  );
+}
+
+function buildAreas(d, aiSummary) {
+  const quality = d.defectCount + d.failedInspectionCount;
+  const stock = d.lowStockCount + d.restrictedStockCount;
+  // AI가 영역별 진단을 줬으면 그 코멘트/상태를 우선 사용 (숫자는 대시보드 데이터 유지)
+  const ai = {};
+  (aiSummary?.areaAssessments || []).forEach((a) => {
+    if (a?.area) ai[a.area] = a;
+  });
+  const merge = (name, base) => {
+    const a = ai[name];
+    return a ? { ...base, status: a.status || base.status, comment: a.comment || base.comment } : base;
+  };
+  const base = [
+    {
+      icon: <ToolOutlined />, name: '생산', value: d.inProgressWorkOrderCount, unit: '건 진행',
+      status: 'NORMAL', comment: `진행 ${d.inProgressWorkOrderCount}건 · 대기 ${d.waitingWorkOrderCount}건`
+    },
+    {
+      icon: <SwapOutlined />, name: '이송', value: d.failedTransferCount, unit: '건 실패',
+      status: d.failedTransferCount > 0 ? 'WARNING' : 'NORMAL',
+      comment: d.failedTransferCount > 0 ? `이송 ${d.failedTransferCount}건 실패 — 확인 필요` : `이송 정상 진행 (이동 중 ${d.movingTransferCount}건)`
+    },
+    {
+      icon: <ExperimentOutlined />, name: '품질', value: quality, unit: '건 이상',
+      status: quality > 0 ? 'WARNING' : 'NORMAL',
+      comment: quality > 0 ? `불량 ${d.defectCount} · 검사 부적합 ${d.failedInspectionCount}` : `검사 ${d.passedInspectionCount}건 합격, 이상 없음`
+    },
+    {
+      icon: <DatabaseOutlined />, name: '재고', value: stock, unit: '품목 주의',
+      status: stock > 0 ? 'WARNING' : 'NORMAL',
+      comment: stock > 0 ? `부족 ${d.lowStockCount} · 사용 제한 ${d.restrictedStockCount}` : '재고 정상 범위'
+    },
+    {
+      icon: <SettingOutlined />, name: '설비', value: d.equipmentIssueCount, unit: '대 이상',
+      status: d.equipmentIssueCount > 0 ? 'WARNING' : 'NORMAL',
+      comment: d.equipmentIssueCount > 0 ? `비가동 ${d.downEquipmentCount} · 확인 ${d.unknownEquipmentCount}` : `${d.runningEquipmentCount}대 정상 가동`
+    }
+  ];
+  return base.map((b) => merge(b.name, b));
 }
 
 export default function AiOperations() {
   const { dashboard, isLoading, errors } = useOperationsDashboard();
 
-  const [savedAiSummary, setSavedAiSummary] = useState(() => loadSavedAiSummary());
-  const [aiSummaryRefreshing, setAiSummaryRefreshing] = useState(false);
-  const [aiSummaryRefreshError, setAiSummaryRefreshError] = useState(null);
+  const [{ summary: savedAiSummary, savedAt: savedAiAt }, setSaved] = useState(() => loadSaved());
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(null);
 
   const { data: aiSummaryResponse, error: aiSummaryError, isLoading: aiSummaryLoading } = useSWR(
     savedAiSummary ? null : ['ai-operations-summary'],
     () => aiApi.getSummary(),
-    {
-      keepPreviousData: true,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      revalidateIfStale: false
-    }
+    { keepPreviousData: true, revalidateOnFocus: false, revalidateOnReconnect: false, revalidateIfStale: false }
   );
 
   const fetchedAiSummary = getApiData(aiSummaryResponse, null);
 
   useEffect(() => {
     if (!fetchedAiSummary) return;
-    saveAiSummary(fetchedAiSummary);
-    setSavedAiSummary(fetchedAiSummary);
+    const savedAt = saveSummary(fetchedAiSummary);
+    setSaved({ summary: fetchedAiSummary, savedAt });
   }, [fetchedAiSummary]);
 
   const refreshAiSummary = async () => {
-    setAiSummaryRefreshing(true);
-    setAiSummaryRefreshError(null);
+    setRefreshing(true);
+    setRefreshError(null);
     try {
       const response = await aiApi.getSummary(true);
-      const freshSummary = getApiData(response, null);
-      if (freshSummary) {
-        saveAiSummary(freshSummary);
-        setSavedAiSummary(freshSummary);
+      const fresh = getApiData(response, null);
+      if (fresh) {
+        const savedAt = saveSummary(fresh);
+        setSaved({ summary: fresh, savedAt });
       }
-    } catch (error) {
-      setAiSummaryRefreshError(error);
+    } catch (e) {
+      setRefreshError(e);
     } finally {
-      setAiSummaryRefreshing(false);
+      setRefreshing(false);
     }
   };
 
   const aiSummary = savedAiSummary || fetchedAiSummary;
-  const isAiSummaryLoading = !aiSummary && aiSummaryLoading;
+  const areas = buildAreas(dashboard, aiSummary);
 
   return (
     <Stack spacing={3}>
       <Box>
         <Typography variant="h3">AI 운영 분석</Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
-          AI가 현재 운영 데이터를 해석한 브리핑과 종합 판단을 확인합니다. 세부 현황은 MES/MCS 대시보드에서 봅니다.
+          AI가 공장 전체 데이터를 종합한 브리핑과, 영역별 현황을 한눈에 확인합니다.
         </Typography>
       </Box>
 
       <AiBriefingSection
         summaryData={aiSummary}
-        loading={isAiSummaryLoading}
-        error={aiSummaryRefreshError || aiSummaryError}
-        refreshing={aiSummaryRefreshing}
+        savedAt={savedAiAt}
+        loading={!aiSummary && aiSummaryLoading}
+        error={refreshError || aiSummaryError}
+        refreshing={refreshing}
         onRefresh={refreshAiSummary}
       />
 
-      {isLoading && <LinearProgress />}
-      {errors.map((error, index) => (
-        <Alert key={index} severity="error">{error.message}</Alert>
-      ))}
-
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard title="품질 이상" value={dashboard.defectCount + dashboard.failedInspectionCount} caption={`불량 ${dashboard.defectCount}건 / 검사 부적합 ${dashboard.failedInspectionCount}건`} color={dashboard.defectCount + dashboard.failedInspectionCount > 0 ? 'warning' : 'success'} icon={<WarningOutlined />} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard title="재고 확인" value={dashboard.lowStockCount + dashboard.restrictedStockCount} caption={`부족 ${dashboard.lowStockCount}건 / 사용 제한 ${dashboard.restrictedStockCount}건`} color={dashboard.lowStockCount + dashboard.restrictedStockCount > 0 ? 'warning' : 'success'} icon={<AlertOutlined />} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard title="설비 이상" value={dashboard.equipmentIssueCount} caption={`비가동 ${dashboard.downEquipmentCount}건 / 확인 필요 ${dashboard.unknownEquipmentCount}건`} color={dashboard.equipmentIssueCount > 0 ? 'warning' : 'success'} icon={<ExclamationCircleOutlined />} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard title="이동/신호 문제" value={dashboard.failedTransferCount + dashboard.dataMissingCount} caption={`이동 실패 ${dashboard.failedTransferCount}건 / 데이터 누락 ${dashboard.dataMissingCount}건`} color={dashboard.failedTransferCount + dashboard.dataMissingCount > 0 ? 'error' : 'success'} icon={<ThunderboltOutlined />} />
-        </Grid>
-      </Grid>
-
-      <MainCard title="데이터 기반 종합 판단">
-        <Alert severity={dashboard.defectCount + dashboard.failedInspectionCount + dashboard.lowStockCount + dashboard.equipmentIssueCount + dashboard.failedTransferCount + dashboard.dataMissingCount > 0 ? 'warning' : 'success'}>
-          {dashboard.mainCause}
-        </Alert>
-      </MainCard>
+      <Box>
+        <Typography variant="h5" sx={{ mb: 0.25 }}>영역별 진단</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          각 영역의 상태와 수치를 한눈에 (정상 / 주의 / 긴급)
+        </Typography>
+        {isLoading && <LinearProgress sx={{ mb: 1 }} />}
+        {errors.map((error, idx) => (
+          <Alert key={idx} severity="error" sx={{ mb: 1 }}>{error.message}</Alert>
+        ))}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(5, 1fr)' },
+            gap: 2
+          }}
+        >
+          {areas.map((area) => (
+            <AreaCard key={area.name} {...area} />
+          ))}
+        </Box>
+      </Box>
     </Stack>
   );
 }

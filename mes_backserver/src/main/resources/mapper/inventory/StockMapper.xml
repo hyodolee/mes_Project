@@ -18,6 +18,7 @@
             s.AVAILABLE_QTY AS availableQty,
             s.UNIT AS unit,
             s.STOCK_STATUS AS stockStatus,
+            i.SAFETY_STOCK_QTY AS safetyStockQty,
             s.EXPIRE_DT AS expireDt,
             s.REG_DTM AS regDtm
         FROM INV_STOCK s
@@ -55,6 +56,7 @@
             s.AVAILABLE_QTY AS availableQty,
             s.UNIT AS unit,
             s.STOCK_STATUS AS stockStatus,
+            i.SAFETY_STOCK_QTY AS safetyStockQty,
             s.EXPIRE_DT AS expireDt,
             s.REG_DTM AS regDtm
         FROM INV_STOCK s

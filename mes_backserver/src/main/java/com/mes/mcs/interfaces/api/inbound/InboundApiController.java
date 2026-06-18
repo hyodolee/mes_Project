@@ -24,12 +24,12 @@ public class InboundApiController {
     }
 
     @GetMapping("/{inboundId}")
-    public ApiResponse<InboundOrderDto> getInbound(@PathVariable Long inboundId) {
+    public ApiResponse<InboundOrderDto> getInbound(@PathVariable("inboundId") Long inboundId) {
         return ApiResponse.ok(inboundService.getInboundOrder(inboundId));
     }
 
     @GetMapping("/{inboundId}/items")
-    public ApiResponse<List<InboundItemDto>> getInboundItems(@PathVariable Long inboundId) {
+    public ApiResponse<List<InboundItemDto>> getInboundItems(@PathVariable("inboundId") Long inboundId) {
         return ApiResponse.ok(inboundService.getInboundItems(inboundId));
     }
 
@@ -49,7 +49,7 @@ public class InboundApiController {
     }
 
     @PutMapping("/{inboundId}")
-    public ApiResponse<Void> updateInbound(@PathVariable Long inboundId, @RequestBody InboundOrderDto orderDto) {
+    public ApiResponse<Void> updateInbound(@PathVariable("inboundId") Long inboundId, @RequestBody InboundOrderDto orderDto) {
         InboundOrderDto dtoWithId = new InboundOrderDto(
                 inboundId, orderDto.getPlantCd(), orderDto.getInboundNo(), orderDto.getInboundStatus(), orderDto.getVendorCd(), orderDto.getWarehouseCd(),
                 orderDto.getExpectedDt(), orderDto.getActualDt(), orderDto.getReceivePlanId(), orderDto.getInboundRmk(),
@@ -60,13 +60,13 @@ public class InboundApiController {
     }
 
     @PostMapping("/{inboundId}/status")
-    public ApiResponse<Void> changeStatus(@PathVariable Long inboundId, @RequestParam String status) {
+    public ApiResponse<Void> changeStatus(@PathVariable("inboundId") Long inboundId, @RequestParam("status") String status) {
         inboundService.changeOrderStatus(inboundId, status, "SYSTEM");
         return ApiResponse.ok();
     }
 
     @DeleteMapping("/{inboundId}")
-    public ApiResponse<Void> deleteInbound(@PathVariable Long inboundId) {
+    public ApiResponse<Void> deleteInbound(@PathVariable("inboundId") Long inboundId) {
         inboundService.deleteInboundOrder(inboundId);
         return ApiResponse.ok();
     }

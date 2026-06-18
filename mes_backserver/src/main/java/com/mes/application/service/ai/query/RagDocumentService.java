@@ -2,6 +2,7 @@ package com.mes.application.service.ai.query;
 
 import com.mes.domain.ai.dto.RagDocumentDto;
 import com.mes.domain.ai.dto.RagDocumentUploadResponse;
+import com.mes.application.service.ai.support.SensitiveDataSanitizer;
 import com.mes.infra.persistence.mybatis.mapper.ai.RagDocumentMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -35,15 +36,18 @@ public class RagDocumentService {
 
     private final RagDocumentMapper ragDocumentMapper;
     private final VectorStore vectorStore;
+    private final SensitiveDataSanitizer sensitiveDataSanitizer;
     private final Path uploadDir;
 
     public RagDocumentService(
             RagDocumentMapper ragDocumentMapper,
             VectorStore vectorStore,
+            SensitiveDataSanitizer sensitiveDataSanitizer,
             @Value("${ai.rag.upload-dir:../tmp/rag-uploads}") String uploadDir
     ) {
         this.ragDocumentMapper = ragDocumentMapper;
         this.vectorStore = vectorStore;
+        this.sensitiveDataSanitizer = sensitiveDataSanitizer;
         this.uploadDir = Path.of(uploadDir).normalize();
     }
 
@@ -119,7 +123,7 @@ public class RagDocumentService {
         ragDocumentMapper.updateStatus(document.getDocumentId(), "PROCESSING", 0, null);
 
         try {
-            String text = extractText(Path.of(document.getStoredFilePath()), document.getOriginalFileName());
+            String text = sensitiveDataSanitizer.mask(extractText(Path.of(document.getStoredFilePath()), document.getOriginalFileName()));
             List<Document> chunks = createChunks(document, text);
             if (chunks.isEmpty()) {
                 ragDocumentMapper.updateStatus(document.getDocumentId(), "FAILED", 0, "문서에서 추출된 텍스트가 없습니다.");

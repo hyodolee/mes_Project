@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class OperationTools {
 
-    private static final int MAX_ROWS = 50;
+    private static final int MAX_ROWS = 30;
 
     private final McsTransferClient mcsTransferClient;
     private final WorkOrderService workOrderService;
@@ -237,8 +237,10 @@ public class OperationTools {
         long inProgress = orders.stream().filter(o -> "진행".equals(o.getWoStatus())).count();
         dataPoints.add("작업지시 " + orders.size() + "건 조회 (대기 " + pending + ", 진행 " + inProgress + ")");
         return orders.stream().limit(MAX_ROWS)
-                .map(o -> new WorkOrderView(safe(o.getWoNo()), safe(o.getItemNm()), num(o.getWoQty()),
-                        safe(o.getWoStatus()), safe(o.getEquipmentCd())))
+                .map(o -> new WorkOrderView(safe(o.getWoNo()), safe(o.getItemCd()), safe(o.getItemNm()),
+                        num(o.getWoQty()), num(o.getGoodQty()), num(o.getDefectQty()), safe(o.getWoStatus()),
+                        o.getPriority(), safe(o.getWorkcenterCd()), safe(o.getEquipmentCd()), safe(o.getLotNo()),
+                        str(o.getPlanStartDtm()), str(o.getPlanEndDtm())))
                 .toList();
     }
 
@@ -248,7 +250,8 @@ public class OperationTools {
         dataPoints.add("생산 계획 " + plans.size() + "건 조회");
         return plans.stream().limit(MAX_ROWS)
                 .map(p -> new ProdPlanView(safe(p.getPlanNo()), safe(p.getItemNm()), num(p.getPlanQty()),
-                        num(p.getResultQty()), safe(p.getPlanStatus()), str(p.getPlanStartDt()), str(p.getPlanEndDt())))
+                        num(p.getResultQty()), safe(p.getPlanStatus()), p.getPriority(),
+                        str(p.getPlanStartDt()), str(p.getPlanEndDt()), str(p.getDeliveryDt())))
                 .toList();
     }
 
@@ -269,22 +272,30 @@ public class OperationTools {
         var items = itemService.getItems(null, null);
         dataPoints.add("품목 " + items.size() + "개 조회");
         return items.stream().limit(MAX_ROWS)
-                .map(i -> new ItemView(safe(i.getItemCd()), safe(i.getItemNm()), safe(i.getItemType()), safe(i.getUnit())))
+                .map(i -> new ItemView(safe(i.getItemCd()), safe(i.getItemNm()), safe(i.getItemSpec()),
+                        safe(i.getItemType()), safe(i.getItemGrp()), safe(i.getUnit()), safe(i.getUseYn())))
                 .toList();
     }
 
     // === 재고 ===============================================================
 
-    @Tool(description = "재고 현황을 조회한다. 품목명, 위치, 로트번호, 재고 수량, 가용 수량, 재고 상태를 포함한다. "
-            + "'OO 품목 재고 얼마야?', '재고 부족한 거 있어?' 같은 질문에 사용한다.")
+    @Tool(description = "재고 현황을 조회한다. 품목, 위치, 로트, 재고/가용 수량, 안전재고(기준치)와 기준치 이하 여부(belowSafety), 재고 상태를 포함한다. "
+            + "'OO 품목 재고 얼마야?', '재고 부족한 거 있어?', '기준치(안전재고) 이하 품목 있어?' 같은 질문에 사용한다. "
+            + "'기준치 이하'는 belowSafety=true 또는 가용수량 < 안전재고로 판단한다.")
     public List<StockView> getStocks() {
         StockSearchDto search = new StockSearchDto();
         search.setSize(100);
         var stocks = inventoryService.getStocks(search);
         dataPoints.add("재고 " + stocks.size() + "건 조회");
         return stocks.stream().limit(MAX_ROWS)
-                .map(s -> new StockView(safe(s.getItemNm()), safe(s.getLocationCd()), safe(s.getLotNo()),
-                        num(s.getStockQty()), num(s.getAvailableQty()), safe(s.getUnit()), safe(s.getStockStatus())))
+                .map(s -> {
+                    Double avail = num(s.getAvailableQty());
+                    Double safety = num(s.getSafetyStockQty());
+                    Boolean below = (avail != null && safety != null) ? avail < safety : null;
+                    return new StockView(safe(s.getItemCd()), safe(s.getItemNm()), safe(s.getLocationCd()), safe(s.getLotNo()),
+                            num(s.getStockQty()), avail, num(s.getReservedQty()), safety, below,
+                            safe(s.getUnit()), safe(s.getStockStatus()), str(s.getExpireDt()));
+                })
                 .toList();
     }
 
@@ -296,8 +307,9 @@ public class OperationTools {
         var list = equipmentService.getOperStatuses(null, null, null, null);
         dataPoints.add("설비 가동 현황 " + list.size() + "건 조회");
         return list.stream().limit(MAX_ROWS)
-                .map(o -> new EquipStatusView(safe(o.getEquipmentCd()), str(o.getOperDt()), safe(o.getOperStatus()),
-                        num(o.getOperTime()), num(o.getProdQty())))
+                .map(o -> new EquipStatusView(safe(o.getEquipmentCd()), str(o.getOperDt()), safe(o.getShift()),
+                        safe(o.getOperStatus()), num(o.getOperTime()), num(o.getProdQty()),
+                        safe(o.getItemCd()), safe(o.getWorkerId())))
                 .toList();
     }
 
@@ -308,7 +320,7 @@ public class OperationTools {
         dataPoints.add("설비 비가동 이력 " + list.size() + "건 조회");
         return list.stream().limit(MAX_ROWS)
                 .map(d -> new DowntimeView(safe(d.getEquipmentCd()), str(d.getDowntimeDt()), safe(d.getDowntimeType()),
-                        safe(d.getDowntimeReason()), num(d.getDowntimeMin())))
+                        safe(d.getDowntimeCd()), safe(d.getDowntimeReason()), num(d.getDowntimeMin()), safe(d.getActionContent())))
                 .toList();
     }
 
@@ -320,8 +332,9 @@ public class OperationTools {
         var list = inspectResultService.getInspectResults(null, null, null, null);
         dataPoints.add("품질 검사 " + list.size() + "건 조회");
         return list.stream().limit(MAX_ROWS)
-                .map(r -> new InspectView(safe(r.getInspectType()), safe(r.getItemCd()), num(r.getInspectQty()),
-                        num(r.getPassQty()), num(r.getFailQty()), safe(r.getJudgeResult()), str(r.getInspectDt())))
+                .map(r -> new InspectView(safe(r.getInspectType()), safe(r.getItemCd()), safe(r.getLotNo()),
+                        num(r.getInspectQty()), num(r.getSampleQty()), num(r.getPassQty()), num(r.getFailQty()),
+                        safe(r.getJudgeResult()), str(r.getInspectDt())))
                 .toList();
     }
 
@@ -331,8 +344,9 @@ public class OperationTools {
         var list = defectHistoryService.getDefectHistories(null, null, null, null);
         dataPoints.add("불량 이력 " + list.size() + "건 조회");
         return list.stream().limit(MAX_ROWS)
-                .map(d -> new DefectView(str(d.getDefectDt()), safe(d.getItemCd()), safe(d.getDefectNm()),
-                        num(d.getDefectQty()), safe(d.getDefectCause()), safe(d.getEquipmentCd())))
+                .map(d -> new DefectView(str(d.getDefectDt()), safe(d.getItemCd()), safe(d.getDefectType()), safe(d.getDefectNm()),
+                        num(d.getDefectQty()), safe(d.getDefectCause()), safe(d.getDefectAction()),
+                        safe(d.getDisposition()), safe(d.getEquipmentCd())))
                 .toList();
     }
 
@@ -410,10 +424,18 @@ public class OperationTools {
     @lombok.Getter @lombok.AllArgsConstructor
     public static class WorkOrderView {
         private String woNo;
+        private String itemCd;
         private String itemNm;
         private Double woQty;
+        private Double goodQty;
+        private Double defectQty;
         private String status;
+        private Integer priority;
+        private String workcenterCd;
         private String equipmentCd;
+        private String lotNo;
+        private String planStart;
+        private String planEnd;
     }
 
     @lombok.Getter @lombok.AllArgsConstructor
@@ -423,8 +445,10 @@ public class OperationTools {
         private Double planQty;
         private Double resultQty;
         private String status;
+        private Integer priority;
         private String startDt;
         private String endDt;
+        private String deliveryDt;
     }
 
     @lombok.Getter @lombok.AllArgsConstructor
@@ -439,28 +463,39 @@ public class OperationTools {
     public static class ItemView {
         private String itemCd;
         private String itemNm;
+        private String itemSpec;
         private String itemType;
+        private String itemGrp;
         private String unit;
+        private String useYn;
     }
 
     @lombok.Getter @lombok.AllArgsConstructor
     public static class StockView {
+        private String itemCd;
         private String itemNm;
         private String locationCd;
         private String lotNo;
         private Double stockQty;
         private Double availableQty;
+        private Double reservedQty;
+        private Double safetyStockQty; // 안전재고(기준치)
+        private Boolean belowSafety;   // 가용재고 < 안전재고 이면 true (기준치 이하)
         private String unit;
         private String stockStatus;
+        private String expireDt;
     }
 
     @lombok.Getter @lombok.AllArgsConstructor
     public static class EquipStatusView {
         private String equipmentCd;
         private String operDt;
+        private String shift;
         private String operStatus;
         private Double operTime;
         private Double prodQty;
+        private String itemCd;
+        private String workerId;
     }
 
     @lombok.Getter @lombok.AllArgsConstructor
@@ -468,15 +503,19 @@ public class OperationTools {
         private String equipmentCd;
         private String downtimeDt;
         private String downtimeType;
+        private String downtimeCd;
         private String downtimeReason;
         private Double downtimeMin;
+        private String actionContent;
     }
 
     @lombok.Getter @lombok.AllArgsConstructor
     public static class InspectView {
         private String inspectType;
         private String itemCd;
+        private String lotNo;
         private Double inspectQty;
+        private Double sampleQty;
         private Double passQty;
         private Double failQty;
         private String judgeResult;
@@ -487,9 +526,12 @@ public class OperationTools {
     public static class DefectView {
         private String defectDt;
         private String itemCd;
+        private String defectType;
         private String defectNm;
         private Double defectQty;
         private String defectCause;
+        private String defectAction;
+        private String disposition;
         private String equipmentCd;
     }
 

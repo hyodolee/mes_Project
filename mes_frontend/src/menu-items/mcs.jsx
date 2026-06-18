@@ -1,4 +1,4 @@
-import { AlertOutlined, AppstoreOutlined, DashboardOutlined, DatabaseOutlined, NodeIndexOutlined, SwapOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { AlertOutlined, AppstoreOutlined, DashboardOutlined, DatabaseOutlined, NodeIndexOutlined, SwapOutlined, ThunderboltOutlined, UnorderedListOutlined } from '@ant-design/icons';
 
 const icons = {
   AlertOutlined,
@@ -7,6 +7,7 @@ const icons = {
   DatabaseOutlined,
   NodeIndexOutlined,
   SwapOutlined,
+  ThunderboltOutlined,
   UnorderedListOutlined
 };
 
@@ -107,6 +108,14 @@ const mcs = {
           type: 'item',
           url: '/mcs/plc-events',
           icon: icons.AlertOutlined,
+          breadcrumbs: false
+        },
+        {
+          id: 'mcs-plc-simulator',
+          title: 'PLC 시뮬레이터',
+          type: 'item',
+          url: '/mcs/plc-simulator',
+          icon: icons.ThunderboltOutlined,
           breadcrumbs: false
         }
       ]

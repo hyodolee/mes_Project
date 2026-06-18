@@ -100,6 +100,14 @@ const mes = {
           url: '/mes/master-data',
           icon: icons.AppstoreOutlined,
           breadcrumbs: false
+        },
+        {
+          id: 'mes-bom',
+          title: 'BOM (자재명세서)',
+          type: 'item',
+          url: '/mes/bom',
+          icon: icons.BuildOutlined,
+          breadcrumbs: false
         }
       ]
     }

@@ -28,7 +28,7 @@ public class LocationApiController {
     }
 
     @GetMapping("/{locationId}")
-    public ApiResponse<LocationDto> getLocation(@PathVariable Long locationId) {
+    public ApiResponse<LocationDto> getLocation(@PathVariable("locationId") Long locationId) {
         return ApiResponse.ok(locationService.getLocation(locationId));
     }
 
@@ -43,7 +43,7 @@ public class LocationApiController {
     }
 
     @PutMapping("/{locationId}")
-    public ApiResponse<Void> updateLocation(@PathVariable Long locationId, @RequestBody LocationDto locationDto) {
+    public ApiResponse<Void> updateLocation(@PathVariable("locationId") Long locationId, @RequestBody LocationDto locationDto) {
         LocationDto dtoWithId = new LocationDto(
                 locationId, null, null, locationDto.getLocationNm(),
                 locationDto.getMaxCapacity(), null, locationDto.getLocationStatus(), locationDto.getUseYn(),
@@ -54,7 +54,7 @@ public class LocationApiController {
     }
 
     @DeleteMapping("/{locationId}")
-    public ApiResponse<Void> deleteLocation(@PathVariable Long locationId) {
+    public ApiResponse<Void> deleteLocation(@PathVariable("locationId") Long locationId) {
         locationService.deleteLocation(locationId);
         return ApiResponse.ok();
     }

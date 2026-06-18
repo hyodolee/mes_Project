@@ -5,13 +5,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mes.application.service.ai.support.AiClientGateway;
 import com.mes.application.service.ai.support.AiJsonSupport;
 import com.mes.application.service.ai.support.AiTextSupport;
+import com.mes.application.service.ai.support.SensitiveDataSanitizer;
+import com.mes.application.service.equipment.EquipmentService;
+import com.mes.application.service.inventory.InventoryService;
 import com.mes.application.service.planning.McsTransferClient;
 import com.mes.application.service.planning.WorkOrderService;
+import com.mes.application.service.production.DefectHistoryService;
+import com.mes.application.service.quality.InspectResultService;
+import com.mes.domain.ai.dto.AreaAssessmentDto;
 import com.mes.domain.ai.dto.CriticalEventDto;
 import com.mes.domain.ai.dto.GlobalOperationAiAnalysisResponse;
 import com.mes.domain.ai.dto.GlobalOperationEvidenceDto;
 import com.mes.domain.ai.dto.McsTransferSummaryDto;
+import com.mes.domain.ai.dto.OperationDomainSummaryDto;
 import com.mes.domain.ai.dto.WorkOrderSummaryDto;
+import com.mes.domain.inventory.stock.dto.StockDto;
+import com.mes.domain.inventory.stock.dto.StockSearchDto;
 import com.mes.domain.planning.workorder.dto.WorkOrderDto;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
@@ -32,17 +41,32 @@ public class OperationAiAnalysisService {
     private final McsTransferClient mcsTransferClient;
     private final AiClientGateway aiClientGateway;
     private final ObjectMapper objectMapper;
+    private final InventoryService inventoryService;
+    private final InspectResultService inspectResultService;
+    private final DefectHistoryService defectHistoryService;
+    private final EquipmentService equipmentService;
+    private final SensitiveDataSanitizer sensitiveDataSanitizer;
 
     public OperationAiAnalysisService(
             WorkOrderService workOrderService,
             McsTransferClient mcsTransferClient,
             AiClientGateway aiClientGateway,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            InventoryService inventoryService,
+            InspectResultService inspectResultService,
+            DefectHistoryService defectHistoryService,
+            EquipmentService equipmentService,
+            SensitiveDataSanitizer sensitiveDataSanitizer
     ) {
         this.workOrderService = workOrderService;
         this.mcsTransferClient = mcsTransferClient;
         this.aiClientGateway = aiClientGateway;
         this.objectMapper = objectMapper;
+        this.inventoryService = inventoryService;
+        this.inspectResultService = inspectResultService;
+        this.defectHistoryService = defectHistoryService;
+        this.equipmentService = equipmentService;
+        this.sensitiveDataSanitizer = sensitiveDataSanitizer;
     }
 
     private static final long CACHE_TTL_MILLIS = 30_000;
@@ -86,12 +110,12 @@ public class OperationAiAnalysisService {
                             throw new java.util.concurrent.CompletionException(e);
                         }
                     })
-                    .orTimeout(8, TimeUnit.SECONDS)
+                    .orTimeout(30, TimeUnit.SECONDS)
                     .join();
             return parseAiResponse(content, evidence);
         } catch (java.util.concurrent.CompletionException e) {
             String label = e.getCause() instanceof TimeoutException
-                    ? "timeout(8s)"
+                    ? "timeout(30s)"
                     : "fallback: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
             return ruleBasedAnalysis(evidence, false, label);
         } catch (Exception e) {
@@ -162,7 +186,39 @@ public class OperationAiAnalysisService {
                         e.getEventType(), e.getLocationCd(), eventMessage(e), e.getEventDtm()
                 )).toList();
 
-        return new GlobalOperationEvidenceDto(woSummary, transferSummary, criticalEvents);
+        return new GlobalOperationEvidenceDto(woSummary, transferSummary, criticalEvents, collectDomains());
+    }
+
+    /**
+     * 품질·재고·설비 요약을 수집한다. 한 영역 조회가 실패해도 나머지는 채운다.
+     */
+    private OperationDomainSummaryDto collectDomains() {
+        OperationDomainSummaryDto d = new OperationDomainSummaryDto();
+        try {
+            StockSearchDto search = new StockSearchDto();
+            search.setSize(1000);
+            List<StockDto> stocks = inventoryService.getStocks(search);
+            d.setStockLow(stocks.stream().filter(s -> "부족".equals(s.getStockStatus())).count());
+            d.setStockRestricted(stocks.stream().filter(s -> "사용 제한".equals(s.getStockStatus())).count());
+        } catch (Exception ignored) { /* 재고 조회 실패 시 0 유지 */ }
+        try {
+            var inspects = inspectResultService.getInspectResults(null, null, null, null);
+            d.setInspectTotal(inspects.size());
+            d.setInspectFailed(inspects.stream()
+                    .filter(i -> i.getFailQty() != null && i.getFailQty().signum() > 0).count());
+        } catch (Exception ignored) { /* 검사 조회 실패 시 0 유지 */ }
+        try {
+            d.setDefectCount(defectHistoryService.getDefectHistories(null, null, null, null).size());
+        } catch (Exception ignored) { /* 불량 조회 실패 시 0 유지 */ }
+        try {
+            var statuses = equipmentService.getOperStatuses(null, null, null, null);
+            d.setEquipRunning(statuses.stream().filter(s -> "가동".equals(s.getOperStatus())).count());
+            d.setEquipDown(statuses.stream().filter(s -> "비가동".equals(s.getOperStatus())).count());
+        } catch (Exception ignored) { /* 설비 가동 조회 실패 시 0 유지 */ }
+        try {
+            d.setEquipDowntime(equipmentService.getDowntimes(null, null, null, null).size());
+        } catch (Exception ignored) { /* 비가동 이력 조회 실패 시 0 유지 */ }
+        return d;
     }
 
     /**
@@ -185,15 +241,35 @@ public class OperationAiAnalysisService {
         JsonNode root = objectMapper.readTree(json);
         return new GlobalOperationAiAnalysisResponse(
                 normalizeSeverity(AiJsonSupport.nodeToText(root.get("severity")), evidence),
-                AiTextSupport.compactText(AiJsonSupport.nodeToText(root.get("summary")), 160),
-                AiTextSupport.compactList(AiJsonSupport.nodeToList(root.get("keyIssues")), 6, 40),
-                AiTextSupport.compactText(AiJsonSupport.nodeToText(root.get("inference")), 180),
-                AiTextSupport.compactText(AiJsonSupport.nodeToText(root.get("productionImpact")), 120),
-                AiTextSupport.compactList(AiJsonSupport.nodeToList(root.get("recommendedActions")), 5, 60),
+                AiTextSupport.compactText(AiJsonSupport.nodeToText(root.get("summary")), 400),
+                AiTextSupport.compactList(AiJsonSupport.nodeToList(root.get("keyIssues")), 8, 40),
+                AiTextSupport.compactText(AiJsonSupport.nodeToText(root.get("inference")), 260),
+                AiTextSupport.compactText(AiJsonSupport.nodeToText(root.get("productionImpact")), 160),
+                AiTextSupport.compactList(AiJsonSupport.nodeToList(root.get("recommendedActions")), 6, 60),
+                parseAreaAssessments(root.get("areaAssessments")),
                 evidence,
                 true,
                 aiClientGateway.getModel()
         );
+    }
+
+    /** AI가 반환한 영역별 진단 배열을 파싱한다. */
+    private List<AreaAssessmentDto> parseAreaAssessments(JsonNode arr) {
+        List<AreaAssessmentDto> list = new ArrayList<>();
+        if (arr != null && arr.isArray()) {
+            for (JsonNode n : arr) {
+                String area = AiJsonSupport.nodeToText(n.get("area"));
+                if (area == null || area.isBlank()) {
+                    continue;
+                }
+                list.add(new AreaAssessmentDto(
+                        area,
+                        AiJsonSupport.nodeToText(n.get("status")),
+                        AiTextSupport.compactText(AiJsonSupport.nodeToText(n.get("comment")), 60)
+                ));
+            }
+        }
+        return list;
     }
 
     /**
@@ -202,10 +278,12 @@ public class OperationAiAnalysisService {
     private GlobalOperationAiAnalysisResponse ruleBasedAnalysis(GlobalOperationEvidenceDto evidence, boolean aiGenerated, String modelLabel) {
         WorkOrderSummaryDto wo = evidence.getWorkOrders();
         McsTransferSummaryDto tr = evidence.getTransfers();
+        OperationDomainSummaryDto dm = evidence.getDomains() != null ? evidence.getDomains() : new OperationDomainSummaryDto();
         int criticalCount = evidence.getCriticalEvents().size();
+        long domainIssues = dm.getInspectFailed() + dm.getDefectCount() + dm.getStockLow() + dm.getStockRestricted() + dm.getEquipDown();
 
         String severity = "NORMAL";
-        if (tr.getFailed() > 0 || criticalCount > 0 || wo.getDelayed() > 0) {
+        if (tr.getFailed() > 0 || criticalCount > 0 || wo.getDelayed() > 0 || domainIssues > 0) {
             severity = "WARNING";
         }
         if (tr.getFailed() > 3 || criticalCount > 3) {
@@ -219,6 +297,15 @@ public class OperationAiAnalysisService {
         }
         if (criticalCount > 0) {
             keyIssues.add("최근 1시간 중요 이벤트 " + criticalCount + "건");
+        }
+        if (dm.getInspectFailed() > 0) {
+            keyIssues.add("검사 부적합 " + dm.getInspectFailed() + "건");
+        }
+        if (dm.getStockLow() + dm.getStockRestricted() > 0) {
+            keyIssues.add("재고 주의 " + (dm.getStockLow() + dm.getStockRestricted()) + "품목");
+        }
+        if (dm.getEquipDown() > 0) {
+            keyIssues.add("설비 비가동 " + dm.getEquipDown() + "대");
         }
         if (wo.getDelayed() > 0) {
             keyIssues.add("시작 지연 우려 작업 " + wo.getDelayed() + "건");
@@ -279,14 +366,48 @@ public class OperationAiAnalysisService {
         return new GlobalOperationAiAnalysisResponse(
                 severity,
                 summary,
-                keyIssues.stream().limit(6).toList(),
+                keyIssues.stream().limit(8).toList(),
                 inference,
                 impact,
-                actions.stream().limit(5).toList(),
+                actions.stream().limit(6).toList(),
+                buildRuleAreas(wo, tr, dm),
                 evidence,
                 aiGenerated,
                 modelLabel
         );
+    }
+
+    /** AI 미사용 시 영역별 진단을 규칙으로 생성한다. */
+    private List<AreaAssessmentDto> buildRuleAreas(WorkOrderSummaryDto wo, McsTransferSummaryDto tr, OperationDomainSummaryDto dm) {
+        List<AreaAssessmentDto> areas = new ArrayList<>();
+        areas.add(new AreaAssessmentDto("생산",
+                wo.getDelayed() > 0 ? "WARNING" : "NORMAL",
+                wo.getDelayed() > 0
+                        ? "진행 " + wo.getInProgress() + "건, 시작 지연 우려 " + wo.getDelayed() + "건으로 일정 점검 필요"
+                        : "진행 " + wo.getInProgress() + "건 · 대기 " + wo.getPending() + "건, 계획대로 진행 중"));
+        areas.add(new AreaAssessmentDto("이송",
+                tr.getFailed() > 0 ? "WARNING" : "NORMAL",
+                tr.getFailed() > 0
+                        ? "이송 " + tr.getFailed() + "건 실패 — 목적지·PLC 송신부 점검 필요"
+                        : "진행 " + tr.getActive() + "건 정상 흐름, 실패 없음"));
+        long q = dm.getInspectFailed() + dm.getDefectCount();
+        areas.add(new AreaAssessmentDto("품질",
+                q > 0 ? "WARNING" : "NORMAL",
+                q > 0
+                        ? "검사 부적합 " + dm.getInspectFailed() + "건 · 불량 " + dm.getDefectCount() + "건, 재작업 부담 발생"
+                        : "검사 이상 없음, 불량 미발생"));
+        long stock = dm.getStockLow() + dm.getStockRestricted();
+        areas.add(new AreaAssessmentDto("재고",
+                stock > 0 ? "WARNING" : "NORMAL",
+                stock > 0
+                        ? "부족 " + dm.getStockLow() + " · 사용제한 " + dm.getStockRestricted() + "품목, 공급 확인 필요"
+                        : "재고 정상 범위, 부족 품목 없음"));
+        areas.add(new AreaAssessmentDto("설비",
+                dm.getEquipDown() > 0 ? "WARNING" : "NORMAL",
+                dm.getEquipDown() > 0
+                        ? "비가동 " + dm.getEquipDown() + "대 — 가동 복구 우선"
+                        : "가동 " + dm.getEquipRunning() + "대 정상, 비가동 이력 " + dm.getEquipDowntime() + "건"));
+        return areas;
     }
 
     /**
@@ -373,15 +494,28 @@ public class OperationAiAnalysisService {
         return """
                 당신은 공장 운영 AI 분석관입니다. 제공된 통계 데이터만 근거로 한국어로 분석하세요.
                 반드시 JSON 객체만 반환하세요. 다른 텍스트 없이 JSON만 출력하세요.
+
+                분석 대상 영역(5개)을 모두 함께 살펴 종합 판단하세요:
+                - 생산(workOrders): 진행/대기/지연/완료
+                - 이송(transfers): 진행/실패/완료, criticalEvents(PLC 중요 이벤트)
+                - 품질(domains): inspectTotal/inspectFailed(검사 부적합), defectCount(불량)
+                - 재고(domains): stockLow(부족), stockRestricted(사용 제한)
+                - 설비(domains): equipRunning(가동)/equipDown(비가동)/equipDowntime(비가동 이력)
+
                 필드:
-                - severity: NORMAL, WARNING, CRITICAL 중 하나
-                - summary: 현재 상황을 2~3문장, 120자 이내로 (작업 진행/대기/지연/완료, 이송 진행/실패/완료 등 핵심 수치 포함)
-                - keyIssues: 핵심 이슈 4~6개, 각 30자 이내 (이송 실패, 중요 이벤트, 지연 작업, 진행/대기/완료 현황 등 구체적 수치로)
-                - inference: 원인·병목 추정 2문장, 140자 이내
-                - productionImpact: 생산 영향 1~2문장, 90자 이내
-                - recommendedActions: 즉시 조치 4~5개, 각 40자 이내 (구체적인 확인 대상과 행동으로)
-                숫자 데이터가 모두 0이면 severity는 NORMAL, summary는 "현재 생산 이상 없음, 진행 작업 정상"으로 작성하세요.
-                제공된 통계에 있는 수치를 최대한 활용해 운영 담당자가 바로 판단할 수 있게 구체적으로 작성하세요.
+                - severity: NORMAL, WARNING, CRITICAL 중 하나 (이송 실패·검사 부적합·재고 부족·설비 비가동이 있으면 WARNING 이상)
+                - summary: 현재 상황을 3~4문장으로 충분히 풍부하게. 5개 영역을 두루 언급하고, 핵심 수치와 영역 간 연결을 포함하세요.
+                - areaAssessments: 5개 영역 각각의 한 줄 진단 배열. 반드시 5개(생산/이송/품질/재고/설비) 모두 포함.
+                  각 항목 = {"area":"생산|이송|품질|재고|설비", "status":"NORMAL|WARNING|CRITICAL", "comment":"해당 영역 진단 한 줄, 50자 이내"}
+                  정상 영역도 "정상 가동 중" 식으로 반드시 코멘트를 채우세요. 단순 숫자 나열이 아니라 의미를 짚으세요.
+                - keyIssues: 핵심 이슈 5~8개, 각 30자 이내 (영역을 가로질러: 이송 실패, 검사 부적합, 재고 부족, 설비 비가동 등 구체적 수치로)
+                - inference: 원인·병목 추정 2~3문장, 200자 이내. 여러 영역이 연결된 문제면 그 연결을 짚으세요(예: 이송 실패 + 해당 자재 재고 부족).
+                - productionImpact: 생산 영향 2문장, 140자 이내
+                - recommendedActions: 즉시 조치 5~6개, 각 40자 이내 (구체적인 확인 대상과 행동으로, 우선순위대로)
+                모든 수치가 0이면 severity는 NORMAL, 각 영역 코멘트는 정상 내용으로 채우세요.
+                영문 필드명(stockLow, stockRestricted, inspectFailed, equipDown 등)을 답변에 그대로 쓰지 말고
+                반드시 한국어로 풀어 쓰세요(예: stockLow -> "부족 재고", inspectFailed -> "검사 부적합").
+                제공된 통계 수치를 최대한 활용해 운영 담당자가 바로 판단할 수 있게 구체적이고 풍부하게 작성하세요.
                 """;
     }
 
@@ -389,8 +523,7 @@ public class OperationAiAnalysisService {
      * 운영 스냅샷 근거 데이터를 JSON으로 직렬화해 사용자 질문 영역에 넣는다.
      */
     private String userPrompt(GlobalOperationEvidenceDto evidence) throws Exception {
-        return "현재 공장 운영 스냅샷 데이터:\n" + objectMapper.writeValueAsString(evidence);
+        return "현재 공장 운영 스냅샷 데이터:\n" + sensitiveDataSanitizer.mask(objectMapper.writeValueAsString(evidence));
     }
 
 }
-

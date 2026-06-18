@@ -2,10 +2,11 @@ package com.mes.interfaces.api.auth;
 
 import com.mes.domain.auth.dto.AuthUserResponse;
 import com.mes.domain.auth.dto.LoginRequest;
+import com.mes.domain.auth.dto.UserAccount;
 import com.mes.global.response.ApiResponse;
 import com.mes.global.security.JwtTokenProvider;
+import com.mes.infra.persistence.mybatis.mapper.auth.UserMapper;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,16 +26,16 @@ public class AuthApiController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final String displayName;
+    private final UserMapper userMapper;
 
     public AuthApiController(
             AuthenticationManager authenticationManager,
             JwtTokenProvider jwtTokenProvider,
-            @Value("${app.security.display-name}") String displayName
+            UserMapper userMapper
     ) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.displayName = displayName;
+        this.userMapper = userMapper;
     }
 
     @PostMapping("/login")
@@ -65,8 +66,11 @@ public class AuthApiController {
         List<String> roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
-        String accessToken = includeToken ? jwtTokenProvider.generateToken(authentication.getName(), roles) : null;
+        String username = authentication.getName();
+        UserAccount account = userMapper.findByUserId(username);
+        String displayName = account != null ? account.getDisplayName() : username;
+        String accessToken = includeToken ? jwtTokenProvider.generateToken(username, roles) : null;
         long expiresIn = includeToken ? jwtTokenProvider.expirationSeconds() : 0;
-        return new AuthUserResponse(authentication.getName(), displayName, roles, true, accessToken, "Bearer", expiresIn);
+        return new AuthUserResponse(username, displayName, roles, true, accessToken, "Bearer", expiresIn);
     }
 }

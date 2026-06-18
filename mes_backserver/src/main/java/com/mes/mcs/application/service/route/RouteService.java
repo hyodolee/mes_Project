@@ -50,10 +50,19 @@ public class RouteService {
         String optimizeRule = normalizeOptimizeRule(request.getOptimizeRule());
         validateOptimizeRequest(request);
 
-        RouteNodeDto startNode = routeMapper.selectRouteNodeByLocation(request.getPlantCd(), request.getFromLocationId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT, "출발 Location에 연결된 경로 노드가 없습니다."));
-        RouteNodeDto endNode = routeMapper.selectRouteNodeByLocation(request.getPlantCd(), request.getToLocationId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INPUT, "도착 Location에 연결된 경로 노드가 없습니다."));
+        // 경로 네트워크에 노드가 없는 위치는 예외(500) 대신 안내 결과로 돌려준다.
+        RouteNodeDto startNode = routeMapper.selectRouteNodeByLocation(request.getPlantCd(), request.getFromLocationId()).orElse(null);
+        if (startNode == null) {
+            return new RouteOptimizeResultDto(false,
+                    "출발 위치가 경로 네트워크에 등록되어 있지 않습니다. 경로 노드가 설정된 위치를 선택하세요.",
+                    optimizeRule, 0.0, 0, 0.0, List.of());
+        }
+        RouteNodeDto endNode = routeMapper.selectRouteNodeByLocation(request.getPlantCd(), request.getToLocationId()).orElse(null);
+        if (endNode == null) {
+            return new RouteOptimizeResultDto(false,
+                    "도착 위치가 경로 네트워크에 등록되어 있지 않습니다. 경로 노드가 설정된 위치를 선택하세요.",
+                    optimizeRule, 0.0, 0, 0.0, List.of());
+        }
 
         List<RouteEdgeDto> edges = routeMapper.selectUsableRouteEdges(request.getPlantCd()).stream()
                 .filter(edge -> !EXCLUDED_STATUSES.contains(edge.getEdgeStatus()))

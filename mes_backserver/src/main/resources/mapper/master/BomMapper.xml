@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mes.infra.persistence.mybatis.mapper.master.BomMapper">
+
+    <sql id="searchWhere">
+        WHERE 1=1
+        <if test="parentItemCd != null and parentItemCd != ''">
+            AND b.PARENT_ITEM_CD = #{parentItemCd}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (p.ITEM_NM LIKE CONCAT('%', #{keyword}, '%')
+                 OR c.ITEM_NM LIKE CONCAT('%', #{keyword}, '%')
+                 OR b.PARENT_ITEM_CD LIKE CONCAT('%', #{keyword}, '%')
+                 OR b.CHILD_ITEM_CD LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="useYn != null and useYn != ''">
+            AND b.USE_YN = #{useYn}
+        </if>
+    </sql>
+
+    <select id="selectBomList" resultType="com.mes.domain.master.bom.dto.BomDto">
+        SELECT b.BOM_ID         as bomId,
+               b.PLANT_CD       as plantCd,
+               b.PARENT_ITEM_CD as parentItemCd,
+               p.ITEM_NM        as parentItemNm,
+               b.CHILD_ITEM_CD  as childItemCd,
+               c.ITEM_NM        as childItemNm,
+               b.BOM_LEVEL      as bomLevel,
+               b.BOM_QTY        as bomQty,
+               b.LOSS_RATE      as lossRate,
+               DATE_FORMAT(b.START_DT, '%Y-%m-%d') as startDt,
+               DATE_FORMAT(b.END_DT, '%Y-%m-%d')   as endDt,
+               b.PROCESS_CD     as processCd,
+               b.BOM_RMK        as bomRmk,
+               b.USE_YN         as useYn
+        FROM MST_BOM b
+        LEFT JOIN MST_ITEM p ON b.PARENT_ITEM_CD = p.ITEM_CD
+        LEFT JOIN MST_ITEM c ON b.CHILD_ITEM_CD = c.ITEM_CD
+        <include refid="searchWhere"/>
+        ORDER BY b.PARENT_ITEM_CD ASC, b.BOM_LEVEL ASC, b.CHILD_ITEM_CD ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countBoms" resultType="int">
+        SELECT COUNT(*)
+        FROM MST_BOM b
+        LEFT JOIN MST_ITEM p ON b.PARENT_ITEM_CD = p.ITEM_CD
+        LEFT JOIN MST_ITEM c ON b.CHILD_ITEM_CD = c.ITEM_CD
+        <include refid="searchWhere"/>
+    </select>
+
+    <select id="getBom" resultType="com.mes.domain.master.bom.dto.BomDto">
+        SELECT b.BOM_ID         as bomId,
+               b.PLANT_CD       as plantCd,
+               b.PARENT_ITEM_CD as parentItemCd,
+               p.ITEM_NM        as parentItemNm,
+               b.CHILD_ITEM_CD  as childItemCd,
+               c.ITEM_NM        as childItemNm,
+               b.BOM_LEVEL      as bomLevel,
+               b.BOM_QTY        as bomQty,
+               b.LOSS_RATE      as lossRate,
+               DATE_FORMAT(b.START_DT, '%Y-%m-%d') as startDt,
+               DATE_FORMAT(b.END_DT, '%Y-%m-%d')   as endDt,
+               b.PROCESS_CD     as processCd,
+               b.BOM_RMK        as bomRmk,
+               b.USE_YN         as useYn
+        FROM MST_BOM b
+        LEFT JOIN MST_ITEM p ON b.PARENT_ITEM_CD = p.ITEM_CD
+        LEFT JOIN MST_ITEM c ON b.CHILD_ITEM_CD = c.ITEM_CD
+        WHERE b.BOM_ID = #{bomId}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="bomId">
+        INSERT INTO MST_BOM (
+            PLANT_CD, PARENT_ITEM_CD, CHILD_ITEM_CD, BOM_LEVEL, BOM_QTY, LOSS_RATE,
+            START_DT, END_DT, PROCESS_CD, BOM_RMK, USE_YN, REG_USER_ID
+        ) VALUES (
+            #{plantCd}, #{parentItemCd}, #{childItemCd},
+            COALESCE(#{bomLevel}, 1), #{bomQty}, COALESCE(#{lossRate}, 0),
+            #{startDt}, #{endDt}, #{processCd}, #{bomRmk},
+            COALESCE(#{useYn}, 'Y'), 'SYSTEM'
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE MST_BOM
+        SET PARENT_ITEM_CD = #{parentItemCd},
+            CHILD_ITEM_CD  = #{childItemCd},
+            BOM_LEVEL      = COALESCE(#{bomLevel}, 1),
+            BOM_QTY        = #{bomQty},
+            LOSS_RATE      = COALESCE(#{lossRate}, 0),
+            START_DT       = #{startDt},
+            END_DT         = #{endDt},
+            PROCESS_CD     = #{processCd},
+            BOM_RMK        = #{bomRmk},
+            USE_YN         = COALESCE(#{useYn}, 'Y'),
+            UPD_USER_ID    = 'SYSTEM'
+        WHERE BOM_ID = #{bomId}
+    </update>
+
+    <update id="deleteBom">
+        UPDATE MST_BOM
+        SET USE_YN = 'N', UPD_USER_ID = 'SYSTEM'
+        WHERE BOM_ID = #{bomId}
+    </update>
+
+</mapper>

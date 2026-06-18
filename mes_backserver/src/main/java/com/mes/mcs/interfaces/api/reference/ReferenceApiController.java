@@ -38,36 +38,36 @@ public class ReferenceApiController {
 
     @GetMapping("/warehouses")
     public ApiResponse<List<WarehouseDto>> getWarehouses(
-            @RequestParam(required = false) String plantCd,
-            @RequestParam(required = false) String warehouseCd,
-            @RequestParam(defaultValue = "Y") String useYn
+            @RequestParam(name = "plantCd", required = false) String plantCd,
+            @RequestParam(name = "warehouseCd", required = false) String warehouseCd,
+            @RequestParam(name = "useYn", defaultValue = "Y") String useYn
     ) {
         return ApiResponse.ok(mesWarehouseMapper.selectWarehouseList(plantCd, warehouseCd, useYn));
     }
 
     @GetMapping("/vendors")
     public ApiResponse<List<VendorDto>> getVendors(
-            @RequestParam(required = false) String vendorCd,
-            @RequestParam(required = false) String vendorNm,
-            @RequestParam(defaultValue = "Y") String useYn
+            @RequestParam(name = "vendorCd", required = false) String vendorCd,
+            @RequestParam(name = "vendorNm", required = false) String vendorNm,
+            @RequestParam(name = "useYn", defaultValue = "Y") String useYn
     ) {
         return ApiResponse.ok(mesVendorMapper.selectVendorList(vendorCd, vendorNm, useYn));
     }
 
     @GetMapping("/items")
     public ApiResponse<List<ItemDto>> getItems(
-            @RequestParam(required = false) String plantCd,
-            @RequestParam(required = false) String itemCd,
-            @RequestParam(required = false) String itemNm,
-            @RequestParam(required = false) String itemType
+            @RequestParam(name = "plantCd", required = false) String plantCd,
+            @RequestParam(name = "itemCd", required = false) String itemCd,
+            @RequestParam(name = "itemNm", required = false) String itemNm,
+            @RequestParam(name = "itemType", required = false) String itemType
     ) {
         return ApiResponse.ok(mesItemMapper.selectItemList(plantCd, itemCd, itemNm, itemType));
     }
 
     @GetMapping("/codes/{grpCd}")
     public ApiResponse<List<ComCodeDto>> getCodes(
-            @PathVariable String grpCd,
-            @RequestParam(defaultValue = "Y") String useYn
+            @PathVariable("grpCd") String grpCd,
+            @RequestParam(name = "useYn", defaultValue = "Y") String useYn
     ) {
         return ApiResponse.ok(mesComCodeMapper.selectComCodeList(grpCd, useYn));
     }

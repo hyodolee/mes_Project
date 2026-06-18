@@ -38,7 +38,10 @@ public class RouteApiController {
     }
 
     @PatchMapping("/route-edges/{routeEdgeId}/status")
-    public ApiResponse<Void> changeEdgeStatus(@PathVariable Long routeEdgeId, @RequestParam String status) {
+    public ApiResponse<Void> changeEdgeStatus(
+            @PathVariable("routeEdgeId") Long routeEdgeId,
+            @RequestParam("status") String status
+    ) {
         routeService.changeEdgeStatus(routeEdgeId, status, "SYSTEM");
         return ApiResponse.ok();
     }
@@ -49,22 +52,22 @@ public class RouteApiController {
     }
 
     @GetMapping("/transfers/{transferId}/routes")
-    public ApiResponse<TransferRouteDto> getTransferRoute(@PathVariable Long transferId) {
+    public ApiResponse<TransferRouteDto> getTransferRoute(@PathVariable("transferId") Long transferId) {
         return ApiResponse.ok(routeService.getTransferRoute(transferId).orElse(null));
     }
 
     @PostMapping("/transfers/{transferId}/routes")
     public ApiResponse<TransferRouteDto> createTransferRoute(
-            @PathVariable Long transferId,
-            @RequestParam(defaultValue = "SHORTEST_TIME") String optimizeRule
+            @PathVariable("transferId") Long transferId,
+            @RequestParam(name = "optimizeRule", defaultValue = "SHORTEST_TIME") String optimizeRule
     ) {
         return ApiResponse.ok(routeService.createRouteForTransfer(transferId, optimizeRule, "SYSTEM"));
     }
 
     @PostMapping("/transfers/{transferId}/routes/replan")
     public ApiResponse<TransferRouteDto> replanTransferRoute(
-            @PathVariable Long transferId,
-            @RequestParam(defaultValue = "AVOID_CONGESTION") String optimizeRule
+            @PathVariable("transferId") Long transferId,
+            @RequestParam(name = "optimizeRule", defaultValue = "AVOID_CONGESTION") String optimizeRule
     ) {
         return ApiResponse.ok(routeService.createRouteForTransfer(transferId, optimizeRule, "SYSTEM"));
     }
