@@ -25,6 +25,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-chroma'
     implementation 'org.flywaydb:flyway-core'
@@ -47,4 +48,5 @@ tasks.named('test') {
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += '-parameters'
+    options.encoding = 'UTF-8'
 }

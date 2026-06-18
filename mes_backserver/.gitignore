@@ -5,6 +5,10 @@ out/
 *.iml
 .DS_Store
 
+# 비밀값이 든 환경파일은 커밋하지 않음 (.env.example 템플릿만 커밋)
+.env
+!.env.example
+
 # Created by https://www.toptal.com/developers/gitignore/api/java,gradle,git
 # Edit at https://www.toptal.com/developers/gitignore?templates=java,gradle,git
 
