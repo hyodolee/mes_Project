@@ -33,6 +33,8 @@ jobs:
             MES_DB_PASSWORD=${{ secrets.MES_DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             OPENAI_MODEL=gpt-5-mini
+            CHROMA_HOST=http://chroma
+            CHROMA_PORT=8000
             SECURITY_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
             PLC_SIM_ENABLED=false
             NOTIFICATION_EMAIL_ENABLED=true
