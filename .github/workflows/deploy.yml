@@ -43,5 +43,5 @@ jobs:
             ENVEOF
 
             # 컨테이너 재빌드 & 재시작
-            sudo docker compose down
-            sudo docker compose up --build -d
+            sudo docker-compose down
+            sudo docker-compose up --build -d
