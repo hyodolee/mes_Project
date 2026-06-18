@@ -1,0 +1,47 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          timeout: 600s
+          script: |
+            # 최초 1회: 레포 클론
+            if [ ! -d ~/mes_project ]; then
+              git clone https://github.com/${{ github.repository }}.git ~/mes_project
+            fi
+
+            cd ~/mes_project/mes_backserver
+
+            # 최신 코드 pull
+            git -C ~/mes_project pull origin master
+
+            # .env 파일 생성 (Secrets 값으로 매번 갱신)
+            cat > .env << 'ENVEOF'
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            MES_DB_PASSWORD=${{ secrets.MES_DB_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            OPENAI_MODEL=gpt-5-mini
+            SECURITY_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+            PLC_SIM_ENABLED=false
+            NOTIFICATION_EMAIL_ENABLED=true
+            MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+            NOTIFICATION_EMAIL_FROM=${{ secrets.MAIL_USERNAME }}
+            NOTIFICATION_EMAIL_TO=${{ secrets.MAIL_USERNAME }}
+            ENVEOF
+
+            # 컨테이너 재빌드 & 재시작
+            sudo docker compose down
+            sudo docker compose up --build -d
