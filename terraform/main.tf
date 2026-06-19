@@ -73,7 +73,10 @@ resource "aws_instance" "mes_backend" {
     volume_type = "gp3"
   }
 
-  user_data = file("${path.module}/userdata.sh")
+  user_data = templatefile("${path.module}/userdata.sh", {
+    duckdns_token     = var.duckdns_token
+    duckdns_subdomain = var.duckdns_subdomain
+  })
 
   tags = { Name = "mes-backend" }
 }
