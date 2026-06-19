@@ -18,10 +18,10 @@ jobs:
           timeout: 600s
           script: |
             # userdata.sh(Docker 설치) 완료 대기 (최대 5분)
-            echo "docker-compose 준비 대기 중..."
+            echo "docker 준비 대기 중..."
             for i in $(seq 1 30); do
-              if [ -f /usr/local/bin/docker-compose ]; then
-                echo "docker-compose 준비 완료 ($i번째 시도)"
+              if docker compose version > /dev/null 2>&1; then
+                echo "docker compose 준비 완료 ($i번째 시도)"
                 break
               fi
               echo "대기 중... ($i/30)"
@@ -57,6 +57,6 @@ jobs:
             NOTIFICATION_EMAIL_TO=${{ secrets.MAIL_USERNAME }}
             ENVEOF
 
-            # 컨테이너 재빌드 & 재시작 (절대경로로 sudo PATH 문제 회피)
-            sudo /usr/local/bin/docker-compose down
-            sudo /usr/local/bin/docker-compose up --build -d
+            # 컨테이너 재빌드 & 재시작 (docker compose V2 plugin)
+            docker compose down
+            docker compose up --build -d
