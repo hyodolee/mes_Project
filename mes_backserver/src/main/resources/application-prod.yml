@@ -18,3 +18,10 @@ logging:
   level:
     root: INFO
     com.mes: INFO
+
+# 메일 서버 미설정/외부 SMTP 지연이 전체 서비스 health를 DOWN(503)으로 만들지 않도록
+# mail health indicator 비활성화 (메일 발송 기능 자체는 그대로 동작)
+management:
+  health:
+    mail:
+      enabled: false

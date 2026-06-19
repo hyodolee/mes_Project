@@ -20,46 +20,59 @@ jobs:
             set -e
             DOMAIN="hyodo.duckdns.org"
 
-            # ── 1. Docker + Compose V2 보장 (없으면 공식 스크립트로 직접 설치) ──
-            if ! docker compose version > /dev/null 2>&1; then
-              echo "docker compose 미설치 → 설치 시작"
-              # cloud-init/apt 락이 풀릴 때까지 대기 (최대 3분)
+            # apt 락(cloud-init 등)이 풀릴 때까지 대기하는 헬퍼
+            wait_apt() {
               for i in $(seq 1 18); do
                 if sudo fuser /var/lib/dpkg/lock-frontend > /dev/null 2>&1; then
                   echo "apt 락 대기 ($i/18)"; sleep 10
                 else
-                  break
+                  return 0
                 fi
               done
+            }
+
+            # ── 1. Docker + Compose V2 보장 (없으면 공식 스크립트로 직접 설치) ──
+            if ! docker compose version > /dev/null 2>&1; then
+              echo "docker compose 미설치 → 설치 시작"
+              wait_apt
               curl -fsSL https://get.docker.com | sudo sh
-              sudo apt-get install -y certbot
               sudo systemctl enable --now docker
             else
               echo "docker compose 준비됨"
             fi
 
-            # ── 2. DuckDNS를 이 서버의 현재 공인 IP로 갱신 (IP 바뀌어도 자가 치유) ──
+            # ── 2. certbot 보장 (docker 설치 여부와 무관하게 항상 확인) ──
+            if ! command -v certbot > /dev/null 2>&1; then
+              echo "certbot 미설치 → 설치"
+              wait_apt
+              sudo apt-get update -y
+              sudo apt-get install -y certbot
+            else
+              echo "certbot 준비됨"
+            fi
+
+            # ── 3. DuckDNS를 이 서버의 현재 공인 IP로 갱신 (IP 바뀌어도 자가 치유) ──
             MYIP=$(curl -s ifconfig.me)
             echo "현재 공인 IP: $MYIP → DuckDNS($DOMAIN) 갱신"
             curl -s "https://www.duckdns.org/update?domains=hyodo&token=${{ secrets.DUCKDNS_TOKEN }}&ip=$MYIP"
             echo ""
 
-            # ── 3. SSL 인증서 발급 (없을 때만, 멱등) ──
+            # ── 4. SSL 인증서 발급 (없을 때만, 멱등) ──
             if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
               echo "SSL 인증서가 없음 → DNS 전파 대기 후 certbot 발급"
               sleep 30
+              # 포트 80을 점유 중인 컨테이너가 없도록(혹시 모를) 보장 후 standalone 발급
               sudo certbot certonly --standalone \
                 -d "$DOMAIN" \
                 -m "${{ secrets.CERTBOT_EMAIL }}" \
-                --agree-tos --non-interactive || echo "⚠️ certbot 실패 (다음 배포에서 재시도)"
+                --agree-tos --non-interactive \
+                && echo "✅ 인증서 발급 성공" \
+                || echo "⚠️ certbot 실패 (위 로그 확인, 다음 배포에서 재시도)"
             else
               echo "SSL 인증서 이미 존재 → 발급 건너뜀"
             fi
 
-            # ── 4. 최초 1회: 레포 클론 ──
-            if [ ! -d ~/mes_project ]; then
-              git clone https://github.com/${{ github.repository }}.git ~/mes_project
-            fi
+            # ── 5. 최초 1회: 레포 클론 ──
             if [ ! -d ~/mes_project ]; then
               git clone https://github.com/${{ github.repository }}.git ~/mes_project
             fi
@@ -80,6 +93,8 @@ jobs:
             SECURITY_ALLOWED_ORIGINS=https://hyodo.duckdns.org,http://localhost:3000
             PLC_SIM_ENABLED=false
             NOTIFICATION_EMAIL_ENABLED=true
+            MAIL_HOST=smtp.gmail.com
+            MAIL_PORT=587
             MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
             MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
             NOTIFICATION_EMAIL_FROM=${{ secrets.MAIL_USERNAME }}
