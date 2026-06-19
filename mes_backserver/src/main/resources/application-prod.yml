@@ -11,8 +11,8 @@ server:
   port: ${SERVER_PORT:8080}
   ssl:
     enabled: ${SSL_ENABLED:false}
-    certificate: /certs/fullchain.pem
-    certificate-private-key: /certs/privkey.pem
+    certificate: /etc/letsencrypt/live/hyodo.duckdns.org/fullchain.pem
+    certificate-private-key: /etc/letsencrypt/live/hyodo.duckdns.org/privkey.pem
 
 logging:
   level:

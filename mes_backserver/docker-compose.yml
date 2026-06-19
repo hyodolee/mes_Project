@@ -19,7 +19,9 @@ services:
     depends_on:
       - chroma
     volumes:
-      - /etc/letsencrypt/live/hyodo.duckdns.org:/certs:ro
+      # live/ 의 인증서는 archive/ 를 가리키는 심볼릭 링크이므로
+      # /etc/letsencrypt 전체를 마운트해야 컨테이너 안에서 링크가 풀린다
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_AI_VECTORSTORE_CHROMA_CLIENT_HOST: http://chroma
