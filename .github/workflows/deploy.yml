@@ -17,6 +17,17 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           timeout: 600s
           script: |
+            # userdata.sh(Docker 설치) 완료 대기 (최대 5분)
+            echo "docker-compose 준비 대기 중..."
+            for i in $(seq 1 30); do
+              if [ -f /usr/local/bin/docker-compose ]; then
+                echo "docker-compose 준비 완료 ($i번째 시도)"
+                break
+              fi
+              echo "대기 중... ($i/30)"
+              sleep 10
+            done
+
             # 최초 1회: 레포 클론
             if [ ! -d ~/mes_project ]; then
               git clone https://github.com/${{ github.repository }}.git ~/mes_project
@@ -35,7 +46,7 @@ jobs:
             OPENAI_MODEL=gpt-5-mini
             CHROMA_HOST=http://chroma
             CHROMA_PORT=8000
-            SECURITY_ALLOWED_ORIGINS=https://hyodo.kro.kr,http://localhost:3000
+            SECURITY_ALLOWED_ORIGINS=https://hyodo.duckdns.org,http://localhost:3000
             SSL_ENABLED=${{ secrets.SSL_ENABLED }}
             SERVER_PORT=${{ secrets.SERVER_PORT }}
             PLC_SIM_ENABLED=false
@@ -46,6 +57,6 @@ jobs:
             NOTIFICATION_EMAIL_TO=${{ secrets.MAIL_USERNAME }}
             ENVEOF
 
-            # 컨테이너 재빌드 & 재시작
-            sudo docker-compose down
-            sudo docker-compose up --build -d
+            # 컨테이너 재빌드 & 재시작 (절대경로로 sudo PATH 문제 회피)
+            sudo /usr/local/bin/docker-compose down
+            sudo /usr/local/bin/docker-compose up --build -d
