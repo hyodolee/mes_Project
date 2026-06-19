@@ -58,7 +58,8 @@ jobs:
             echo ""
 
             # ── 4. SSL 인증서 발급 (없을 때만, 멱등) ──
-            if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
+            # /etc/letsencrypt/{live,archive}는 root 전용(700)이라 반드시 sudo test 로 확인
+            if ! sudo test -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem; then
               echo "SSL 인증서가 없음 → DNS 전파 대기 후 certbot 발급"
               sleep 30
               # 포트 80을 점유 중인 컨테이너가 없도록(혹시 모를) 보장 후 standalone 발급
@@ -102,7 +103,8 @@ jobs:
             ENVEOF
 
             # ── SSL: 인증서 있으면 HTTPS(8443), 없으면 HTTP(8080)로 자동 판단 ──
-            if [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
+            # root 전용 폴더이므로 sudo test 로 확인해야 ubuntu 권한에서도 올바로 감지됨
+            if sudo test -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem; then
               echo "SSL_ENABLED=true"  >> .env
               echo "SERVER_PORT=8443"  >> .env
               echo "→ HTTPS 모드 (8443)"
