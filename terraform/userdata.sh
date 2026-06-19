@@ -1,37 +1,22 @@
 #!/bin/bash
 set -e
 
-DUCKDNS_TOKEN="${duckdns_token}"
-DUCKDNS_SUBDOMAIN="${duckdns_subdomain}"
-EMAIL="${email}"
-DOMAIN="$${DUCKDNS_SUBDOMAIN}.duckdns.org"
+# ─────────────────────────────────────────────────────────────
+# 부팅 시 1회: 소프트웨어 설치만 담당 (불안정한 타이밍 작업은 배포 워크플로로 이관)
+# DuckDNS IP 등록 + Let's Encrypt 발급은 .github/workflows/deploy.yml 에서
+# 매 배포마다 멱등(idempotent)하게 실행 → 타이밍에 휘둘리지 않고 자가 치유됨
+# ─────────────────────────────────────────────────────────────
 
-# 1. Docker + Docker Compose V2 plugin + certbot 설치 (apt, 안정적)
+# Docker + Compose V2 plugin + certbot 설치 (apt, 안정적)
 apt-get update -y
 apt-get install -y docker.io docker-compose-plugin certbot curl
 systemctl start docker
 systemctl enable docker
 usermod -aG docker ubuntu
 
-# sudo가 TTY 없어도 동작하도록 (GitHub Actions SSH는 TTY 없음)
+# GitHub Actions SSH는 TTY가 없으므로 sudo가 비밀번호를 묻지 않도록 보장
 echo "Defaults !requiretty" > /etc/sudoers.d/99-notty
 echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-ubuntu
 chmod 440 /etc/sudoers.d/99-notty /etc/sudoers.d/99-ubuntu
 
-# 2. DuckDNS에 현재 IP 자동 등록
-PUBLIC_IP=$$(curl -s ifconfig.me)
-curl -s "https://www.duckdns.org/update?domains=$${DUCKDNS_SUBDOMAIN}&token=$${DUCKDNS_TOKEN}&ip=$${PUBLIC_IP}"
-echo "DuckDNS 업데이트 완료: $${DOMAIN} -> $${PUBLIC_IP}"
-
-# 3. DNS 전파 대기 (90초)
-echo "DNS 전파 대기 중..."
-sleep 90
-
-# 4. Let's Encrypt SSL 인증서 자동 발급
-certbot certonly --standalone \
-  -d "$${DOMAIN}" \
-  -m "$${EMAIL}" \
-  --agree-tos \
-  --non-interactive
-
-echo "SSL 인증서 발급 완료: $${DOMAIN}"
+echo "userdata 완료: Docker/certbot 설치됨. DNS/SSL은 배포 시 처리."

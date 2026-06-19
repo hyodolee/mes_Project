@@ -17,7 +17,10 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           timeout: 600s
           script: |
-            # userdata.sh(Docker 설치) 완료 대기 (최대 5분)
+            set -e
+            DOMAIN="hyodo.duckdns.org"
+
+            # ── 1. userdata.sh(Docker 설치) 완료 대기 (최대 5분) ──
             echo "docker 준비 대기 중..."
             for i in $(seq 1 30); do
               if docker compose version > /dev/null 2>&1; then
@@ -28,7 +31,28 @@ jobs:
               sleep 10
             done
 
-            # 최초 1회: 레포 클론
+            # ── 2. DuckDNS를 이 서버의 현재 공인 IP로 갱신 (IP 바뀌어도 자가 치유) ──
+            MYIP=$(curl -s ifconfig.me)
+            echo "현재 공인 IP: $MYIP → DuckDNS($DOMAIN) 갱신"
+            curl -s "https://www.duckdns.org/update?domains=hyodo&token=${{ secrets.DUCKDNS_TOKEN }}&ip=$MYIP"
+            echo ""
+
+            # ── 3. SSL 인증서 발급 (없을 때만, 멱등) ──
+            if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
+              echo "SSL 인증서가 없음 → DNS 전파 대기 후 certbot 발급"
+              sleep 30
+              sudo certbot certonly --standalone \
+                -d "$DOMAIN" \
+                -m "${{ secrets.CERTBOT_EMAIL }}" \
+                --agree-tos --non-interactive || echo "⚠️ certbot 실패 (다음 배포에서 재시도)"
+            else
+              echo "SSL 인증서 이미 존재 → 발급 건너뜀"
+            fi
+
+            # ── 4. 최초 1회: 레포 클론 ──
+            if [ ! -d ~/mes_project ]; then
+              git clone https://github.com/${{ github.repository }}.git ~/mes_project
+            fi
             if [ ! -d ~/mes_project ]; then
               git clone https://github.com/${{ github.repository }}.git ~/mes_project
             fi
@@ -47,8 +71,6 @@ jobs:
             CHROMA_HOST=http://chroma
             CHROMA_PORT=8000
             SECURITY_ALLOWED_ORIGINS=https://hyodo.duckdns.org,http://localhost:3000
-            SSL_ENABLED=${{ secrets.SSL_ENABLED }}
-            SERVER_PORT=${{ secrets.SERVER_PORT }}
             PLC_SIM_ENABLED=false
             NOTIFICATION_EMAIL_ENABLED=true
             MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
@@ -57,6 +79,17 @@ jobs:
             NOTIFICATION_EMAIL_TO=${{ secrets.MAIL_USERNAME }}
             ENVEOF
 
-            # 컨테이너 재빌드 & 재시작 (docker compose V2 plugin)
+            # ── SSL: 인증서 있으면 HTTPS(8443), 없으면 HTTP(8080)로 자동 판단 ──
+            if [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
+              echo "SSL_ENABLED=true"  >> .env
+              echo "SERVER_PORT=8443"  >> .env
+              echo "→ HTTPS 모드 (8443)"
+            else
+              echo "SSL_ENABLED=false" >> .env
+              echo "SERVER_PORT=8080"  >> .env
+              echo "→ HTTP 모드 (8080) — 인증서 발급 후 다음 배포에서 HTTPS 전환"
+            fi
+
+            # ── 컨테이너 재빌드 & 재시작 (docker compose V2 plugin) ──
             docker compose down
             docker compose up --build -d
