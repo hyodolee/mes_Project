@@ -20,16 +20,23 @@ jobs:
             set -e
             DOMAIN="hyodo.duckdns.org"
 
-            # ── 1. userdata.sh(Docker 설치) 완료 대기 (최대 5분) ──
-            echo "docker 준비 대기 중..."
-            for i in $(seq 1 30); do
-              if docker compose version > /dev/null 2>&1; then
-                echo "docker compose 준비 완료 ($i번째 시도)"
-                break
-              fi
-              echo "대기 중... ($i/30)"
-              sleep 10
-            done
+            # ── 1. Docker + Compose V2 보장 (없으면 공식 스크립트로 직접 설치) ──
+            if ! docker compose version > /dev/null 2>&1; then
+              echo "docker compose 미설치 → 설치 시작"
+              # cloud-init/apt 락이 풀릴 때까지 대기 (최대 3분)
+              for i in $(seq 1 18); do
+                if sudo fuser /var/lib/dpkg/lock-frontend > /dev/null 2>&1; then
+                  echo "apt 락 대기 ($i/18)"; sleep 10
+                else
+                  break
+                fi
+              done
+              curl -fsSL https://get.docker.com | sudo sh
+              sudo apt-get install -y certbot
+              sudo systemctl enable --now docker
+            else
+              echo "docker compose 준비됨"
+            fi
 
             # ── 2. DuckDNS를 이 서버의 현재 공인 IP로 갱신 (IP 바뀌어도 자가 치유) ──
             MYIP=$(curl -s ifconfig.me)
@@ -90,6 +97,6 @@ jobs:
               echo "→ HTTP 모드 (8080) — 인증서 발급 후 다음 배포에서 HTTPS 전환"
             fi
 
-            # ── 컨테이너 재빌드 & 재시작 (docker compose V2 plugin) ──
-            docker compose down
-            docker compose up --build -d
+            # ── 컨테이너 재빌드 & 재시작 (sudo: 갓 설치 시 docker 그룹 미적용 대비) ──
+            sudo docker compose down
+            sudo docker compose up --build -d
