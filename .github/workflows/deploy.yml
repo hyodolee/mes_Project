@@ -91,7 +91,7 @@ jobs:
             OPENAI_MODEL=gpt-5-mini
             CHROMA_HOST=http://chroma
             CHROMA_PORT=8000
-            SECURITY_ALLOWED_ORIGINS=https://hyodo.duckdns.org,http://localhost:3000
+            SECURITY_ALLOWED_ORIGINS=https://mes-project-sigma.vercel.app,https://hyodo.duckdns.org,http://localhost:3000
             PLC_SIM_ENABLED=false
             NOTIFICATION_EMAIL_ENABLED=true
             MAIL_HOST=smtp.gmail.com
