@@ -92,7 +92,7 @@ jobs:
             CHROMA_HOST=http://chroma
             CHROMA_PORT=8000
             SECURITY_ALLOWED_ORIGINS=https://mes-project-sigma.vercel.app,https://hyodo.duckdns.org,http://localhost:3000
-            PLC_SIM_ENABLED=false
+            PLC_SIM_ENABLED=true
             NOTIFICATION_EMAIL_ENABLED=true
             MAIL_HOST=smtp.gmail.com
             MAIL_PORT=587
