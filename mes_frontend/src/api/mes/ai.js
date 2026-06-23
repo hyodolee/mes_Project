@@ -71,8 +71,8 @@ async function parseApiResponse(response) {
 
 export const aiApi = {
   getSummary: (refresh = false) => mesApi.get(`/api/v1/ai/operations/summary${refresh ? '?refresh=true' : ''}`),
-  query: (question, pageContext, history = [], conversationId = '') =>
-    mesApi.post('/api/v1/ai/query', { question, conversationId, pageContext, history }),
+  query: (question, pageContext, history = [], conversationId = '', images = []) =>
+    mesApi.post('/api/v1/ai/query', { question, conversationId, pageContext, history, images }),
   getRagDocuments: () => mesApi.get('/api/v1/ai/rag/documents'),
   uploadRagDocument: async ({ file, documentCategory, documentType, tags }) => {
     const base = getMesApiBaseUrl();
@@ -96,7 +96,7 @@ export const aiApi = {
   reindexRagDocument: (documentId) => mesApi.post(`/api/v1/ai/rag/documents/${documentId}/reindex`, {}),
   reindexAllRagDocuments: () => mesApi.post('/api/v1/ai/rag/documents/reindex-all', {}),
   deleteRagDocument: (documentId) => mesApi.delete(`/api/v1/ai/rag/documents/${documentId}`),
-  streamQuery: async (question, pageContext, history = [], conversationId = '', handlers = {}) => {
+  streamQuery: async (question, pageContext, history = [], conversationId = '', handlers = {}, images = []) => {
     const base = getMesApiBaseUrl();
     const token = authTokenStore.getMesToken();
     let response;
@@ -109,7 +109,7 @@ export const aiApi = {
           Accept: 'text/event-stream',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ question, conversationId, pageContext, history })
+        body: JSON.stringify({ question, conversationId, pageContext, history, images })
       });
     } catch {
       throw new AiStreamError('MES 서버에 접속할 수 없습니다. 백엔드가 실행 중인지 확인해 주세요.', {
@@ -133,13 +133,10 @@ export const aiApi = {
         detail = '';
       }
 
-      throw new AiStreamError(
-        detail || `AI 요청 처리 중 서버 오류가 발생했습니다. HTTP ${response.status}`,
-        {
-          status: response.status,
-          code: 'HTTP_ERROR'
-        }
-      );
+      throw new AiStreamError(detail || `AI 요청 처리 중 서버 오류가 발생했습니다. HTTP ${response.status}`, {
+        status: response.status,
+        code: 'HTTP_ERROR'
+      });
     }
     if (!response.body) {
       throw new AiStreamError('브라우저에서 스트리밍 응답을 읽을 수 없습니다.', {
@@ -191,8 +188,7 @@ export const aiApi = {
       });
     }
   },
-  clearQueryMemory: (conversationId) =>
-    mesApi.post('/api/v1/ai/query/memory/clear', { conversationId }),
+  clearQueryMemory: (conversationId) => mesApi.post('/api/v1/ai/query/memory/clear', { conversationId }),
 
   getNotifications: (limit = 20) => mesApi.get('/api/v1/notifications?limit=' + limit),
   getUnreadCount: () => mesApi.get('/api/v1/notifications/unread-count'),

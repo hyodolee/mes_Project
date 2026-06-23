@@ -19,6 +19,7 @@ import {
   CloseOutlined,
   DeleteOutlined,
   DownOutlined,
+  PaperClipOutlined,
   RobotOutlined,
   SendOutlined,
   UserOutlined
@@ -210,6 +211,9 @@ export default function ChatDrawer() {
   const [resizing, setResizing] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  // 전송 대기 중인 첨부 이미지(base64 data URL). 전송하면 서버 보관소로 넘기고 비운다.
+  const [attachedImages, setAttachedImages] = useState([]);
   const suggestions = getSuggestions(location.pathname);
 
   // 오른쪽 Drawer의 왼쪽 모서리를 잡고 폭을 조절합니다.
@@ -256,53 +260,80 @@ export default function ChatDrawer() {
     }
   }, [open]);
 
+  // 파일 선택 → base64(data URL)로 변환해 최근 5장까지 담는다. (보관·만료는 서버가 처리)
+  const handlePickImages = (event) => {
+    Array.from(event.target.files || []).forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = () => setAttachedImages((prev) => [...prev, reader.result].slice(-5));
+      reader.readAsDataURL(file);
+    });
+    event.target.value = ''; // 같은 파일을 다시 선택할 수 있도록 초기화
+  };
+
+  const removeAttachedImage = (idx) => setAttachedImages((prev) => prev.filter((_, i) => i !== idx));
+
   const handleSend = async (text) => {
-    const question = (text || input).trim();
-    if (!question || loading) return;
+    if (loading) return;
+    const imagesToSend = attachedImages;
+    const typed = (text || input).trim();
+    // 글 없이 이미지만 보냈으면 기본 질문으로 분석을 요청한다.
+    const question = typed || (imagesToSend.length > 0 ? '첨부한 이미지를 분석해서 현재 상황과 문제점을 알려줘.' : '');
+    if (!question) return;
 
     setInput('');
+    setAttachedImages([]); // 입력창 첨부는 비움 (서버 보관소로 이동)
     const history = messages.slice(-6).map((m) => ({ role: m.role, text: m.text }));
-    addUserMessage(question);
+    // 화면 말풍선에는 이미지 첨부 표시를 함께 남긴다.
+    const userText = imagesToSend.length > 0 ? `${typed || '(이미지 분석 요청)'}  🖼️×${imagesToSend.length}` : question;
+    addUserMessage(userText);
     const aiMessageId = addAiMessage('');
     setLoading(true);
     let receivedToken = false;
     let completed = false;
 
     try {
-      await aiApi.streamQuery(question, location.pathname, history, conversationId, {
-        onToken: (token) => {
-          receivedToken = true;
-          appendAiMessageText(aiMessageId, token);
+      await aiApi.streamQuery(
+        question,
+        location.pathname,
+        history,
+        conversationId,
+        {
+          onToken: (token) => {
+            receivedToken = true;
+            appendAiMessageText(aiMessageId, token);
+          },
+          onDataPoints: (dataPoints) => {
+            updateAiMessage(aiMessageId, { dataPoints });
+          },
+          onDone: (data) => {
+            completed = true;
+            const patch = {};
+            if (!receivedToken) {
+              patch.text = data?.answer || '응답을 받지 못했습니다. 다시 시도해 주세요.';
+            }
+            if (Array.isArray(data?.dataPoints)) {
+              patch.dataPoints = data.dataPoints;
+            }
+            if (typeof data?.aiGenerated === 'boolean') {
+              patch.aiGenerated = data.aiGenerated;
+            }
+            if (data?.model) {
+              patch.model = data.model;
+            }
+            updateAiMessage(aiMessageId, patch);
+          },
+          onError: (message) => {
+            const errorMessage = message || '응답 생성 중 연결이 중단되었습니다.';
+            if (receivedToken) {
+              appendAiMessageText(aiMessageId, `\n\n${errorMessage}`);
+              return;
+            }
+            updateAiMessage(aiMessageId, { text: '응답 생성 중 오류가 발생했습니다. 다시 시도해 주세요.' });
+          }
         },
-        onDataPoints: (dataPoints) => {
-          updateAiMessage(aiMessageId, { dataPoints });
-        },
-        onDone: (data) => {
-          completed = true;
-          const patch = {};
-          if (!receivedToken) {
-            patch.text = data?.answer || '응답을 받지 못했습니다. 다시 시도해 주세요.';
-          }
-          if (Array.isArray(data?.dataPoints)) {
-            patch.dataPoints = data.dataPoints;
-          }
-          if (typeof data?.aiGenerated === 'boolean') {
-            patch.aiGenerated = data.aiGenerated;
-          }
-          if (data?.model) {
-            patch.model = data.model;
-          }
-          updateAiMessage(aiMessageId, patch);
-        },
-        onError: (message) => {
-          const errorMessage = message || '응답 생성 중 연결이 중단되었습니다.';
-          if (receivedToken) {
-            appendAiMessageText(aiMessageId, `\n\n${errorMessage}`);
-            return;
-          }
-          updateAiMessage(aiMessageId, { text: '응답 생성 중 오류가 발생했습니다. 다시 시도해 주세요.' });
-        }
-      });
+        imagesToSend
+      );
     } catch (error) {
       const errorMessage = getAiErrorMessage(error);
       if (!receivedToken && !completed) {
@@ -409,13 +440,7 @@ export default function ChatDrawer() {
             msg.role === 'user' ? (
               <UserBubble key={msg.id} text={msg.text} />
             ) : (
-              <AiBubble
-                key={msg.id}
-                text={msg.text}
-                dataPoints={msg.dataPoints}
-                aiGenerated={msg.aiGenerated}
-                model={msg.model}
-              />
+              <AiBubble key={msg.id} text={msg.text} dataPoints={msg.dataPoints} aiGenerated={msg.aiGenerated} model={msg.model} />
             )
           )}
           <div ref={bottomRef} />
@@ -440,6 +465,48 @@ export default function ChatDrawer() {
       </Box>
 
       <Box sx={{ px: 2, pb: 2, pt: 0.5, flexShrink: 0 }}>
+        {/* 전송 전 첨부 이미지 미리보기 (최대 5장) */}
+        {attachedImages.length > 0 && (
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, mb: 1 }}>
+            {attachedImages.map((src, idx) => (
+              <Box key={idx} sx={{ position: 'relative' }}>
+                <Box
+                  component="img"
+                  src={src}
+                  alt={`첨부 이미지 ${idx + 1}`}
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    objectFit: 'cover',
+                    borderRadius: 1.5,
+                    display: 'block',
+                    border: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                />
+                <IconButton
+                  size="small"
+                  onClick={() => removeAttachedImage(idx)}
+                  sx={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    p: '2px',
+                    bgcolor: 'background.paper',
+                    boxShadow: 1,
+                    '&:hover': { bgcolor: 'grey.200' }
+                  }}
+                >
+                  <CloseOutlined style={{ fontSize: 10 }} />
+                </IconButton>
+              </Box>
+            ))}
+          </Stack>
+        )}
+
+        {/* 숨겨진 파일 선택기 — 📎 버튼으로 연다 */}
+        <input type="file" accept="image/*" multiple hidden ref={fileInputRef} onChange={handlePickImages} />
+
         <TextField
           inputRef={inputRef}
           fullWidth
@@ -451,18 +518,40 @@ export default function ChatDrawer() {
           onKeyDown={handleKeyDown}
           disabled={loading}
           size="small"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                {loading ? (
-                  <CircularProgress size={18} />
-                ) : (
-                  <IconButton size="small" onClick={() => handleSend()} disabled={!input.trim()} color="primary">
-                    <SendOutlined style={{ fontSize: 16 }} />
-                  </IconButton>
-                )}
-              </InputAdornment>
-            )
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Tooltip title={attachedImages.length >= 5 ? '이미지는 최대 5장' : '이미지 첨부 (최대 5장)'}>
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={loading || attachedImages.length >= 5}
+                      >
+                        <PaperClipOutlined style={{ fontSize: 16 }} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  {loading ? (
+                    <CircularProgress size={18} />
+                  ) : (
+                    <IconButton
+                      size="small"
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() && attachedImages.length === 0}
+                      color="primary"
+                    >
+                      <SendOutlined style={{ fontSize: 16 }} />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              )
+            }
           }}
         />
       </Box>

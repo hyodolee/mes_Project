@@ -9,8 +9,12 @@ import com.mes.domain.ai.dto.NaturalLanguageQueryResponse;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.content.Media;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.util.MimeType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,8 +26,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * 운영 현황을 자연어 질문으로 조회하는 서비스.
  *
- * <p>사용자 질문을 받아 필요한 조회 기능을 모델에 제공하고,
- * 모델이 조회 결과를 참고해 답변을 만들도록 한다.</p>
+ * <p>
+ * 사용자 질문을 받아 필요한 조회 기능을 모델에 제공하고,
+ * 모델이 조회 결과를 참고해 답변을 만들도록 한다.
+ * </p>
  */
 @Service
 public class OperationQueryService {
@@ -51,6 +57,7 @@ public class OperationQueryService {
     private final ChatMemory chatMemory;
     private final MessageChatMemoryAdvisor chatMemoryAdvisor;
     private final SensitiveDataSanitizer sensitiveDataSanitizer;
+    private final ConversationImageStore imageStore;
 
     public OperationQueryService(
             WorkOrderService workOrderService,
@@ -59,8 +66,8 @@ public class OperationQueryService {
             AiClientGateway aiClientGateway,
             ChatMemory chatMemory,
             MessageChatMemoryAdvisor chatMemoryAdvisor,
-            SensitiveDataSanitizer sensitiveDataSanitizer
-    ) {
+            SensitiveDataSanitizer sensitiveDataSanitizer,
+            ConversationImageStore imageStore) {
         this.workOrderService = workOrderService;
         this.mcsTransferClient = mcsTransferClient;
         this.operationToolsFactory = operationToolsFactory;
@@ -68,6 +75,7 @@ public class OperationQueryService {
         this.chatMemory = chatMemory;
         this.chatMemoryAdvisor = chatMemoryAdvisor;
         this.sensitiveDataSanitizer = sensitiveDataSanitizer;
+        this.imageStore = imageStore;
     }
 
     public NaturalLanguageQueryResponse query(NaturalLanguageQueryRequest request) {
@@ -92,7 +100,8 @@ public class OperationQueryService {
                 }
             }).orTimeout(AI_TIMEOUT_SECONDS, TimeUnit.SECONDS).join();
 
-            return new NaturalLanguageQueryResponse(answer, "AI_TOOL", List.copyOf(dataPoints), true, aiClientGateway.getModel());
+            return new NaturalLanguageQueryResponse(answer, "AI_TOOL", List.copyOf(dataPoints), true,
+                    aiClientGateway.getModel());
         } catch (Exception e) {
             log.warn("AI 질의 실패, 규칙 기반 답변으로 폴백. 원인: {}", e.getMessage());
             return ruleBasedFallback(request.getQuestion(), "AI 분석 호출이 실패해 기본 조회 결과로 답변합니다.");
@@ -112,8 +121,7 @@ public class OperationQueryService {
         if (builder == null) {
             NaturalLanguageQueryResponse fallback = ruleBasedFallback(
                     request.getQuestion(),
-                    "AI 설정이 없어 기본 조회 결과로 답변합니다."
-            );
+                    "AI 설정이 없어 기본 조회 결과로 답변합니다.");
             sendEvent(emitter, "token", fallback.getAnswer());
             sendEvent(emitter, "done", fallback);
             emitter.complete();
@@ -141,8 +149,7 @@ public class OperationQueryService {
                         "AI_TOOL",
                         List.copyOf(dataPoints),
                         true,
-                        aiClientGateway.getModel()
-                );
+                        aiClientGateway.getModel());
                 sendEvent(emitter, "data-points", response.getDataPoints());
                 sendEvent(emitter, "done", response);
                 emitter.complete();
@@ -151,8 +158,7 @@ public class OperationQueryService {
                 if (answer.isEmpty()) {
                     NaturalLanguageQueryResponse fallback = ruleBasedFallback(
                             request.getQuestion(),
-                            "AI 분석 호출이 지연되어 기본 조회 결과로 먼저 답변합니다."
-                    );
+                            "AI 분석 호출이 지연되어 기본 조회 결과로 먼저 답변합니다.");
                     sendEvent(emitter, "token", fallback.getAnswer());
                     sendEvent(emitter, "done", fallback);
                 } else {
@@ -169,14 +175,22 @@ public class OperationQueryService {
         String normalized = normalizeConversationId(conversationId);
         if (normalized != null) {
             chatMemory.clear(normalized);
+            imageStore.clear(normalized);
         }
+    }
+
+    // "data:image/png;base64,XXXX" 문자열을 형식(MimeType)과 바이트로 분리한다.
+    private ConversationImageStore.HeldImage decodeImage(String dataUrl) {
+        String meta = dataUrl.substring(5, dataUrl.indexOf(';')); // "image/png"
+        String base64 = dataUrl.substring(dataUrl.indexOf(',') + 1); // 본문
+        byte[] bytes = java.util.Base64.getDecoder().decode(base64);
+        return new ConversationImageStore.HeldImage(bytes, MimeType.valueOf(meta), java.time.Instant.now());
     }
 
     private String callAi(
             ChatClient.Builder builder,
             NaturalLanguageQueryRequest request,
-            OperationTools tools
-    ) {
+            OperationTools tools) {
         return buildRequestSpec(builder, request, tools)
                 .call()
                 .content();
@@ -185,9 +199,13 @@ public class OperationQueryService {
     private ChatClient.ChatClientRequestSpec buildRequestSpec(
             ChatClient.Builder builder,
             NaturalLanguageQueryRequest request,
-            OperationTools tools
-    ) {
+            OperationTools tools) {
         String conversationId = normalizeConversationId(request.getConversationId());
+
+        // 이번 턴에 새로 첨부된 이미지를 대화 보관소에 저장 (5장 상한은 보관소가 처리)
+        if (conversationId != null && request.getImages() != null) {
+            request.getImages().forEach(dataUrl -> imageStore.add(conversationId, decodeImage(dataUrl)));
+        }
 
         // system: 답변 역할과 규칙
         // user: 사용자의 실제 질문
@@ -195,7 +213,14 @@ public class OperationQueryService {
         ChatClient.ChatClientRequestSpec spec = builder.build()
                 .prompt()
                 .system(OperationQueryPrompt.SYSTEM)
-                .user(buildUserPrompt(request, conversationId))
+                // 텍스트 질문 + 이 대화에 보관 중인 이미지들을 함께 첨부 (매 턴 다시 붙여 "기억")
+                .user(u -> {
+                    u.text(buildUserPrompt(request, conversationId));
+                    if (conversationId != null) {
+                        imageStore.get(conversationId)
+                                .forEach(h -> u.media(new Media(h.getMimeType(), new ByteArrayResource(h.getData()))));
+                    }
+                })
                 .tools(tools);
 
         // 같은 대화방의 이전 질문/답변을 함께 참고하도록 대화 ID를 지정한다.
@@ -229,8 +254,10 @@ public class OperationQueryService {
     /**
      * AI 호출이 실패했을 때 사용하는 기본 조회 답변.
      *
-     * <p>모델이 만든 분석처럼 보이면 사용자가 오해할 수 있으므로,
-     * 기본 조회로 전환했다는 사실을 답변에 함께 표시한다.</p>
+     * <p>
+     * 모델이 만든 분석처럼 보이면 사용자가 오해할 수 있으므로,
+     * 기본 조회로 전환했다는 사실을 답변에 함께 표시한다.
+     * </p>
      */
     private NaturalLanguageQueryResponse ruleBasedFallback(String question, String reason) {
         List<String> dataPoints = new ArrayList<>();
