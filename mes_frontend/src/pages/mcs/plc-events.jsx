@@ -17,7 +17,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -107,7 +107,10 @@ function getSituationLabel(event) {
 function extractMissingFields(message) {
   const match = String(message || '').match(/missingFields=([^,.\s]+(?:,[^,.\s]+)*)/);
   if (!match) return [];
-  return match[1].split(',').map((field) => field.trim()).filter(Boolean);
+  return match[1]
+    .split(',')
+    .map((field) => field.trim())
+    .filter(Boolean);
 }
 
 function getDetailMessage(event, missingFields) {
@@ -144,7 +147,11 @@ export default function McsPlcEvents() {
   const [query, setQuery] = useState({ page: 1, size: 10 });
 
   const eventParams = useMemo(() => ({ ...search, targetType: 'TRANSFER', ...query }), [search, query]);
-  const { data: eventResponse, error: eventError, isLoading } = useSWR(['mcs-plc-events', eventParams], () => plcEventApi.list(eventParams));
+  const {
+    data: eventResponse,
+    error: eventError,
+    isLoading
+  } = useSWR(['mcs-plc-events', eventParams], () => plcEventApi.list(eventParams));
 
   const page = getApiData(eventResponse, { content: [], totalElements: 0, currentPage: 1, size: 10 });
 
@@ -173,10 +180,22 @@ export default function McsPlcEvents() {
       <MainCard title="검색 조건">
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="이벤트 ID" value={search.eventId} onChange={(event) => handleSearchValue('eventId', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="이벤트 ID"
+              value={search.eventId}
+              onChange={(event) => handleSearchValue('eventId', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="설비" value={search.equipmentCd} onChange={(event) => handleSearchValue('equipmentCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="설비"
+              value={search.equipmentCd}
+              onChange={(event) => handleSearchValue('equipmentCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
             <FormControl fullWidth size="small">
@@ -205,7 +224,13 @@ export default function McsPlcEvents() {
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="이동오더" value={search.targetId} onChange={(event) => handleSearchValue('targetId', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="이동오더"
+              value={search.targetId}
+              onChange={(event) => handleSearchValue('targetId', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
@@ -315,14 +340,10 @@ export default function McsPlcEvents() {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={page.totalElements}
-          page={Math.max((page.currentPage || 1) - 1, 0)}
-          rowsPerPage={page.size || query.size}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setQuery((current) => ({ ...current, page: nextPage + 1 }))}
-          onRowsPerPageChange={(event) => setQuery({ page: 1, size: Number(event.target.value) })}
+        <TablePager
+          page={page.currentPage || 1}
+          count={page.totalPages ?? Math.ceil((page.totalElements || 0) / (page.size || query.size || 10))}
+          onChange={(nextPage) => setQuery((current) => ({ ...current, page: nextPage }))}
         />
       </MainCard>
     </Stack>

@@ -24,7 +24,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
@@ -181,7 +181,7 @@ export default function MesWorkOrders() {
   const [search, setSearch] = useState(initialSearch);
   const [query, setQuery] = useState(search);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage] = useState(10);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [materialDialogOpen, setMaterialDialogOpen] = useState(false);
   const [materialOrder, setMaterialOrder] = useState(null);
@@ -191,7 +191,12 @@ export default function MesWorkOrders() {
   const [pendingAction, setPendingAction] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
-  const { data: workOrderResponse, error: workOrderError, isLoading, mutate } = useSWR(['mes-work-orders', query], () => mesWorkOrderApi.list(query));
+  const {
+    data: workOrderResponse,
+    error: workOrderError,
+    isLoading,
+    mutate
+  } = useSWR(['mes-work-orders', query], () => mesWorkOrderApi.list(query));
   const { data: plantResponse } = useSWR('mes-plants', () => mesMasterApi.plants({ useYn: 'Y' }));
   const { data: itemResponse } = useSWR('mes-items', () => mesMasterApi.items({ useYn: 'Y', itemNm: '' }));
   const { data: planResponse } = useSWR('mes-prod-plan-options', () => mesPlanningApi.prodPlans({}));
@@ -221,9 +226,7 @@ export default function MesWorkOrders() {
   const { data: materialStatusResponse, mutate: mutateMaterialStatuses } = useSWR(
     visibleWorkOrderIds.length ? ['mes-work-order-material-statuses', visibleWorkOrderIds] : null,
     async () => {
-      const responses = await Promise.all(
-        visibleWorkOrderIds.map((woId) => mesWorkOrderApi.materialTransferStatus(woId))
-      );
+      const responses = await Promise.all(visibleWorkOrderIds.map((woId) => mesWorkOrderApi.materialTransferStatus(woId)));
       return responses.map((response) => getApiData(response, null)).filter(Boolean);
     }
   );
@@ -290,8 +293,7 @@ export default function MesWorkOrders() {
       return next;
     });
   };
-  const handleMaterialValue = (field, value) =>
-    setMaterialForm((current) => ({ ...current, [field]: value }));
+  const handleMaterialValue = (field, value) => setMaterialForm((current) => ({ ...current, [field]: value }));
 
   const handleSearch = () => {
     setPage(0);
@@ -370,7 +372,11 @@ export default function MesWorkOrders() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={2}
+        sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}
+      >
         <Box>
           <Typography variant="h3">MES 작업 오더</Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
@@ -385,14 +391,24 @@ export default function MesWorkOrders() {
       <MainCard title="검색 조건">
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="생산 지시 번호" value={search.woNo} onChange={(event) => handleSearchValue('woNo', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="생산 지시 번호"
+              value={search.woNo}
+              onChange={(event) => handleSearchValue('woNo', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
             <FormControl fullWidth size="small">
               <InputLabel>공장</InputLabel>
               <Select label="공장" value={search.plantCd} onChange={(event) => handleSearchValue('plantCd', event.target.value)}>
                 <MenuItem value="">전체</MenuItem>
-                {plants.map((plant) => <MenuItem key={plant.plantCd} value={plant.plantCd}>{plant.plantNm}</MenuItem>)}
+                {plants.map((plant) => (
+                  <MenuItem key={plant.plantCd} value={plant.plantCd}>
+                    {plant.plantNm}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -401,7 +417,11 @@ export default function MesWorkOrders() {
               <InputLabel>품목</InputLabel>
               <Select label="품목" value={search.itemCd} onChange={(event) => handleSearchValue('itemCd', event.target.value)}>
                 <MenuItem value="">전체</MenuItem>
-                {items.slice(0, 100).map((item) => <MenuItem key={`${item.plantCd}-${item.itemCd}`} value={item.itemCd}>{item.itemCd} - {item.itemNm}</MenuItem>)}
+                {items.slice(0, 100).map((item) => (
+                  <MenuItem key={`${item.plantCd}-${item.itemCd}`} value={item.itemCd}>
+                    {item.itemCd} - {item.itemNm}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -418,15 +438,35 @@ export default function MesWorkOrders() {
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" type="date" label="From" value={search.woFromDt} onChange={(event) => handleSearchValue('woFromDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              label="From"
+              value={search.woFromDt}
+              onChange={(event) => handleSearchValue('woFromDt', event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" type="date" label="To" value={search.woToDt} onChange={(event) => handleSearchValue('woToDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              label="To"
+              value={search.woToDt}
+              onChange={(event) => handleSearchValue('woToDt', event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
           </Grid>
           <Grid size={12}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-              <Button variant="outlined" startIcon={<ReloadOutlined />} onClick={handleReset}>초기화</Button>
-              <Button variant="contained" startIcon={<SearchOutlined />} onClick={handleSearch}>조회</Button>
+              <Button variant="outlined" startIcon={<ReloadOutlined />} onClick={handleReset}>
+                초기화
+              </Button>
+              <Button variant="contained" startIcon={<SearchOutlined />} onClick={handleSearch}>
+                조회
+              </Button>
             </Stack>
           </Grid>
         </Grid>
@@ -450,7 +490,9 @@ export default function MesWorkOrders() {
             <TableBody>
               {!isLoading && workOrders.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">조회된 작업 오더가 없습니다.</TableCell>
+                  <TableCell colSpan={7} align="center">
+                    조회된 작업 오더가 없습니다.
+                  </TableCell>
                 </TableRow>
               )}
               {visibleWorkOrders.map((order) => {
@@ -462,132 +504,143 @@ export default function MesWorkOrders() {
 
                 return [
                   <TableRow key={`${order.woId}-main`} hover>
-                      <TableCell>
-                        <IconButton
+                    <TableCell>
+                      <IconButton size="small" aria-label="작업오더 상세" onClick={() => setExpandedOrderId(expanded ? null : order.woId)}>
+                        <DownOutlined style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="subtitle2">{order.woNo}</Typography>
+                      <Typography variant="body2" sx={{ mt: 0.25 }}>
+                        {order.itemNm || order.itemCd}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {order.itemCd}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">{order.plantNm || order.plantCd}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {order.woDt}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="subtitle2">{order.woQty}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        양품 {order.goodQty || 0} / 불량 {order.defectQty || 0}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={order.woStatus} size="small" color={getStatusColor(order.woStatus)} variant="light" />
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title={materialView.detail} arrow>
+                        <Chip
+                          label={materialView.label}
                           size="small"
-                          aria-label="작업오더 상세"
-                          onClick={() => setExpandedOrderId(expanded ? null : order.woId)}
+                          color={materialView.color}
+                          variant={materialRequested ? 'light' : 'outlined'}
+                          sx={{ maxWidth: 180, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }}
+                        />
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', rowGap: 0.75 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          disabled={isBusy || materialRequested}
+                          onClick={() => openMaterialDialog(order)}
                         >
-                          <DownOutlined style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                        </IconButton>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2">{order.woNo}</Typography>
-                        <Typography variant="body2" sx={{ mt: 0.25 }}>{order.itemNm || order.itemCd}</Typography>
-                        <Typography variant="caption" color="text.secondary">{order.itemCd}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{order.plantNm || order.plantCd}</Typography>
-                        <Typography variant="caption" color="text.secondary">{order.woDt}</Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="subtitle2">{order.woQty}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          양품 {order.goodQty || 0} / 불량 {order.defectQty || 0}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={order.woStatus} size="small" color={getStatusColor(order.woStatus)} variant="light" />
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title={materialView.detail} arrow>
-                          <Chip
-                            label={materialView.label}
-                            size="small"
-                            color={materialView.color}
-                            variant={materialRequested ? 'light' : 'outlined'}
-                            sx={{ maxWidth: 180, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }}
-                          />
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', rowGap: 0.75 }}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            disabled={isBusy || materialRequested}
-                            onClick={() => openMaterialDialog(order)}
-                          >
-                            자재 요청
-                          </Button>
-                          {canStart(order.woStatus) && (
+                          자재 요청
+                        </Button>
+                        {canStart(order.woStatus) && (
                           <Button
                             size="small"
                             title={materialView.startTitle}
                             disabled={startDisabled}
-                            startIcon={pendingAction === `status-${order.woId}-진행` ? <CircularProgress size={14} color="inherit" /> : undefined}
+                            startIcon={
+                              pendingAction === `status-${order.woId}-진행` ? <CircularProgress size={14} color="inherit" /> : undefined
+                            }
                             onClick={() => handleStatus(order, '진행')}
                           >
                             시작
                           </Button>
                         )}
-                          {canFinish(order.woStatus) && (
+                        {canFinish(order.woStatus) && (
                           <Button
                             size="small"
                             color="success"
                             disabled={isBusy}
-                            startIcon={pendingAction === `status-${order.woId}-완료` ? <CircularProgress size={14} color="inherit" /> : undefined}
+                            startIcon={
+                              pendingAction === `status-${order.woId}-완료` ? <CircularProgress size={14} color="inherit" /> : undefined
+                            }
                             onClick={() => handleStatus(order, '완료')}
                           >
                             완료
                           </Button>
                         )}
-                          {(canStart(order.woStatus) || canFinish(order.woStatus)) && (
+                        {(canStart(order.woStatus) || canFinish(order.woStatus)) && (
                           <Button
                             size="small"
                             color="error"
                             disabled={isBusy}
-                            startIcon={pendingAction === `status-${order.woId}-취소` ? <CircularProgress size={14} color="inherit" /> : undefined}
+                            startIcon={
+                              pendingAction === `status-${order.woId}-취소` ? <CircularProgress size={14} color="inherit" /> : undefined
+                            }
                             onClick={() => handleStatus(order, '취소')}
                           >
                             취소
                           </Button>
                         )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>,
-                    expanded && (
-                      <TableRow key={`${order.woId}-detail`}>
-                        <TableCell />
-                        <TableCell colSpan={6} sx={{ bgcolor: 'grey.50', py: 1.5 }}>
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, md: 3 }}>
-                              <Typography variant="caption" color="text.secondary">생산 LOT</Typography>
-                              <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>{order.lotNo || '-'}</Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 3 }}>
-                              <Typography variant="caption" color="text.secondary">설비</Typography>
-                              <Typography variant="body2">{order.equipmentCd || '-'}</Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 3 }}>
-                              <Typography variant="caption" color="text.secondary">MCS 이동오더</Typography>
-                              <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>{materialStatus?.transferNo || '-'}</Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 3 }}>
-                              <Typography variant="caption" color="text.secondary">자재 이동 설명</Typography>
-                              <Typography variant="body2" color="text.secondary">{materialView.detail}</Typography>
-                            </Grid>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>,
+                  expanded && (
+                    <TableRow key={`${order.woId}-detail`}>
+                      <TableCell />
+                      <TableCell colSpan={6} sx={{ bgcolor: 'grey.50', py: 1.5 }}>
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              생산 LOT
+                            </Typography>
+                            <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                              {order.lotNo || '-'}
+                            </Typography>
                           </Grid>
-                        </TableCell>
-                      </TableRow>
-                    )
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              설비
+                            </Typography>
+                            <Typography variant="body2">{order.equipmentCd || '-'}</Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              MCS 이동오더
+                            </Typography>
+                            <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                              {materialStatus?.transferNo || '-'}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              자재 이동 설명
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {materialView.detail}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </TableCell>
+                    </TableRow>
+                  )
                 ];
               })}
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={workOrders.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setPage(nextPage)}
-          onRowsPerPageChange={(event) => {
-            setRowsPerPage(Number(event.target.value));
-            setPage(0);
-          }}
-        />
+        <TablePager page={page + 1} count={Math.ceil(workOrders.length / rowsPerPage)} onChange={(nextPage) => setPage(nextPage - 1)} />
       </MainCard>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="md">
@@ -599,7 +652,11 @@ export default function MesWorkOrders() {
                 <InputLabel>생산 계획</InputLabel>
                 <Select label="생산 계획" value={form.planId} onChange={(event) => handleFormValue('planId', event.target.value)}>
                   <MenuItem value="">계획 미연결</MenuItem>
-                  {plans.slice(0, 100).map((plan) => <MenuItem key={plan.planId} value={plan.planId}>{plan.planNo} - {plan.itemNm || plan.itemCd}</MenuItem>)}
+                  {plans.slice(0, 100).map((plan) => (
+                    <MenuItem key={plan.planId} value={plan.planId}>
+                      {plan.planNo} - {plan.itemNm || plan.itemCd}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -607,7 +664,11 @@ export default function MesWorkOrders() {
               <FormControl fullWidth size="small" required>
                 <InputLabel>공장</InputLabel>
                 <Select label="공장" value={form.plantCd} onChange={(event) => handleFormValue('plantCd', event.target.value)}>
-                  {plants.map((plant) => <MenuItem key={plant.plantCd} value={plant.plantCd}>{plant.plantNm}</MenuItem>)}
+                  {plants.map((plant) => (
+                    <MenuItem key={plant.plantCd} value={plant.plantCd}>
+                      {plant.plantNm}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -615,24 +676,70 @@ export default function MesWorkOrders() {
               <FormControl fullWidth size="small" required>
                 <InputLabel>품목</InputLabel>
                 <Select label="품목" value={form.itemCd} onChange={(event) => handleFormValue('itemCd', event.target.value)}>
-                  {items.slice(0, 100).map((item) => <MenuItem key={`${item.plantCd}-${item.itemCd}`} value={item.itemCd}>{item.itemCd} - {item.itemNm}</MenuItem>)}
+                  {items.slice(0, 100).map((item) => (
+                    <MenuItem key={`${item.plantCd}-${item.itemCd}`} value={item.itemCd}>
+                      {item.itemCd} - {item.itemNm}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="number" label="지시수량" value={form.woQty} onChange={(event) => handleFormValue('woQty', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="number"
+                label="지시수량"
+                value={form.woQty}
+                onChange={(event) => handleFormValue('woQty', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="date" label="작업일" value={form.woDt} onChange={(event) => handleFormValue('woDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="date"
+                label="작업일"
+                value={form.woDt}
+                onChange={(event) => handleFormValue('woDt', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth size="small" type="number" label="우선순위" value={form.priority} onChange={(event) => handleFormValue('priority', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="우선순위"
+                value={form.priority}
+                onChange={(event) => handleFormValue('priority', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="datetime-local" label="계획 시작" value={form.planStartDtm} onChange={(event) => handleFormValue('planStartDtm', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="datetime-local"
+                label="계획 시작"
+                value={form.planStartDtm}
+                onChange={(event) => handleFormValue('planStartDtm', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="datetime-local" label="계획 종료" value={form.planEndDtm} onChange={(event) => handleFormValue('planEndDtm', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="datetime-local"
+                label="계획 종료"
+                value={form.planEndDtm}
+                onChange={(event) => handleFormValue('planEndDtm', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth size="small" required>
@@ -683,19 +790,42 @@ export default function MesWorkOrders() {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" label="수주번호" value={form.orderNo} onChange={(event) => handleFormValue('orderNo', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                label="수주번호"
+                value={form.orderNo}
+                onChange={(event) => handleFormValue('orderNo', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" type="date" label="납기" value={form.deliveryDt} onChange={(event) => handleFormValue('deliveryDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                size="small"
+                type="date"
+                label="납기"
+                value={form.deliveryDt}
+                onChange={(event) => handleFormValue('deliveryDt', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={12}>
-              <TextField fullWidth multiline minRows={3} label="비고" value={form.woRmk} onChange={(event) => handleFormValue('woRmk', event.target.value)} />
+              <TextField
+                fullWidth
+                multiline
+                minRows={3}
+                label="비고"
+                value={form.woRmk}
+                onChange={(event) => handleFormValue('woRmk', event.target.value)}
+              />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>취소</Button>
-          <Button variant="contained" disabled={!isWorkOrderFormValid} onClick={handleSave}>저장</Button>
+          <Button variant="contained" disabled={!isWorkOrderFormValid} onClick={handleSave}>
+            저장
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -712,20 +842,41 @@ export default function MesWorkOrders() {
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth size="small" required>
                   <InputLabel>요청 품목</InputLabel>
-                  <Select label="요청 품목" value={materialForm.itemCd} onChange={(event) => handleMaterialValue('itemCd', event.target.value)}>
-                    {items.filter((item) => !materialOrder?.plantCd || item.plantCd === materialOrder.plantCd).slice(0, 100).map((item) => (
-                      <MenuItem key={`${item.plantCd}-${item.itemCd}`} value={item.itemCd}>
-                        {item.itemCd} - {item.itemNm}
-                      </MenuItem>
-                    ))}
+                  <Select
+                    label="요청 품목"
+                    value={materialForm.itemCd}
+                    onChange={(event) => handleMaterialValue('itemCd', event.target.value)}
+                  >
+                    {items
+                      .filter((item) => !materialOrder?.plantCd || item.plantCd === materialOrder.plantCd)
+                      .slice(0, 100)
+                      .map((item) => (
+                        <MenuItem key={`${item.plantCd}-${item.itemCd}`} value={item.itemCd}>
+                          {item.itemCd} - {item.itemNm}
+                        </MenuItem>
+                      ))}
                   </Select>
                 </FormControl>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth required size="small" type="number" label="요청 수량" value={materialForm.transferQty} onChange={(event) => handleMaterialValue('transferQty', event.target.value)} />
+                <TextField
+                  fullWidth
+                  required
+                  size="small"
+                  type="number"
+                  label="요청 수량"
+                  value={materialForm.transferQty}
+                  onChange={(event) => handleMaterialValue('transferQty', event.target.value)}
+                />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <TextField fullWidth size="small" label="요청 사유" value={materialForm.requestReason} onChange={(event) => handleMaterialValue('requestReason', event.target.value)} />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="요청 사유"
+                  value={materialForm.requestReason}
+                  onChange={(event) => handleMaterialValue('requestReason', event.target.value)}
+                />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Alert severity="info" variant="outlined">
@@ -748,8 +899,17 @@ export default function MesWorkOrders() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-        {message && <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>{message.text}</Alert>}
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        {message && (
+          <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
+            {message.text}
+          </Alert>
+        )}
       </Snackbar>
     </Stack>
   );

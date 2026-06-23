@@ -24,7 +24,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -62,7 +62,12 @@ export default function McsLocationStock() {
   const [pendingAction, setPendingAction] = useState(null);
 
   const stockParams = useMemo(() => ({ ...search, ...query }), [search, query]);
-  const { data: stockResponse, error: stockError, isLoading, mutate } = useSWR(['mcs-location-stocks', stockParams], () => inventoryApi.stocks(stockParams));
+  const {
+    data: stockResponse,
+    error: stockError,
+    isLoading,
+    mutate
+  } = useSWR(['mcs-location-stocks', stockParams], () => inventoryApi.stocks(stockParams));
   const { data: plantResponse } = useSWR('mcs-reference-plants', () => mcsReferenceApi.plants());
   const { data: warehouseResponse } = useSWR('mcs-reference-warehouses', () => mcsReferenceApi.warehouses({ useYn: 'Y' }));
   const { data: zoneResponse } = useSWR('mcs-zone-options', () => zoneApi.list({ page: 1, size: 1000 }));
@@ -182,17 +187,40 @@ export default function McsLocationStock() {
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="Location 코드" value={search.locationCd} onChange={(event) => handleSearchValue('locationCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="Location 코드"
+              value={search.locationCd}
+              onChange={(event) => handleSearchValue('locationCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="품목 코드" value={search.itemCd} onChange={(event) => handleSearchValue('itemCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="품목 코드"
+              value={search.itemCd}
+              onChange={(event) => handleSearchValue('itemCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="LOT 번호" value={search.lotNo} onChange={(event) => handleSearchValue('lotNo', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="LOT 번호"
+              value={search.lotNo}
+              onChange={(event) => handleSearchValue('lotNo', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControlLabel
-              control={<Checkbox checked={search.excludeZeroStock} onChange={(event) => handleSearchValue('excludeZeroStock', event.target.checked)} />}
+              control={
+                <Checkbox
+                  checked={search.excludeZeroStock}
+                  onChange={(event) => handleSearchValue('excludeZeroStock', event.target.checked)}
+                />
+              }
               label="0 재고 제외"
             />
           </Grid>
@@ -261,14 +289,10 @@ export default function McsLocationStock() {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={page.totalElements}
-          page={Math.max((page.currentPage || 1) - 1, 0)}
-          rowsPerPage={page.size || query.size}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setQuery((current) => ({ ...current, page: nextPage + 1 }))}
-          onRowsPerPageChange={(event) => setQuery({ page: 1, size: Number(event.target.value) })}
+        <TablePager
+          page={page.currentPage || 1}
+          count={page.totalPages ?? Math.ceil((page.totalElements || 0) / (page.size || query.size || 10))}
+          onChange={(nextPage) => setQuery((current) => ({ ...current, page: nextPage }))}
         />
       </MainCard>
 
@@ -278,14 +302,20 @@ export default function McsLocationStock() {
           {adjustTarget && (
             <Stack spacing={2}>
               <Box>
-                <Typography variant="subtitle1">{adjustTarget.locationCd} / {adjustTarget.itemNm || adjustTarget.itemCd}</Typography>
+                <Typography variant="subtitle1">
+                  {adjustTarget.locationCd} / {adjustTarget.itemNm || adjustTarget.itemCd}
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
                   현재고 {adjustTarget.stockQty}, 가용 {adjustTarget.availableQty}
                 </Typography>
               </Box>
               <FormControl fullWidth size="small">
                 <InputLabel>조정 유형</InputLabel>
-                <Select label="조정 유형" value={adjustForm.adjustType} onChange={(event) => setAdjustForm((current) => ({ ...current, adjustType: event.target.value }))}>
+                <Select
+                  label="조정 유형"
+                  value={adjustForm.adjustType}
+                  onChange={(event) => setAdjustForm((current) => ({ ...current, adjustType: event.target.value }))}
+                >
                   <MenuItem value="ADJ_PLUS">재고 증가</MenuItem>
                   <MenuItem value="ADJ_MINUS">재고 감소</MenuItem>
                 </Select>
@@ -322,7 +352,12 @@ export default function McsLocationStock() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
         {message && (
           <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
             {message.text}

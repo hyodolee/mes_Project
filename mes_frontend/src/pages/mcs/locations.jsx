@@ -23,7 +23,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -58,7 +58,12 @@ export default function McsLocations() {
   const [pendingAction, setPendingAction] = useState(null);
 
   const locationParams = useMemo(() => ({ ...search, ...query }), [search, query]);
-  const { data: locationResponse, error: locationError, isLoading, mutate } = useSWR(['mcs-locations', locationParams], () => locationApi.list(locationParams));
+  const {
+    data: locationResponse,
+    error: locationError,
+    isLoading,
+    mutate
+  } = useSWR(['mcs-locations', locationParams], () => locationApi.list(locationParams));
   const { data: plantResponse } = useSWR('mcs-reference-plants', () => mcsReferenceApi.plants());
   const { data: warehouseResponse } = useSWR('mcs-reference-warehouses', () => mcsReferenceApi.warehouses({ useYn: 'Y' }));
   const { data: zoneResponse } = useSWR('mcs-zone-options', () => zoneApi.list({ page: 1, size: 1000 }));
@@ -173,7 +178,8 @@ export default function McsLocations() {
     }
   };
 
-  const getStatusLabel = (location) => location.locationStatusNm || statuses.find((status) => status.comCd === location.locationStatus)?.comNm || location.locationStatus;
+  const getStatusLabel = (location) =>
+    location.locationStatusNm || statuses.find((status) => status.comCd === location.locationStatus)?.comNm || location.locationStatus;
 
   return (
     <Stack spacing={3}>
@@ -255,7 +261,11 @@ export default function McsLocations() {
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>상태</InputLabel>
-              <Select label="상태" value={search.locationStatus} onChange={(event) => handleSearchValue('locationStatus', event.target.value)}>
+              <Select
+                label="상태"
+                value={search.locationStatus}
+                onChange={(event) => handleSearchValue('locationStatus', event.target.value)}
+              >
                 <MenuItem value="">전체</MenuItem>
                 {statuses.map((status) => (
                   <MenuItem key={status.comCd} value={status.comCd}>
@@ -340,7 +350,13 @@ export default function McsLocations() {
                         <Button
                           size="small"
                           color="error"
-                          startIcon={isPending(`delete-location-${location.locationId}`) ? <CircularProgress size={14} color="inherit" /> : <DeleteOutlined />}
+                          startIcon={
+                            isPending(`delete-location-${location.locationId}`) ? (
+                              <CircularProgress size={14} color="inherit" />
+                            ) : (
+                              <DeleteOutlined />
+                            )
+                          }
                           disabled={isBusy}
                           onClick={() => handleDelete(location)}
                         >
@@ -354,14 +370,10 @@ export default function McsLocations() {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={page.totalElements}
-          page={Math.max((page.currentPage || 1) - 1, 0)}
-          rowsPerPage={page.size || query.size}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setQuery((current) => ({ ...current, page: nextPage + 1 }))}
-          onRowsPerPageChange={(event) => setQuery({ page: 1, size: Number(event.target.value) })}
+        <TablePager
+          page={page.currentPage || 1}
+          count={page.totalPages ?? Math.ceil((page.totalElements || 0) / (page.size || query.size || 10))}
+          onChange={(nextPage) => setQuery((current) => ({ ...current, page: nextPage }))}
         />
       </MainCard>
 
@@ -415,7 +427,11 @@ export default function McsLocations() {
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>상태</InputLabel>
-                <Select label="상태" value={form.locationStatus} onChange={(event) => handleFormValue('locationStatus', event.target.value)}>
+                <Select
+                  label="상태"
+                  value={form.locationStatus}
+                  onChange={(event) => handleFormValue('locationStatus', event.target.value)}
+                >
                   {statuses.map((status) => (
                     <MenuItem key={status.comCd} value={status.comCd}>
                       {status.comNm}
@@ -448,7 +464,12 @@ export default function McsLocations() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
         {message && (
           <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
             {message.text}

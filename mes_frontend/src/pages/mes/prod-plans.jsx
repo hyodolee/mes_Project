@@ -21,7 +21,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -69,12 +69,17 @@ export default function MesProdPlans() {
   const [search, setSearch] = useState({ plantCd: '', itemCd: '', planStatus: '', planFromDt: '', planToDt: '' });
   const [query, setQuery] = useState(search);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage] = useState(10);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState(null);
 
-  const { data: planResponse, error: planError, isLoading, mutate } = useSWR(['mes-prod-plans', query], () => mesPlanningApi.prodPlans(query));
+  const {
+    data: planResponse,
+    error: planError,
+    isLoading,
+    mutate
+  } = useSWR(['mes-prod-plans', query], () => mesPlanningApi.prodPlans(query));
   const { data: plantResponse } = useSWR('mes-plants', () => mesMasterApi.plants({ useYn: 'Y' }));
   const { data: itemResponse } = useSWR('mes-items', () => mesMasterApi.items({ useYn: 'Y', itemNm: '' }));
 
@@ -131,7 +136,11 @@ export default function MesProdPlans() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={2}
+        sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}
+      >
         <Box>
           <Typography variant="h3">MES 생산 계획</Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
@@ -146,24 +155,62 @@ export default function MesProdPlans() {
       <MainCard title="검색 조건">
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="공장" value={search.plantCd} onChange={(event) => handleSearchValue('plantCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="공장"
+              value={search.plantCd}
+              onChange={(event) => handleSearchValue('plantCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="품목 코드" value={search.itemCd} onChange={(event) => handleSearchValue('itemCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="품목 코드"
+              value={search.itemCd}
+              onChange={(event) => handleSearchValue('itemCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="상태" value={search.planStatus} onChange={(event) => handleSearchValue('planStatus', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="상태"
+              value={search.planStatus}
+              onChange={(event) => handleSearchValue('planStatus', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" type="date" label="From" value={search.planFromDt} onChange={(event) => handleSearchValue('planFromDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              label="From"
+              value={search.planFromDt}
+              onChange={(event) => handleSearchValue('planFromDt', event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" type="date" label="To" value={search.planToDt} onChange={(event) => handleSearchValue('planToDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              label="To"
+              value={search.planToDt}
+              onChange={(event) => handleSearchValue('planToDt', event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
           </Grid>
           <Grid size={12}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-              <Button variant="outlined" startIcon={<ReloadOutlined />} onClick={handleReset}>초기화</Button>
-              <Button variant="contained" startIcon={<SearchOutlined />} onClick={handleSearch}>조회</Button>
+              <Button variant="outlined" startIcon={<ReloadOutlined />} onClick={handleReset}>
+                초기화
+              </Button>
+              <Button variant="contained" startIcon={<SearchOutlined />} onClick={handleSearch}>
+                조회
+              </Button>
             </Stack>
           </Grid>
         </Grid>
@@ -189,7 +236,9 @@ export default function MesProdPlans() {
             <TableBody>
               {!isLoading && plans.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">조회된 생산 계획이 없습니다.</TableCell>
+                  <TableCell colSpan={9} align="center">
+                    조회된 생산 계획이 없습니다.
+                  </TableCell>
                 </TableRow>
               )}
               {visiblePlans.map((plan) => (
@@ -197,29 +246,24 @@ export default function MesProdPlans() {
                   <TableCell>{plan.planNo}</TableCell>
                   <TableCell>{plan.plantNm || plan.plantCd}</TableCell>
                   <TableCell>{plan.planDt}</TableCell>
-                  <TableCell>{plan.itemNm || plan.itemCd} ({plan.itemCd})</TableCell>
+                  <TableCell>
+                    {plan.itemNm || plan.itemCd} ({plan.itemCd})
+                  </TableCell>
                   <TableCell align="right">{plan.planQty}</TableCell>
                   <TableCell align="right">{plan.resultQty || 0}</TableCell>
-                  <TableCell>{plan.planStartDt || '-'} ~ {plan.planEndDt || '-'}</TableCell>
+                  <TableCell>
+                    {plan.planStartDt || '-'} ~ {plan.planEndDt || '-'}
+                  </TableCell>
                   <TableCell>{plan.deliveryDt || '-'}</TableCell>
-                  <TableCell><Chip label={plan.planStatus} size="small" color={statusColor(plan.planStatus)} variant="light" /></TableCell>
+                  <TableCell>
+                    <Chip label={plan.planStatus} size="small" color={statusColor(plan.planStatus)} variant="light" />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={plans.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setPage(nextPage)}
-          onRowsPerPageChange={(event) => {
-            setRowsPerPage(Number(event.target.value));
-            setPage(0);
-          }}
-        />
+        <TablePager page={page + 1} count={Math.ceil(plans.length / rowsPerPage)} onChange={(nextPage) => setPage(nextPage - 1)} />
       </MainCard>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="md">
@@ -230,64 +274,172 @@ export default function MesProdPlans() {
               <FormControl fullWidth size="small" required>
                 <InputLabel>공장</InputLabel>
                 <Select label="공장" value={form.plantCd} onChange={(event) => handleFormValue('plantCd', event.target.value)}>
-                  {plants.map((plant) => <MenuItem key={plant.plantCd} value={plant.plantCd}>{plant.plantNm}</MenuItem>)}
+                  {plants.map((plant) => (
+                    <MenuItem key={plant.plantCd} value={plant.plantCd}>
+                      {plant.plantNm}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" label="계획번호" value={form.planNo} onChange={(event) => handleFormValue('planNo', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                label="계획번호"
+                value={form.planNo}
+                onChange={(event) => handleFormValue('planNo', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth size="small" required>
                 <InputLabel>품목</InputLabel>
                 <Select label="품목" value={form.itemCd} onChange={(event) => handleFormValue('itemCd', event.target.value)}>
-                  {items.slice(0, 100).map((item) => <MenuItem key={`${item.plantCd}-${item.itemCd}`} value={item.itemCd}>{item.itemCd} - {item.itemNm}</MenuItem>)}
+                  {items.slice(0, 100).map((item) => (
+                    <MenuItem key={`${item.plantCd}-${item.itemCd}`} value={item.itemCd}>
+                      {item.itemCd} - {item.itemNm}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="number" label="계획수량" value={form.planQty} onChange={(event) => handleFormValue('planQty', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="number"
+                label="계획수량"
+                value={form.planQty}
+                onChange={(event) => handleFormValue('planQty', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="date" label="계획일" value={form.planDt} onChange={(event) => handleFormValue('planDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="date"
+                label="계획일"
+                value={form.planDt}
+                onChange={(event) => handleFormValue('planDt', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" label="계획유형" value={form.planType} onChange={(event) => handleFormValue('planType', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                label="계획유형"
+                value={form.planType}
+                onChange={(event) => handleFormValue('planType', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="date" label="시작일" value={form.planStartDt} onChange={(event) => handleFormValue('planStartDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="date"
+                label="시작일"
+                value={form.planStartDt}
+                onChange={(event) => handleFormValue('planStartDt', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="date" label="종료일" value={form.planEndDt} onChange={(event) => handleFormValue('planEndDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="date"
+                label="종료일"
+                value={form.planEndDt}
+                onChange={(event) => handleFormValue('planEndDt', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" type="number" label="우선순위" value={form.priority} onChange={(event) => handleFormValue('priority', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="우선순위"
+                value={form.priority}
+                onChange={(event) => handleFormValue('priority', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" label="수주번호" value={form.orderNo} onChange={(event) => handleFormValue('orderNo', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                label="수주번호"
+                value={form.orderNo}
+                onChange={(event) => handleFormValue('orderNo', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" type="date" label="납기" value={form.deliveryDt} onChange={(event) => handleFormValue('deliveryDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                size="small"
+                type="date"
+                label="납기"
+                value={form.deliveryDt}
+                onChange={(event) => handleFormValue('deliveryDt', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth size="small" label="고객코드" value={form.customerCd} onChange={(event) => handleFormValue('customerCd', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                label="고객코드"
+                value={form.customerCd}
+                onChange={(event) => handleFormValue('customerCd', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth size="small" label="고객명" value={form.customerNm} onChange={(event) => handleFormValue('customerNm', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                label="고객명"
+                value={form.customerNm}
+                onChange={(event) => handleFormValue('customerNm', event.target.value)}
+              />
             </Grid>
             <Grid size={12}>
-              <TextField fullWidth multiline minRows={3} label="비고" value={form.planRmk} onChange={(event) => handleFormValue('planRmk', event.target.value)} />
+              <TextField
+                fullWidth
+                multiline
+                minRows={3}
+                label="비고"
+                value={form.planRmk}
+                onChange={(event) => handleFormValue('planRmk', event.target.value)}
+              />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>취소</Button>
-          <Button variant="contained" onClick={handleSave}>저장</Button>
+          <Button variant="contained" onClick={handleSave}>
+            저장
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-        {message && <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>{message.text}</Alert>}
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        {message && (
+          <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
+            {message.text}
+          </Alert>
+        )}
       </Snackbar>
     </Stack>
   );

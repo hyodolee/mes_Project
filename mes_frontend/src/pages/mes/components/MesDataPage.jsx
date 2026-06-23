@@ -16,7 +16,6 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -24,6 +23,7 @@ import Typography from '@mui/material/Typography';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 
 import MainCard from 'components/MainCard';
+import TablePager from 'components/TablePager';
 
 function getApiData(response, fallback) {
   return response?.data ?? fallback;
@@ -56,13 +56,24 @@ function matchesSearch(row, query) {
   });
 }
 
-export default function MesDataPage({ title, description, cardTitle = '목록', swrKey, fetcher, initialSearch, filters, columns, getRowId, renderActions }) {
+export default function MesDataPage({
+  title,
+  description,
+  cardTitle = '목록',
+  swrKey,
+  fetcher,
+  initialSearch,
+  filters,
+  columns,
+  getRowId,
+  renderActions
+}) {
   const [urlSearchParams] = useSearchParams();
   const initialSearchFromUrl = useMemo(() => makeInitialSearch(initialSearch, urlSearchParams), [initialSearch, urlSearchParams]);
   const [search, setSearch] = useState(initialSearchFromUrl);
   const [query, setQuery] = useState(initialSearchFromUrl);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage] = useState(10);
 
   const { data, error, isLoading, mutate } = useSWR([swrKey, query], () => fetcher(query));
   const rawRows = getApiData(data, []);
@@ -90,7 +101,11 @@ export default function MesDataPage({ title, description, cardTitle = '목록', 
 
   return (
     <Stack spacing={3}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={2}
+        sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}
+      >
         <Box>
           <Typography variant="h3">{title}</Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
@@ -107,7 +122,11 @@ export default function MesDataPage({ title, description, cardTitle = '목록', 
               {filter.type === 'select' ? (
                 <FormControl fullWidth size="small">
                   <InputLabel>{filter.label}</InputLabel>
-                  <Select label={filter.label} value={search[filter.field]} onChange={(event) => handleValue(filter.field, event.target.value)}>
+                  <Select
+                    label={filter.label}
+                    value={search[filter.field]}
+                    onChange={(event) => handleValue(filter.field, event.target.value)}
+                  >
                     <MenuItem value="">전체</MenuItem>
                     {(filter.options || []).map((option) => (
                       <MenuItem key={option.value} value={option.value}>
@@ -175,18 +194,7 @@ export default function MesDataPage({ title, description, cardTitle = '목록', 
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={rows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setPage(nextPage)}
-          onRowsPerPageChange={(event) => {
-            setRowsPerPage(Number(event.target.value));
-            setPage(0);
-          }}
-        />
+        <TablePager page={page + 1} count={Math.ceil(rows.length / rowsPerPage)} onChange={(nextPage) => setPage(nextPage - 1)} />
       </MainCard>
     </Stack>
   );

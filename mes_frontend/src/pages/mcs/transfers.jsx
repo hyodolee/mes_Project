@@ -24,7 +24,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -133,7 +133,12 @@ export default function McsTransfers() {
   const [pendingAction, setPendingAction] = useState(null);
 
   const transferParams = useMemo(() => ({ ...search, ...query }), [search, query]);
-  const { data: transferResponse, error: transferError, isLoading, mutate } = useSWR(['mcs-transfers', transferParams], () => transferApi.list(transferParams));
+  const {
+    data: transferResponse,
+    error: transferError,
+    isLoading,
+    mutate
+  } = useSWR(['mcs-transfers', transferParams], () => transferApi.list(transferParams));
   const { data: plantResponse } = useSWR('mcs-reference-plants', () => mcsReferenceApi.plants());
   const { data: statusResponse } = useSWR('mcs-reference-transfer-statuses', () => mcsReferenceApi.codes('MCS_TF_STATUS'));
   const { data: locationResponse } = useSWR('mcs-location-options', () => locationApi.list({ page: 1, size: 1000 }));
@@ -144,12 +149,16 @@ export default function McsTransfers() {
     data: transferItemResponse,
     error: transferItemError,
     mutate: mutateTransferItems
-  } = useSWR(selectedTransfer ? ['mcs-transfer-items', selectedTransfer.transferId] : null, () => transferApi.items(selectedTransfer.transferId));
+  } = useSWR(selectedTransfer ? ['mcs-transfer-items', selectedTransfer.transferId] : null, () =>
+    transferApi.items(selectedTransfer.transferId)
+  );
   const {
     data: transferRouteResponse,
     error: transferRouteError,
     mutate: mutateTransferRoute
-  } = useSWR(selectedTransfer ? ['mcs-transfer-route', selectedTransfer.transferId] : null, () => routeApi.transferRoute(selectedTransfer.transferId));
+  } = useSWR(selectedTransfer ? ['mcs-transfer-route', selectedTransfer.transferId] : null, () =>
+    routeApi.transferRoute(selectedTransfer.transferId)
+  );
   const { data: plcEventResponse, error: plcEventError } = useSWR(
     selectedTransfer ? ['mcs-transfer-plc-events', selectedTransfer.transferId] : null,
     () => plcEventApi.list({ targetType: 'TRANSFER', targetId: selectedTransfer.transferId, page: 1, size: 5 })
@@ -337,7 +346,9 @@ export default function McsTransfers() {
   };
 
   const getStatusLabel = (transfer) =>
-    transfer.transferStatusNm || transferStatuses.find((status) => status.comCd === transfer.transferStatus)?.comNm || transfer.transferStatus;
+    transfer.transferStatusNm ||
+    transferStatuses.find((status) => status.comCd === transfer.transferStatus)?.comNm ||
+    transfer.transferStatus;
 
   const getStatusColor = (status) => {
     if (status === 'COMPLETED') return 'success';
@@ -400,7 +411,11 @@ export default function McsTransfers() {
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>상태</InputLabel>
-              <Select label="상태" value={search.transferStatus} onChange={(event) => handleSearchValue('transferStatus', event.target.value)}>
+              <Select
+                label="상태"
+                value={search.transferStatus}
+                onChange={(event) => handleSearchValue('transferStatus', event.target.value)}
+              >
                 <MenuItem value="">전체</MenuItem>
                 {transferStatuses.map((status) => (
                   <MenuItem key={status.comCd} value={status.comCd}>
@@ -411,7 +426,13 @@ export default function McsTransfers() {
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="이동번호" value={search.transferNo} onChange={(event) => handleSearchValue('transferNo', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="이동번호"
+              value={search.transferNo}
+              onChange={(event) => handleSearchValue('transferNo', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
@@ -465,7 +486,12 @@ export default function McsTransfers() {
                       <TableCell>{transfer.toLocationCd}</TableCell>
                       <TableCell>{transfer.transferReason || '-'}</TableCell>
                       <TableCell>
-                        <Chip label={getStatusLabel(transfer)} size="small" color={getStatusColor(transfer.transferStatus)} variant="light" />
+                        <Chip
+                          label={getStatusLabel(transfer)}
+                          size="small"
+                          color={getStatusColor(transfer.transferStatus)}
+                          variant="light"
+                        />
                       </TableCell>
                       <TableCell align="right" onClick={(event) => event.stopPropagation()}>
                         <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
@@ -483,12 +509,18 @@ export default function McsTransfers() {
                           {isMesRequestedTransfer(transfer) &&
                             transfer.transferStatus !== 'COMPLETED' &&
                             transfer.transferStatus !== 'CANCELLED' &&
-                            transfer.transferStatus !== 'FAILED' && <Chip label="PLC 처리 대기" size="small" color="warning" variant="light" />}
+                            transfer.transferStatus !== 'FAILED' && (
+                              <Chip label="PLC 처리 대기" size="small" color="warning" variant="light" />
+                            )}
                           {transfer.transferStatus === 'FAILED' && (
                             <Button
                               size="small"
                               color="error"
-                              startIcon={isPending(`status-${transfer.transferId}-CANCELLED`) ? <CircularProgress size={14} color="inherit" /> : undefined}
+                              startIcon={
+                                isPending(`status-${transfer.transferId}-CANCELLED`) ? (
+                                  <CircularProgress size={14} color="inherit" />
+                                ) : undefined
+                              }
                               disabled={isBusy}
                               onClick={() => handleStatus(transfer, 'CANCELLED')}
                             >
@@ -498,7 +530,13 @@ export default function McsTransfers() {
                           {!isMesRequestedTransfer(transfer) && transfer.transferStatus === 'REQUESTED' && (
                             <Button
                               size="small"
-                              startIcon={isPending(`status-${transfer.transferId}-IN_PROGRESS`) ? <CircularProgress size={14} color="inherit" /> : <SwapOutlined />}
+                              startIcon={
+                                isPending(`status-${transfer.transferId}-IN_PROGRESS`) ? (
+                                  <CircularProgress size={14} color="inherit" />
+                                ) : (
+                                  <SwapOutlined />
+                                )
+                              }
                               disabled={isBusy}
                               onClick={() => handleStatus(transfer, 'IN_PROGRESS')}
                             >
@@ -509,7 +547,11 @@ export default function McsTransfers() {
                             <Button
                               size="small"
                               color="success"
-                              startIcon={isPending(`status-${transfer.transferId}-COMPLETED`) ? <CircularProgress size={14} color="inherit" /> : undefined}
+                              startIcon={
+                                isPending(`status-${transfer.transferId}-COMPLETED`) ? (
+                                  <CircularProgress size={14} color="inherit" />
+                                ) : undefined
+                              }
                               disabled={isBusy}
                               onClick={() => handleStatus(transfer, 'COMPLETED')}
                             >
@@ -519,7 +561,13 @@ export default function McsTransfers() {
                           <Button
                             size="small"
                             color="error"
-                            startIcon={isPending(`delete-${transfer.transferId}`) ? <CircularProgress size={14} color="inherit" /> : <DeleteOutlined />}
+                            startIcon={
+                              isPending(`delete-${transfer.transferId}`) ? (
+                                <CircularProgress size={14} color="inherit" />
+                              ) : (
+                                <DeleteOutlined />
+                              )
+                            }
                             disabled={isBusy || transfer.transferStatus !== 'REQUESTED'}
                             onClick={() => handleDelete(transfer)}
                           >
@@ -532,14 +580,10 @@ export default function McsTransfers() {
                 </TableBody>
               </Table>
             </TableContainer>
-            <TablePagination
-              component="div"
-              count={page.totalElements}
-              page={Math.max((page.currentPage || 1) - 1, 0)}
-              rowsPerPage={page.size || query.size}
-              rowsPerPageOptions={[10, 20, 50]}
-              onPageChange={(_, nextPage) => setQuery((current) => ({ ...current, page: nextPage + 1 }))}
-              onRowsPerPageChange={(event) => setQuery({ page: 1, size: Number(event.target.value) })}
+            <TablePager
+              page={page.currentPage || 1}
+              count={page.totalPages ?? Math.ceil((page.totalElements || 0) / (page.size || query.size || 10))}
+              onChange={(nextPage) => setQuery((current) => ({ ...current, page: nextPage }))}
             />
           </MainCard>
         </Grid>
@@ -622,7 +666,9 @@ export default function McsTransfers() {
                       <Button
                         size="small"
                         color="error"
-                        startIcon={isPending(`remove-item-${item.transferItemId}`) ? <CircularProgress size={14} color="inherit" /> : undefined}
+                        startIcon={
+                          isPending(`remove-item-${item.transferItemId}`) ? <CircularProgress size={14} color="inherit" /> : undefined
+                        }
                         disabled={isBusy || !selectedCanEdit}
                         onClick={() => handleRemoveItem(item)}
                       >
@@ -647,7 +693,12 @@ export default function McsTransfers() {
                       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                         <Typography variant="subtitle2">{event.eventType}</Typography>
                         <Chip label={event.eventStatus} size="small" color={getEventStatusColor(event.eventStatus)} variant="light" />
-                        <Chip label={getProcessResultLabel(event.processResult)} size="small" color={getProcessResultColor(event.processResult)} variant="outlined" />
+                        <Chip
+                          label={getProcessResultLabel(event.processResult)}
+                          size="small"
+                          color={getProcessResultColor(event.processResult)}
+                          variant="outlined"
+                        />
                       </Stack>
                       <Typography variant="caption" color="text.secondary">
                         {event.eventDtm} / {event.equipmentCd || '-'} / {event.locationCd || '-'}
@@ -666,7 +717,11 @@ export default function McsTransfers() {
                 <Stack spacing={1.5}>
                   <FormControl fullWidth size="small" disabled={!selectedCanEdit}>
                     <InputLabel>품목</InputLabel>
-                    <Select label="품목" value={itemForm.itemCd} onChange={(event) => setItemForm((current) => ({ ...current, itemCd: event.target.value }))}>
+                    <Select
+                      label="품목"
+                      value={itemForm.itemCd}
+                      onChange={(event) => setItemForm((current) => ({ ...current, itemCd: event.target.value }))}
+                    >
                       {items.map((item) => (
                         <MenuItem key={item.itemCd} value={item.itemCd}>
                           {item.itemCd} - {item.itemNm}
@@ -736,7 +791,11 @@ export default function McsTransfers() {
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth size="small" required>
                 <InputLabel>출발 Location</InputLabel>
-                <Select label="출발 Location" value={form.fromLocationId} onChange={(event) => handleFormValue('fromLocationId', event.target.value)}>
+                <Select
+                  label="출발 Location"
+                  value={form.fromLocationId}
+                  onChange={(event) => handleFormValue('fromLocationId', event.target.value)}
+                >
                   {filteredLocations.map((location) => (
                     <MenuItem key={location.locationId} value={location.locationId}>
                       {location.locationCd} - {location.locationNm}
@@ -748,7 +807,11 @@ export default function McsTransfers() {
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth size="small" required>
                 <InputLabel>도착 Location</InputLabel>
-                <Select label="도착 Location" value={form.toLocationId} onChange={(event) => handleFormValue('toLocationId', event.target.value)}>
+                <Select
+                  label="도착 Location"
+                  value={form.toLocationId}
+                  onChange={(event) => handleFormValue('toLocationId', event.target.value)}
+                >
                   {filteredLocations.map((location) => (
                     <MenuItem key={location.locationId} value={location.locationId}>
                       {location.locationCd} - {location.locationNm}
@@ -760,7 +823,11 @@ export default function McsTransfers() {
             <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth size="small" required>
                 <InputLabel>경로 계산 기준</InputLabel>
-                <Select label="경로 계산 기준" value={form.optimizeRule} onChange={(event) => handleFormValue('optimizeRule', event.target.value)}>
+                <Select
+                  label="경로 계산 기준"
+                  value={form.optimizeRule}
+                  onChange={(event) => handleFormValue('optimizeRule', event.target.value)}
+                >
                   {optimizeRules.map((rule) => (
                     <MenuItem key={rule.value} value={rule.value}>
                       {rule.label}
@@ -794,7 +861,12 @@ export default function McsTransfers() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
         {message && (
           <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
             {message.text}

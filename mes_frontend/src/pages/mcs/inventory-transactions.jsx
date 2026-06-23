@@ -16,7 +16,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -42,7 +42,11 @@ export default function McsInventoryTransactions() {
   const [query, setQuery] = useState({ page: 1, size: 10 });
 
   const transParams = useMemo(() => ({ ...search, ...query }), [search, query]);
-  const { data: transResponse, error: transError, isLoading } = useSWR(['mcs-inventory-transactions', transParams], () => inventoryApi.transactions(transParams));
+  const {
+    data: transResponse,
+    error: transError,
+    isLoading
+  } = useSWR(['mcs-inventory-transactions', transParams], () => inventoryApi.transactions(transParams));
   const { data: plantResponse } = useSWR('mcs-reference-plants', () => mcsReferenceApi.plants());
   const { data: typeResponse } = useSWR('mcs-reference-inventory-transaction-types', () => mcsReferenceApi.codes('MCS_INV_TX_TYPE'));
 
@@ -63,7 +67,8 @@ export default function McsInventoryTransactions() {
     setQuery({ page: 1, size: 10 });
   };
 
-  const getTransLabel = (history) => history.transTypeNm || transTypes.find((type) => type.comCd === history.transType)?.comNm || history.transType;
+  const getTransLabel = (history) =>
+    history.transTypeNm || transTypes.find((type) => type.comCd === history.transType)?.comNm || history.transType;
 
   return (
     <Stack spacing={3}>
@@ -125,10 +130,22 @@ export default function McsInventoryTransactions() {
             />
           </Grid>
           <Grid size={{ xs: 12, md: 2.4 }}>
-            <TextField fullWidth size="small" label="품목 코드" value={search.itemCd} onChange={(event) => handleSearchValue('itemCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="품목 코드"
+              value={search.itemCd}
+              onChange={(event) => handleSearchValue('itemCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="Location 코드" value={search.locationCd} onChange={(event) => handleSearchValue('locationCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="Location 코드"
+              value={search.locationCd}
+              onChange={(event) => handleSearchValue('locationCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 9 }}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
@@ -195,14 +212,10 @@ export default function McsInventoryTransactions() {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={page.totalElements}
-          page={Math.max((page.currentPage || 1) - 1, 0)}
-          rowsPerPage={page.size || query.size}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setQuery((current) => ({ ...current, page: nextPage + 1 }))}
-          onRowsPerPageChange={(event) => setQuery({ page: 1, size: Number(event.target.value) })}
+        <TablePager
+          page={page.currentPage || 1}
+          count={page.totalPages ?? Math.ceil((page.totalElements || 0) / (page.size || query.size || 10))}
+          onChange={(nextPage) => setQuery((current) => ({ ...current, page: nextPage }))}
         />
       </MainCard>
     </Stack>

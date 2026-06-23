@@ -21,7 +21,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -72,12 +72,17 @@ export default function MesWorkResults() {
   const [search, setSearch] = useState({ plantCd: '', itemCd: '', resultFromDt: '', resultToDt: '' });
   const [query, setQuery] = useState(search);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage] = useState(10);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState(null);
 
-  const { data: resultResponse, error: resultError, isLoading, mutate } = useSWR(['mes-work-results', query], () => mesProductionApi.workResults(query));
+  const {
+    data: resultResponse,
+    error: resultError,
+    isLoading,
+    mutate
+  } = useSWR(['mes-work-results', query], () => mesProductionApi.workResults(query));
   const { data: orderResponse } = useSWR('mes-work-order-options', () => mesWorkOrderApi.list({}));
 
   const results = getApiData(resultResponse, []);
@@ -156,7 +161,11 @@ export default function MesWorkResults() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={2}
+        sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}
+      >
         <Box>
           <Typography variant="h3">MES 생산 실적</Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
@@ -171,21 +180,53 @@ export default function MesWorkResults() {
       <MainCard title="검색 조건">
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="공장" value={search.plantCd} onChange={(event) => handleSearchValue('plantCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="공장"
+              value={search.plantCd}
+              onChange={(event) => handleSearchValue('plantCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="품목 코드" value={search.itemCd} onChange={(event) => handleSearchValue('itemCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="품목 코드"
+              value={search.itemCd}
+              onChange={(event) => handleSearchValue('itemCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" type="date" label="From" value={search.resultFromDt} onChange={(event) => handleSearchValue('resultFromDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              label="From"
+              value={search.resultFromDt}
+              onChange={(event) => handleSearchValue('resultFromDt', event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" type="date" label="To" value={search.resultToDt} onChange={(event) => handleSearchValue('resultToDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              label="To"
+              value={search.resultToDt}
+              onChange={(event) => handleSearchValue('resultToDt', event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
           </Grid>
           <Grid size={12}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-              <Button variant="outlined" startIcon={<ReloadOutlined />} onClick={handleReset}>초기화</Button>
-              <Button variant="contained" startIcon={<SearchOutlined />} onClick={handleSearch}>조회</Button>
+              <Button variant="outlined" startIcon={<ReloadOutlined />} onClick={handleReset}>
+                초기화
+              </Button>
+              <Button variant="contained" startIcon={<SearchOutlined />} onClick={handleSearch}>
+                조회
+              </Button>
             </Stack>
           </Grid>
         </Grid>
@@ -212,7 +253,9 @@ export default function MesWorkResults() {
             <TableBody>
               {!isLoading && results.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center">조회된 생산 실적이 없습니다.</TableCell>
+                  <TableCell colSpan={10} align="center">
+                    조회된 생산 실적이 없습니다.
+                  </TableCell>
                 </TableRow>
               )}
               {visibleResults.map((result) => (
@@ -226,24 +269,15 @@ export default function MesWorkResults() {
                   <TableCell align="right">{result.goodQty}</TableCell>
                   <TableCell align="right">{result.defectQty || 0}</TableCell>
                   <TableCell>{result.equipmentCd || '-'}</TableCell>
-                  <TableCell><Chip label={result.resultStatus || '-'} size="small" color="primary" variant="light" /></TableCell>
+                  <TableCell>
+                    <Chip label={result.resultStatus || '-'} size="small" color="primary" variant="light" />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={results.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setPage(nextPage)}
-          onRowsPerPageChange={(event) => {
-            setRowsPerPage(Number(event.target.value));
-            setPage(0);
-          }}
-        />
+        <TablePager page={page + 1} count={Math.ceil(results.length / rowsPerPage)} onChange={(nextPage) => setPage(nextPage - 1)} />
       </MainCard>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="md">
@@ -263,69 +297,210 @@ export default function MesWorkResults() {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" label="공장" value={form.plantCd} onChange={(event) => handleFormValue('plantCd', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                label="공장"
+                value={form.plantCd}
+                onChange={(event) => handleFormValue('plantCd', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" label="품목 코드" value={form.itemCd} onChange={(event) => handleFormValue('itemCd', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                label="품목 코드"
+                value={form.itemCd}
+                onChange={(event) => handleFormValue('itemCd', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="date" label="실적일" value={form.resultDt} onChange={(event) => handleFormValue('resultDt', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="date"
+                label="실적일"
+                value={form.resultDt}
+                onChange={(event) => handleFormValue('resultDt', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth required size="small" type="number" label="생산 수량" value={form.prodQty} onChange={(event) => handleFormValue('prodQty', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="number"
+                label="생산 수량"
+                value={form.prodQty}
+                onChange={(event) => handleFormValue('prodQty', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth required size="small" type="number" label="양품 수량" value={form.goodQty} onChange={(event) => handleFormValue('goodQty', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="number"
+                label="양품 수량"
+                value={form.goodQty}
+                onChange={(event) => handleFormValue('goodQty', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" type="number" label="불량 수량" value={form.defectQty} onChange={(event) => handleFormValue('defectQty', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="불량 수량"
+                value={form.defectQty}
+                onChange={(event) => handleFormValue('defectQty', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth required size="small" label="조" value={form.shift} onChange={(event) => handleFormValue('shift', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                label="조"
+                value={form.shift}
+                onChange={(event) => handleFormValue('shift', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth required size="small" label="작업자" value={form.workerId} onChange={(event) => handleFormValue('workerId', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                label="작업자"
+                value={form.workerId}
+                onChange={(event) => handleFormValue('workerId', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth required size="small" label="작업장" value={form.workcenterCd} onChange={(event) => handleFormValue('workcenterCd', event.target.value)} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                label="작업장"
+                value={form.workcenterCd}
+                onChange={(event) => handleFormValue('workcenterCd', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" label="설비" value={form.equipmentCd} onChange={(event) => handleFormValue('equipmentCd', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                label="설비"
+                value={form.equipmentCd}
+                onChange={(event) => handleFormValue('equipmentCd', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" label="LOT 번호" value={form.lotNo} onChange={(event) => handleFormValue('lotNo', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                label="LOT 번호"
+                value={form.lotNo}
+                onChange={(event) => handleFormValue('lotNo', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" label="상태" value={form.resultStatus} onChange={(event) => handleFormValue('resultStatus', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                label="상태"
+                value={form.resultStatus}
+                onChange={(event) => handleFormValue('resultStatus', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth required size="small" type="datetime-local" label="시작" value={form.startDtm} onChange={(event) => handleFormValue('startDtm', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                required
+                size="small"
+                type="datetime-local"
+                label="시작"
+                value={form.startDtm}
+                onChange={(event) => handleFormValue('startDtm', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth size="small" type="datetime-local" label="종료" value={form.endDtm} onChange={(event) => handleFormValue('endDtm', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                size="small"
+                type="datetime-local"
+                label="종료"
+                value={form.endDtm}
+                onChange={(event) => handleFormValue('endDtm', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" type="number" label="작업 시간" value={form.workTime} onChange={(event) => handleFormValue('workTime', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="작업 시간"
+                value={form.workTime}
+                onChange={(event) => handleFormValue('workTime', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" type="number" label="준비 시간" value={form.setupTime} onChange={(event) => handleFormValue('setupTime', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="준비 시간"
+                value={form.setupTime}
+                onChange={(event) => handleFormValue('setupTime', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" type="number" label="비가동 시간" value={form.downTime} onChange={(event) => handleFormValue('downTime', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="비가동 시간"
+                value={form.downTime}
+                onChange={(event) => handleFormValue('downTime', event.target.value)}
+              />
             </Grid>
             <Grid size={12}>
-              <TextField fullWidth multiline minRows={3} label="비고" value={form.resultRmk} onChange={(event) => handleFormValue('resultRmk', event.target.value)} />
+              <TextField
+                fullWidth
+                multiline
+                minRows={3}
+                label="비고"
+                value={form.resultRmk}
+                onChange={(event) => handleFormValue('resultRmk', event.target.value)}
+              />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>취소</Button>
-          <Button variant="contained" onClick={handleSave}>저장</Button>
+          <Button variant="contained" onClick={handleSave}>
+            저장
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-        {message && <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>{message.text}</Alert>}
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        {message && (
+          <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
+            {message.text}
+          </Alert>
+        )}
       </Snackbar>
     </Stack>
   );

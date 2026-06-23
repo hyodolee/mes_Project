@@ -22,7 +22,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -59,7 +59,12 @@ export default function McsOutbounds() {
   const [pendingAction, setPendingAction] = useState(null);
 
   const outboundParams = useMemo(() => ({ ...search, ...query }), [search, query]);
-  const { data: outboundResponse, error: outboundError, isLoading, mutate } = useSWR(['mcs-outbounds', outboundParams], () => outboundApi.list(outboundParams));
+  const {
+    data: outboundResponse,
+    error: outboundError,
+    isLoading,
+    mutate
+  } = useSWR(['mcs-outbounds', outboundParams], () => outboundApi.list(outboundParams));
   const { data: plantResponse } = useSWR('mcs-reference-plants', () => mcsReferenceApi.plants());
   const { data: warehouseResponse } = useSWR('mcs-reference-warehouses', () => mcsReferenceApi.warehouses({ useYn: 'Y' }));
   const { data: vendorResponse } = useSWR('mcs-reference-vendors', () => mcsReferenceApi.vendors({ useYn: 'Y' }));
@@ -182,7 +187,8 @@ export default function McsOutbounds() {
     }
   };
 
-  const getStatusLabel = (outbound) => outbound.outboundStatusNm || statuses.find((status) => status.comCd === outbound.outboundStatus)?.comNm || outbound.outboundStatus;
+  const getStatusLabel = (outbound) =>
+    outbound.outboundStatusNm || statuses.find((status) => status.comCd === outbound.outboundStatus)?.comNm || outbound.outboundStatus;
 
   return (
     <Stack spacing={3}>
@@ -233,7 +239,11 @@ export default function McsOutbounds() {
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>상태</InputLabel>
-              <Select label="상태" value={search.outboundStatus} onChange={(event) => handleSearchValue('outboundStatus', event.target.value)}>
+              <Select
+                label="상태"
+                value={search.outboundStatus}
+                onChange={(event) => handleSearchValue('outboundStatus', event.target.value)}
+              >
                 <MenuItem value="">전체</MenuItem>
                 {statuses.map((status) => (
                   <MenuItem key={status.comCd} value={status.comCd}>
@@ -244,7 +254,13 @@ export default function McsOutbounds() {
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="출고번호" value={search.outboundNo} onChange={(event) => handleSearchValue('outboundNo', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="출고번호"
+              value={search.outboundNo}
+              onChange={(event) => handleSearchValue('outboundNo', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
@@ -316,17 +332,31 @@ export default function McsOutbounds() {
                   <TableCell>{outbound.requestDt || '-'}</TableCell>
                   <TableCell>{outbound.shippedDt || '-'}</TableCell>
                   <TableCell>
-                    <Chip label={getStatusLabel(outbound)} size="small" color={outbound.outboundStatus === 'SHIPPED' ? 'success' : 'primary'} variant="light" />
+                    <Chip
+                      label={getStatusLabel(outbound)}
+                      size="small"
+                      color={outbound.outboundStatus === 'SHIPPED' ? 'success' : 'primary'}
+                      variant="light"
+                    />
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                      <Button size="small" startIcon={<EditOutlined />} disabled={isBusy || outbound.outboundStatus !== 'REQUESTED'} onClick={() => openEditDialog(outbound)}>
+                      <Button
+                        size="small"
+                        startIcon={<EditOutlined />}
+                        disabled={isBusy || outbound.outboundStatus !== 'REQUESTED'}
+                        onClick={() => openEditDialog(outbound)}
+                      >
                         수정
                       </Button>
                       {outbound.outboundStatus !== 'SHIPPED' && (
                         <Button
                           size="small"
-                          startIcon={isPending(`status-outbound-${outbound.outboundId}-SHIPPED`) ? <CircularProgress size={14} color="inherit" /> : undefined}
+                          startIcon={
+                            isPending(`status-outbound-${outbound.outboundId}-SHIPPED`) ? (
+                              <CircularProgress size={14} color="inherit" />
+                            ) : undefined
+                          }
                           disabled={isBusy}
                           onClick={() => handleStatus(outbound, 'SHIPPED')}
                         >
@@ -336,7 +366,13 @@ export default function McsOutbounds() {
                       <Button
                         size="small"
                         color="error"
-                        startIcon={isPending(`delete-outbound-${outbound.outboundId}`) ? <CircularProgress size={14} color="inherit" /> : <DeleteOutlined />}
+                        startIcon={
+                          isPending(`delete-outbound-${outbound.outboundId}`) ? (
+                            <CircularProgress size={14} color="inherit" />
+                          ) : (
+                            <DeleteOutlined />
+                          )
+                        }
                         disabled={isBusy || outbound.outboundStatus !== 'REQUESTED'}
                         onClick={() => handleDelete(outbound)}
                       >
@@ -349,14 +385,10 @@ export default function McsOutbounds() {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={page.totalElements}
-          page={Math.max((page.currentPage || 1) - 1, 0)}
-          rowsPerPage={page.size || query.size}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setQuery((current) => ({ ...current, page: nextPage + 1 }))}
-          onRowsPerPageChange={(event) => setQuery({ page: 1, size: Number(event.target.value) })}
+        <TablePager
+          page={page.currentPage || 1}
+          count={page.totalPages ?? Math.ceil((page.totalElements || 0) / (page.size || query.size || 10))}
+          onChange={(nextPage) => setQuery((current) => ({ ...current, page: nextPage }))}
         />
       </MainCard>
 
@@ -425,7 +457,13 @@ export default function McsOutbounds() {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth size="small" label="목적지" value={form.destination} onChange={(event) => handleFormValue('destination', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                label="목적지"
+                value={form.destination}
+                onChange={(event) => handleFormValue('destination', event.target.value)}
+              />
             </Grid>
             <Grid size={12}>
               <TextField
@@ -452,7 +490,12 @@ export default function McsOutbounds() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
         {message && (
           <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
             {message.text}

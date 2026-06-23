@@ -22,7 +22,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -202,10 +202,22 @@ export default function McsZones() {
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="Zone 코드" value={search.zoneCd} onChange={(event) => handleSearchValue('zoneCd', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="Zone 코드"
+              value={search.zoneCd}
+              onChange={(event) => handleSearchValue('zoneCd', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="Zone 명" value={search.zoneNm} onChange={(event) => handleSearchValue('zoneNm', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="Zone 명"
+              value={search.zoneNm}
+              onChange={(event) => handleSearchValue('zoneNm', event.target.value)}
+            />
           </Grid>
           <Grid size={12}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
@@ -253,7 +265,12 @@ export default function McsZones() {
                   <TableCell>{zone.zoneTypeNm || zone.zoneType}</TableCell>
                   <TableCell align="right">{zone.sortSeq}</TableCell>
                   <TableCell>
-                    <Chip label={zone.useYn === 'Y' ? '사용' : '미사용'} size="small" color={zone.useYn === 'Y' ? 'success' : 'default'} variant="light" />
+                    <Chip
+                      label={zone.useYn === 'Y' ? '사용' : '미사용'}
+                      size="small"
+                      color={zone.useYn === 'Y' ? 'success' : 'default'}
+                      variant="light"
+                    />
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
@@ -263,7 +280,9 @@ export default function McsZones() {
                       <Button
                         size="small"
                         color="error"
-                        startIcon={isPending(`delete-zone-${zone.zoneId}`) ? <CircularProgress size={14} color="inherit" /> : <DeleteOutlined />}
+                        startIcon={
+                          isPending(`delete-zone-${zone.zoneId}`) ? <CircularProgress size={14} color="inherit" /> : <DeleteOutlined />
+                        }
                         disabled={isBusy}
                         onClick={() => handleDelete(zone)}
                       >
@@ -276,14 +295,10 @@ export default function McsZones() {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={page.totalElements}
-          page={Math.max((page.currentPage || 1) - 1, 0)}
-          rowsPerPage={page.size || query.size}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setQuery((current) => ({ ...current, page: nextPage + 1 }))}
-          onRowsPerPageChange={(event) => setQuery({ page: 1, size: Number(event.target.value) })}
+        <TablePager
+          page={page.currentPage || 1}
+          count={page.totalPages ?? Math.ceil((page.totalElements || 0) / (page.size || query.size || 10))}
+          onChange={(nextPage) => setQuery((current) => ({ ...current, page: nextPage }))}
         />
       </MainCard>
 
@@ -316,10 +331,25 @@ export default function McsZones() {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth size="small" required disabled={!!editingZone} label="Zone 코드" value={form.zoneCd} onChange={(event) => handleFormValue('zoneCd', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                required
+                disabled={!!editingZone}
+                label="Zone 코드"
+                value={form.zoneCd}
+                onChange={(event) => handleFormValue('zoneCd', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField fullWidth size="small" required label="Zone 명" value={form.zoneNm} onChange={(event) => handleFormValue('zoneNm', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                required
+                label="Zone 명"
+                value={form.zoneNm}
+                onChange={(event) => handleFormValue('zoneNm', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth size="small">
@@ -334,7 +364,14 @@ export default function McsZones() {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth size="small" type="number" label="정렬 순서" value={form.sortSeq} onChange={(event) => handleFormValue('sortSeq', event.target.value)} />
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="정렬 순서"
+                value={form.sortSeq}
+                onChange={(event) => handleFormValue('sortSeq', event.target.value)}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth size="small">
@@ -360,7 +397,12 @@ export default function McsZones() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
         {message && (
           <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
             {message.text}

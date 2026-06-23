@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
-import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
-import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -16,6 +14,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import MainCard from 'components/MainCard';
+import TablePager from 'components/TablePager';
 import { bomApi } from 'api/mes/bom';
 
 const PAGE_SIZE = 10;
@@ -118,11 +117,7 @@ export default function MesBom() {
           </Table>
         </TableContainer>
 
-        {totalPages > 1 && (
-          <Box display="flex" justifyContent="center">
-            <Pagination count={totalPages} page={page} onChange={(event, value) => setPage(value)} color="primary" />
-          </Box>
-        )}
+        <TablePager page={page} count={totalPages} onChange={setPage} />
       </Stack>
     </MainCard>
   );

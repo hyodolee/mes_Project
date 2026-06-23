@@ -22,7 +22,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
+import TablePager from 'components/TablePager';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -47,7 +47,15 @@ function getApiData(response, fallback) {
 }
 
 export default function McsInbounds() {
-  const [search, setSearch] = useState({ plantCd: '', vendorCd: '', warehouseCd: '', inboundStatus: '', inboundNo: '', fromDate: '', toDate: '' });
+  const [search, setSearch] = useState({
+    plantCd: '',
+    vendorCd: '',
+    warehouseCd: '',
+    inboundStatus: '',
+    inboundNo: '',
+    fromDate: '',
+    toDate: ''
+  });
   const [query, setQuery] = useState({ page: 1, size: 10 });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingInbound, setEditingInbound] = useState(null);
@@ -56,7 +64,12 @@ export default function McsInbounds() {
   const [pendingAction, setPendingAction] = useState(null);
 
   const inboundParams = useMemo(() => ({ ...search, ...query }), [search, query]);
-  const { data: inboundResponse, error: inboundError, isLoading, mutate } = useSWR(['mcs-inbounds', inboundParams], () => inboundApi.list(inboundParams));
+  const {
+    data: inboundResponse,
+    error: inboundError,
+    isLoading,
+    mutate
+  } = useSWR(['mcs-inbounds', inboundParams], () => inboundApi.list(inboundParams));
   const { data: plantResponse } = useSWR('mcs-reference-plants', () => mcsReferenceApi.plants());
   const { data: warehouseResponse } = useSWR('mcs-reference-warehouses', () => mcsReferenceApi.warehouses({ useYn: 'Y' }));
   const { data: vendorResponse } = useSWR('mcs-reference-vendors', () => mcsReferenceApi.vendors({ useYn: 'Y' }));
@@ -175,7 +188,8 @@ export default function McsInbounds() {
     }
   };
 
-  const getStatusLabel = (inbound) => inbound.inboundStatusNm || statuses.find((status) => status.comCd === inbound.inboundStatus)?.comNm || inbound.inboundStatus;
+  const getStatusLabel = (inbound) =>
+    inbound.inboundStatusNm || statuses.find((status) => status.comCd === inbound.inboundStatus)?.comNm || inbound.inboundStatus;
 
   return (
     <Stack spacing={3}>
@@ -239,7 +253,11 @@ export default function McsInbounds() {
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>상태</InputLabel>
-              <Select label="상태" value={search.inboundStatus} onChange={(event) => handleSearchValue('inboundStatus', event.target.value)}>
+              <Select
+                label="상태"
+                value={search.inboundStatus}
+                onChange={(event) => handleSearchValue('inboundStatus', event.target.value)}
+              >
                 <MenuItem value="">전체</MenuItem>
                 {statuses.map((status) => (
                   <MenuItem key={status.comCd} value={status.comCd}>
@@ -250,7 +268,13 @@ export default function McsInbounds() {
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth size="small" label="입고번호" value={search.inboundNo} onChange={(event) => handleSearchValue('inboundNo', event.target.value)} />
+            <TextField
+              fullWidth
+              size="small"
+              label="입고번호"
+              value={search.inboundNo}
+              onChange={(event) => handleSearchValue('inboundNo', event.target.value)}
+            />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
@@ -320,17 +344,31 @@ export default function McsInbounds() {
                   <TableCell>{inbound.expectedDt}</TableCell>
                   <TableCell>{inbound.actualDt || '-'}</TableCell>
                   <TableCell>
-                    <Chip label={getStatusLabel(inbound)} size="small" color={inbound.inboundStatus === 'COMPLETED' ? 'success' : 'primary'} variant="light" />
+                    <Chip
+                      label={getStatusLabel(inbound)}
+                      size="small"
+                      color={inbound.inboundStatus === 'COMPLETED' ? 'success' : 'primary'}
+                      variant="light"
+                    />
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                      <Button size="small" startIcon={<EditOutlined />} disabled={isBusy || inbound.inboundStatus !== 'PLANNED'} onClick={() => openEditDialog(inbound)}>
+                      <Button
+                        size="small"
+                        startIcon={<EditOutlined />}
+                        disabled={isBusy || inbound.inboundStatus !== 'PLANNED'}
+                        onClick={() => openEditDialog(inbound)}
+                      >
                         수정
                       </Button>
                       {inbound.inboundStatus !== 'COMPLETED' && (
                         <Button
                           size="small"
-                          startIcon={isPending(`status-inbound-${inbound.inboundId}-COMPLETED`) ? <CircularProgress size={14} color="inherit" /> : undefined}
+                          startIcon={
+                            isPending(`status-inbound-${inbound.inboundId}-COMPLETED`) ? (
+                              <CircularProgress size={14} color="inherit" />
+                            ) : undefined
+                          }
                           disabled={isBusy}
                           onClick={() => handleStatus(inbound, 'COMPLETED')}
                         >
@@ -340,7 +378,13 @@ export default function McsInbounds() {
                       <Button
                         size="small"
                         color="error"
-                        startIcon={isPending(`delete-inbound-${inbound.inboundId}`) ? <CircularProgress size={14} color="inherit" /> : <DeleteOutlined />}
+                        startIcon={
+                          isPending(`delete-inbound-${inbound.inboundId}`) ? (
+                            <CircularProgress size={14} color="inherit" />
+                          ) : (
+                            <DeleteOutlined />
+                          )
+                        }
                         disabled={isBusy || inbound.inboundStatus !== 'PLANNED'}
                         onClick={() => handleDelete(inbound)}
                       >
@@ -353,14 +397,10 @@ export default function McsInbounds() {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={page.totalElements}
-          page={Math.max((page.currentPage || 1) - 1, 0)}
-          rowsPerPage={page.size || query.size}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, nextPage) => setQuery((current) => ({ ...current, page: nextPage + 1 }))}
-          onRowsPerPageChange={(event) => setQuery({ page: 1, size: Number(event.target.value) })}
+        <TablePager
+          page={page.currentPage || 1}
+          count={page.totalPages ?? Math.ceil((page.totalElements || 0) / (page.size || query.size || 10))}
+          onChange={(nextPage) => setQuery((current) => ({ ...current, page: nextPage }))}
         />
       </MainCard>
 
@@ -453,7 +493,12 @@ export default function McsInbounds() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={!!message} autoHideDuration={3500} onClose={() => setMessage(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+      <Snackbar
+        open={!!message}
+        autoHideDuration={3500}
+        onClose={() => setMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
         {message && (
           <Alert severity={message.severity} variant="filled" onClose={() => setMessage(null)}>
             {message.text}
