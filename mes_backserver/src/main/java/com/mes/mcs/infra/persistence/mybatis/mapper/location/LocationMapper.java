@@ -13,7 +13,7 @@ public interface LocationMapper {
     List<LocationDto> selectLocationList(LocationSearchDto searchDto);
     long selectLocationCount(LocationSearchDto searchDto);
     Optional<LocationDto> selectLocationById(Long locationId);
-    Optional<LocationDto> selectLocationByCd(Long zoneId, String locationCd);
+    Optional<LocationDto> selectLocationByCd(@Param("zoneId") Long zoneId, @Param("locationCd") String locationCd);
     List<LocationDto> selectAutoTransferDestinations(
             @Param("plantCd") String plantCd,
             @Param("sourceLocationId") Long sourceLocationId

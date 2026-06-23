@@ -13,7 +13,7 @@ import org.springframework.web.context.request.async.AsyncRequestNotUsableExcept
 import java.util.HashMap;
 import java.util.Map;
 
-@RestControllerAdvice(basePackages = "com.mes.interfaces.api")
+@RestControllerAdvice(basePackages = {"com.mes.interfaces.api", "com.mes.mcs.interfaces.api"})
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
