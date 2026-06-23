@@ -156,8 +156,9 @@ export default function MesQuality() {
           cardTitle="검사 결과 목록"
           swrKey="mes-inspect-results"
           fetcher={mesQualityApi.inspectResults}
-          initialSearch={{ plantCd: '', itemCd: '', fromDt: '', toDt: '', inspectId: '' }}
+          initialSearch={{ inspectNo: '', plantCd: '', itemCd: '', fromDt: '', toDt: '' }}
           filters={[
+            { field: 'inspectNo', label: '검사번호' },
             { field: 'plantCd', label: '공장' },
             { field: 'itemCd', label: '품목 코드' },
             { field: 'fromDt', label: 'From', type: 'date' },
