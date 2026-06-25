@@ -8,11 +8,19 @@ import com.mes.infra.persistence.mybatis.mapper.ai.AiNotificationMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * PLC 이벤트를 운영자 알림으로 변환하는 서비스.
+ *
+ * <p>
+ * 알림 생성의 중심 흐름은 다음과 같다.
+ * PLC 이벤트 ID 수신 -> 이벤트 상세 조회 -> 알림 대상 여부 판단 -> AI 문구 생성(또는 기본 문구)
+ * -> DB 저장 -> SSE 화면 push -> 메일 발송.
+ * </p>
+ */
 @Service
 public class AiNotificationService {
 
@@ -55,24 +63,29 @@ public class AiNotificationService {
         this.sensitiveDataSanitizer = sensitiveDataSanitizer;
     }
 
-    @Scheduled(fixedDelay = 60_000)
-    public void detectAndNotify() {
+    /**
+     * PLC 이벤트 1건을 받아 알림 생성이 필요한지 판단한다.
+     *
+     * <p>
+     * 리스너는 eventId만 넘겨주므로 여기서 다시 이벤트 상세를 조회한다.
+     * 이렇게 하면 이벤트 발행 객체가 커지지 않고, 알림 서비스가 필요한 데이터만 책임지고 가져온다.
+     * </p>
+     */
+    public void notifyPlcEvent(Long eventId) {
         try {
-            List<com.mes.application.service.planning.McsTransferClient.McsPlcEventSummary> events =
-                    mcsTransferClient.getRecentPlcEvents(20);
-
-            events.stream()
-                    .filter(this::isAlertTarget)
-                    .filter(e -> mapper.countBySourceRef("PLC_EVENT#" + e.getEventId()) == 0)
-                    .forEach(this::createNotification);
-
+            var event = mcsTransferClient.getPlcEvent(eventId);
+            if (!isAlertTarget(event)) {
+                return;
+            }
+            createNotification(event);
         } catch (Exception e) {
-            log.debug("PLC 이벤트 조회 실패 (MCS 미연결): {}", e.getMessage());
+            log.warn("PLC event notification failed (eventId={}): {}", eventId, e.getMessage(), e);
         }
     }
 
     /**
-     * 최근 PLC 이벤트 중 운영자 알림으로 만들 이벤트인지 판단한다.
+     * 모든 PLC 이벤트가 알림이 되면 화면이 너무 시끄러워진다.
+     * 검증 실패, ERROR, 인터록, 타임아웃, 오도착처럼 운영자가 봐야 할 이벤트만 통과시킨다.
      */
     private boolean isAlertTarget(com.mes.application.service.planning.McsTransferClient.McsPlcEventSummary event) {
         String eventType = AiTextSupport.text(event.getEventType()).toUpperCase();
@@ -94,6 +107,10 @@ public class AiNotificationService {
     private void createNotification(com.mes.application.service.planning.McsTransferClient.McsPlcEventSummary event) {
         try {
             String sourceRef = "PLC_EVENT#" + event.getEventId();
+            // 같은 PLC 이벤트로 알림이 여러 번 생성되지 않게 sourceRef로 중복을 막는다.
+            if (mapper.countBySourceRef(sourceRef) > 0) {
+                return;
+            }
             String eventInfo = sensitiveDataSanitizer.mask(String.format("설비: %s, 유형: %s, 오류코드: %s, 메시지: %s",
                     event.getEquipmentCd(), event.getEventType(), event.getErrorCode(), event.getEventMessage()));
 
@@ -103,6 +120,7 @@ public class AiNotificationService {
 
             ChatClient.Builder builder = aiClientGateway.getBuilderOrNull();
             if (builder != null) {
+                // AI가 설정되어 있으면 현장 담당자가 읽기 쉬운 제목/내용으로 요약한다.
                 String json = builder.build()
                         .prompt()
                         .user(ALERT_PROMPT + eventInfo)
@@ -118,12 +136,14 @@ public class AiNotificationService {
                 severity = defaultSeverity(event.getEventType());
             }
 
+            // AI 응답이 길거나 형식이 흔들려도 화면에 표시 가능한 길이와 심각도로 보정한다.
             title = AiTextSupport.compactText(title, 30, "설비 알림");
             message = AiTextSupport.compactText(message, 160, "설비 이상이 감지되었습니다.");
             severity = normalizeSeverity(severity, event.getEventType());
 
             AiNotificationDto dto = new AiNotificationDto(null, title, message, severity, sourceRef, false, null);
             mapper.insert(dto);
+            // 저장 이후 화면/메일 채널로 전파한다. 메일 실패는 NotificationEmailSender 내부에서 삼킨다.
             sseEmitterService.pushNewNotification();
             emailSender.send(title, message, severity);
             log.info("AI 알림 생성: [{}] {}", severity, title);
@@ -163,14 +183,23 @@ public class AiNotificationService {
         return mapper.findRecent(limit);
     }
 
+    /**
+     * 헤더 뱃지 등에 표시할 읽지 않은 알림 수를 조회한다.
+     */
     public int getUnreadCount() {
         return mapper.countUnread();
     }
 
+    /**
+     * 사용자가 특정 알림을 확인했을 때 읽음 처리한다.
+     */
     public void markAsRead(Long id) {
         mapper.markAsRead(id);
     }
 
+    /**
+     * 알림 목록에서 전체 읽음 처리를 할 때 사용한다.
+     */
     public void markAllAsRead() {
         mapper.markAllAsRead();
     }

@@ -28,8 +28,8 @@ RAG는 단계적으로 도입합니다. 현재 코드 상태와 목표를 구분
 | 단계 | 방식 | 상태 |
 |---|---|---|
 | 1차 | 로컬 Markdown 키워드 검색 (`OperationDocumentSearchService`) | 구현됨 — 매칭 라인 주변 스니펫 반환 |
-| 2차 | Vector RAG (Chroma 등 임베딩 검색) | 예정 — 아래 "RAG 적재 기준"의 청크 단위 적용 |
-| 3차 | Graph RAG (이벤트·필드·태그·조치 관계 탐색) | 예정 — [GRAPH_RAG_DEMO_SCENARIO.md](GRAPH_RAG_DEMO_SCENARIO.md) 참고 |
+| 2차 | Vector RAG (Chroma 등 임베딩 검색) | 구현됨 — 문서 업로드/청크/임베딩 검색 적용 |
+| 3차 | Graph RAG (Neo4j 이벤트·필드·태그·조치 관계 탐색) | 1차 구현됨 — PLC 이벤트 중심 고정 관계 그래프 + AI Tool 적용 |
 
 ## RAG 적재 기준
 

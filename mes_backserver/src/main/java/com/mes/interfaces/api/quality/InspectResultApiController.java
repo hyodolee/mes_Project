@@ -23,12 +23,13 @@ public class InspectResultApiController {
 
     @GetMapping
     public ApiResponse<List<InspectResultDto>> getInspectResults(
+            @RequestParam(name = "inspectNo", required = false) String inspectNo,
             @RequestParam(name = "plantCd", required = false) String plantCd,
             @RequestParam(name = "itemCd", required = false) String itemCd,
             @RequestParam(name = "fromDt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDt,
             @RequestParam(name = "toDt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDt
     ) {
-        return ApiResponse.ok(inspectResultService.getInspectResults(plantCd, itemCd, fromDt, toDt));
+        return ApiResponse.ok(inspectResultService.getInspectResults(inspectNo, plantCd, itemCd, fromDt, toDt));
     }
 
     @GetMapping("/{inspectId}")

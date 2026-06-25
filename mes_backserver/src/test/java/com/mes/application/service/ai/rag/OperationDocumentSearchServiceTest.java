@@ -1,4 +1,4 @@
-package com.mes.application.service.ai.query;
+package com.mes.application.service.ai.rag;
 
 import com.mes.application.service.ai.support.SensitiveDataSanitizer;
 import org.junit.jupiter.api.BeforeEach;

@@ -13,6 +13,7 @@ import java.util.List;
 @Mapper
 public interface InspectResultMapper {
     List<InspectResultDto> selectInspectResults(
+        @Param("inspectNo") String inspectNo,
         @Param("plantCd") String plantCd,
         @Param("itemCd") String itemCd,
         @Param("inspectFromDt") LocalDate inspectFromDt,

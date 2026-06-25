@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class InspectResultSearchDto extends PageRequest {
+    private String inspectNo;
     private String plantCd;
     private String itemCd;
     private LocalDate inspectFromDt;

@@ -7,11 +7,13 @@ import com.mes.mcs.application.service.transfer.TransferService;
 import com.mes.mcs.domain.plc.dto.PlcEventDto;
 import com.mes.mcs.domain.plc.dto.PlcEventRequest;
 import com.mes.mcs.domain.plc.dto.PlcEventSearchDto;
+import com.mes.mcs.domain.plc.event.PlcEventProcessedEvent;
 import com.mes.global.common.dto.PageResponse;
 import com.mes.global.exception.BusinessException;
 import com.mes.global.exception.ErrorCode;
 import com.mes.mcs.infra.persistence.mybatis.mapper.plc.PlcEventMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ public class PlcEventService {
     private final TransferService transferService;
     private final RouteService routeService;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PageResponse<PlcEventDto> getEventList(PlcEventSearchDto searchDto) {
         var list = plcEventMapper.selectPlcEventList(searchDto);
@@ -45,14 +48,17 @@ public class PlcEventService {
             PayloadValidation validation = validatePayload(request, event);
             if (!validation.valid()) {
                 plcEventMapper.updateProcessResult(event.getEventId(), "VALIDATION_FAILED", validation.message());
-                return event;
+            } else {
+                processEvent(event);
+                plcEventMapper.updateProcessResult(event.getEventId(), "SUCCESS", "processed");
             }
-            processEvent(event);
-            plcEventMapper.updateProcessResult(event.getEventId(), "SUCCESS", "processed");
         } catch (RuntimeException e) {
             plcEventMapper.updateProcessResult(event.getEventId(), "FAILED", e.getMessage());
         }
 
+        // PLC 이벤트 저장/처리 트랜잭션이 끝난 뒤 알림 리스너가 이 eventId로 알림을 생성한다.
+        // 알림 생성은 별도 관심사라 이 서비스에서 직접 메일/SSE를 호출하지 않는다.
+        eventPublisher.publishEvent(new PlcEventProcessedEvent(event.getEventId()));
         return event;
     }
 
@@ -146,7 +152,7 @@ public class PlcEventService {
                 requireText(missingFields, event.getEventMessage(), "message");
             }
             default -> {
-                // Unsupported event types are handled by processEvent after basic validation.
+                // 지원하지 않는 이벤트 타입은 기본 필수값 확인 후 processEvent에서 명확한 예외로 처리한다.
             }
         }
 

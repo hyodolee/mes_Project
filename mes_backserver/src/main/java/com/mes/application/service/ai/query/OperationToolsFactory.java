@@ -9,6 +9,13 @@ import com.mes.application.service.planning.ProdPlanService;
 import com.mes.application.service.planning.WorkOrderService;
 import com.mes.application.service.production.DefectHistoryService;
 import com.mes.application.service.quality.InspectResultService;
+import com.mes.application.service.ai.query.tools.McsAiTools;
+import com.mes.application.service.ai.query.tools.MesAiTools;
+import com.mes.application.service.ai.query.tools.OperationStatusAiTools;
+import com.mes.application.service.ai.query.tools.OperationToolSet;
+import com.mes.application.service.ai.query.tools.RagAiTools;
+import com.mes.application.service.ai.rag.OperationDocumentSearchService;
+import com.mes.application.service.ai.rag.OperationGraphSearchService;
 import com.mes.mcs.infra.persistence.mybatis.mapper.inventory.InventoryMapper;
 import com.mes.mcs.infra.persistence.mybatis.mapper.location.LocationMapper;
 import com.mes.mcs.infra.persistence.mybatis.mapper.plc.PlcEventMapper;
@@ -35,6 +42,7 @@ public class OperationToolsFactory {
     private final ProdPlanService prodPlanService;
     private final DefectHistoryService defectHistoryService;
     private final InspectResultService inspectResultService;
+    private final OperationGraphSearchService graphSearchService;
     private final OperationDocumentSearchService documentSearchService;
     private final RouteMapper mcsRouteMapper;
     private final LocationMapper mcsLocationMapper;
@@ -51,6 +59,7 @@ public class OperationToolsFactory {
             ProdPlanService prodPlanService,
             DefectHistoryService defectHistoryService,
             InspectResultService inspectResultService,
+            OperationGraphSearchService graphSearchService,
             OperationDocumentSearchService documentSearchService,
             RouteMapper mcsRouteMapper,
             LocationMapper mcsLocationMapper,
@@ -66,6 +75,7 @@ public class OperationToolsFactory {
         this.prodPlanService = prodPlanService;
         this.defectHistoryService = defectHistoryService;
         this.inspectResultService = inspectResultService;
+        this.graphSearchService = graphSearchService;
         this.documentSearchService = documentSearchService;
         this.mcsRouteMapper = mcsRouteMapper;
         this.mcsLocationMapper = mcsLocationMapper;
@@ -73,24 +83,36 @@ public class OperationToolsFactory {
         this.mcsPlcEventMapper = mcsPlcEventMapper;
     }
 
-    public OperationTools create(List<String> dataPoints) {
-        // dataPoints는 이번 질문에서 실제 조회한 내역을 담으므로 요청마다 새 도구를 만든다.
-        return new OperationTools(
+    public OperationToolSet create(List<String> dataPoints) {
+        // dataPoints는 이번 질문에서 실제 조회한 내역을 담으므로 요청마다 새 도구 묶음을 만든다.
+        McsAiTools mcsTools = new McsAiTools(
                 mcsTransferClient,
-                workOrderService,
-                plantService,
-                itemService,
-                inventoryService,
-                equipmentService,
-                prodPlanService,
-                defectHistoryService,
-                inspectResultService,
-                documentSearchService,
                 mcsRouteMapper,
                 mcsLocationMapper,
                 mcsInventoryMapper,
                 mcsPlcEventMapper,
                 dataPoints
         );
+        MesAiTools mesTools = new MesAiTools(
+                workOrderService,
+                prodPlanService,
+                plantService,
+                itemService,
+                dataPoints
+        );
+        OperationStatusAiTools statusTools = new OperationStatusAiTools(
+                inventoryService,
+                equipmentService,
+                inspectResultService,
+                defectHistoryService,
+                dataPoints
+        );
+        RagAiTools ragTools = new RagAiTools(
+                graphSearchService,
+                documentSearchService,
+                dataPoints
+        );
+
+        return new OperationToolSet(mcsTools, mesTools, statusTools, ragTools);
     }
 }

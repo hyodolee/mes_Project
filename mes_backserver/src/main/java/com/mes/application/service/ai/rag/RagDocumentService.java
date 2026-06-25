@@ -1,4 +1,4 @@
-package com.mes.application.service.ai.query;
+package com.mes.application.service.ai.rag;
 
 import com.mes.domain.ai.dto.RagDocumentDto;
 import com.mes.domain.ai.dto.RagDocumentUploadResponse;

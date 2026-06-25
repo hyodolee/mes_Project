@@ -28,8 +28,8 @@ public class InspectResultService {
         this.inspectResultMapper = inspectResultMapper;
     }
 
-    public List<InspectResultDto> getInspectResults(String plantCd, String itemCd, LocalDate fromDt, LocalDate toDt) {
-        return inspectResultMapper.selectInspectResults(plantCd, itemCd, fromDt, toDt);
+    public List<InspectResultDto> getInspectResults(String inspectNo, String plantCd, String itemCd, LocalDate fromDt, LocalDate toDt) {
+        return inspectResultMapper.selectInspectResults(inspectNo, plantCd, itemCd, fromDt, toDt);
     }
 
     public PageResponse<InspectResultDto> getInspectResultPage(InspectResultSearchDto searchDto) {

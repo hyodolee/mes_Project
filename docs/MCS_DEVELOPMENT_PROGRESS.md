@@ -182,7 +182,7 @@ MCS는 MES와 같은 `MES_DB`를 사용합니다. MCS 전용 테이블은 `MCS_`
 | 4 | ~~Chroma 연결~~ | 완료 — Docker Chroma + Spring AI VectorStore 연결 |
 | 5 | ~~RAG 검색 결과 검증~~ | 완료 — 3단계 전환 데모로 답변 품질 차이 검증 |
 | 6 | Chroma 볼륨 마운트 정리 | 볼륨이 `/chroma/chroma`(구버전 경로)에 마운트됨 → `/data`로 수정해 영속화 |
-| 7 | Graph RAG 검토 | `docs/rag/GRAPH_RAG_DEMO_SCENARIO.md` 기반 차기 단계 |
+| 7 | Graph RAG 1차 적용 | Neo4j 기반 PLC 이벤트·필드·태그·SOP 관계 검색 Tool 추가 |
 
 ## 참고 문서
 

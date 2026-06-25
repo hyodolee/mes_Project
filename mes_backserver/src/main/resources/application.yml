@@ -1,6 +1,11 @@
 spring:
   application:
     name: mes_backserver
+  neo4j:
+    uri: ${NEO4J_URI:bolt://localhost:7687}
+    authentication:
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:mesneo4j1234}
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:missing}
@@ -47,6 +52,11 @@ mybatis:
 ai:
   rag:
     upload-dir: ${AI_RAG_UPLOAD_DIR:../tmp/rag-uploads}
+  graph-rag:
+    enabled: ${AI_GRAPH_RAG_ENABLED:true}
+    seed-enabled: ${AI_GRAPH_RAG_SEED_ENABLED:true}
+    seed-retry-attempts: ${AI_GRAPH_RAG_SEED_RETRY_ATTEMPTS:6}
+    seed-retry-delay-ms: ${AI_GRAPH_RAG_SEED_RETRY_DELAY_MS:3000}
 
 management:
   endpoints:

@@ -1,6 +1,6 @@
 package com.mes.interfaces.api.ai;
 
-import com.mes.application.service.ai.query.RagDocumentService;
+import com.mes.application.service.ai.rag.RagDocumentService;
 import com.mes.domain.ai.dto.RagDocumentDto;
 import com.mes.domain.ai.dto.RagDocumentUploadResponse;
 import com.mes.global.response.ApiResponse;

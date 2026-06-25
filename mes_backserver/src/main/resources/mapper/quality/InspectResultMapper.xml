@@ -75,6 +75,9 @@
             ir.REG_DTM AS regDtm
         FROM QC_INSPECT_RESULT ir
         WHERE 1 = 1
+        <if test="inspectNo != null and inspectNo != ''">
+            AND ir.INSPECT_NO = #{inspectNo}
+        </if>
         <if test="plantCd != null and plantCd != ''">
             AND ir.PLANT_CD = #{plantCd}
         </if>
@@ -117,6 +120,9 @@
             ir.REG_DTM AS regDtm
         FROM QC_INSPECT_RESULT ir
         WHERE 1 = 1
+        <if test="inspectNo != null and inspectNo != ''">
+            AND ir.INSPECT_NO = #{inspectNo}
+        </if>
         <if test="plantCd != null and plantCd != ''">
             AND ir.PLANT_CD = #{plantCd}
         </if>
@@ -137,6 +143,9 @@
         SELECT COUNT(*)
         FROM QC_INSPECT_RESULT ir
         WHERE 1 = 1
+        <if test="inspectNo != null and inspectNo != ''">
+            AND ir.INSPECT_NO = #{inspectNo}
+        </if>
         <if test="plantCd != null and plantCd != ''">
             AND ir.PLANT_CD = #{plantCd}
         </if>

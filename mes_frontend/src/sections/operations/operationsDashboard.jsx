@@ -398,7 +398,7 @@ export function useOperationsDashboard() {
         ...inspect,
         id: inspect.inspectId,
         detailUrl: buildUrl('/mes/quality', {
-          inspectId: inspect.inspectId,
+          inspectNo: inspect.inspectNo,
           itemCd: inspect.itemCd,
           fromDt: inspect.inspectDt,
           toDt: inspect.inspectDt

@@ -3,6 +3,7 @@ package com.mes.application.service.ai.query;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,6 +53,11 @@ public class ConversationImageStore {
         }
     }
 
+    /** data URL 형식 이미지를 해석해 대화 보관소에 추가한다. */
+    public void addDataUrl(String convId, String dataUrl) {
+        add(convId, decodeImage(dataUrl));
+    }
+
     /** 해당 대화의 보관 이미지 목록 반환 (없으면 빈 목록). 모델 요청에 첨부할 때 사용. */
     public List<HeldImage> get(String convId) {
         List<HeldImage> list = cache.getIfPresent(convId);
@@ -66,5 +72,12 @@ public class ConversationImageStore {
     /** 해당 대화의 이미지 전체 삭제 (새 대화 시작 / 대화 비움 때 호출). */
     public void clear(String convId) {
         cache.invalidate(convId);
+    }
+
+    private HeldImage decodeImage(String dataUrl) {
+        String meta = dataUrl.substring(5, dataUrl.indexOf(';')); // image/png
+        String base64 = dataUrl.substring(dataUrl.indexOf(',') + 1);
+        byte[] bytes = Base64.getDecoder().decode(base64);
+        return new HeldImage(bytes, MimeType.valueOf(meta), Instant.now());
     }
 }

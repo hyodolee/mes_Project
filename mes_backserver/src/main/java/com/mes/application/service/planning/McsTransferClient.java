@@ -130,6 +130,17 @@ public class McsTransferClient {
                 .toList();
     }
 
+    public McsPlcEventSummary getPlcEvent(Long eventId) {
+        PlcEventSearchDto searchDto = new PlcEventSearchDto();
+        searchDto.setEventId(eventId);
+        searchDto.setPage(1);
+        searchDto.setSize(1);
+        return plcEventService.getEventList(searchDto).getContent().stream()
+                .findFirst()
+                .map(this::toPlcEventSummary)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_ERROR, "PLC event not found: " + eventId));
+    }
+
     public List<McsPlcEventSummary> getPlcEventsByTransfer(Long transferId, int size) {
         PlcEventSearchDto searchDto = new PlcEventSearchDto();
         searchDto.setTargetType("TRANSFER");
