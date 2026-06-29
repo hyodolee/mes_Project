@@ -12,7 +12,7 @@ import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import { ThunderboltOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, WarningOutlined } from '@ant-design/icons';
 
 import MainCard from 'components/MainCard';
 import { plcSimApi } from 'api/mes/plcSim';
@@ -22,7 +22,6 @@ function getApiData(response, fallback) {
   return response?.data ?? fallback;
 }
 
-// 시나리오별 버튼 색상 (정상=초록, 그 외 문제=빨강/주황)
 function scenarioColor(code) {
   if (code === 'NORMAL') return 'success';
   if (code === 'EQUIPMENT_ERROR' || code === 'INTERLOCK') return 'warning';
@@ -44,7 +43,6 @@ export default function McsPlcSimulator() {
     revalidateOnFocus: false
   });
 
-  // 이동오더 목록: PageResponse면 content, 배열이면 그대로
   const transfers = useMemo(() => {
     const raw = getApiData(transfersData, []);
     return Array.isArray(raw) ? raw : raw?.content ?? [];
@@ -57,17 +55,39 @@ export default function McsPlcSimulator() {
       setMessage({ severity: 'warning', text: '먼저 이동오더를 선택해 주세요.' });
       return;
     }
+
     setWorking(scenario.code);
     setMessage(null);
+
     try {
       const res = await plcSimApi.fire(Number(transferId), scenario.code);
       const sent = res?.data?.eventsSent ?? 0;
       setMessage({
         severity: 'success',
-        text: `[${scenario.label}] 이벤트 ${sent}건 발생 완료. 1분 안에 알림/PLC 이벤트 화면에 반영됩니다.`
+        text: `[${scenario.label}] 이벤트 ${sent}건 발생 완료. 잠시 후 알림/PLC 이벤트 화면에 반영됩니다.`
       });
     } catch (fireError) {
       setMessage({ severity: 'error', text: fireError.message || '이벤트 발생에 실패했습니다.' });
+    } finally {
+      setWorking('');
+    }
+  };
+
+  const handleSentryError = async () => {
+    setWorking('SENTRY_ERROR');
+    setMessage(null);
+
+    try {
+      await plcSimApi.sentryError(transferId);
+      setMessage({
+        severity: 'warning',
+        text: 'Sentry 테스트 API가 에러 없이 종료되었습니다. 백엔드 설정을 확인해 주세요.'
+      });
+    } catch (sentryError) {
+      setMessage({
+        severity: 'error',
+        text: `의도한 Sentry 테스트 에러가 발생했습니다. Sentry Issues에서 "PLC simulator Sentry error test"를 확인하세요. (${sentryError.message})`
+      });
     } finally {
       setWorking('');
     }
@@ -77,7 +97,7 @@ export default function McsPlcSimulator() {
     <MainCard title="PLC 이벤트 시뮬레이터">
       <Stack spacing={3}>
         <Typography variant="body2" color="text.secondary">
-          CMD 없이 버튼으로 PLC 이벤트를 발생시킵니다. 이동오더를 고르고 시나리오 버튼을 누르세요. (데모/테스트 전용)
+          버튼으로 PLC 이벤트를 발생시킵니다. 이동오더를 고르고 시나리오 버튼을 누르세요. 데모/테스트 전용 화면입니다.
         </Typography>
 
         <FormControl sx={{ maxWidth: 420 }}>
@@ -125,6 +145,21 @@ export default function McsPlcSimulator() {
               </Grid>
             ))}
           </Grid>
+        </Box>
+
+        <Box>
+          <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
+            운영 모니터링 테스트
+          </Typography>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<WarningOutlined />}
+            disabled={Boolean(working)}
+            onClick={handleSentryError}
+          >
+            {working === 'SENTRY_ERROR' ? '에러 발생 중...' : 'Sentry 에러 발생'}
+          </Button>
         </Box>
       </Stack>
     </MainCard>

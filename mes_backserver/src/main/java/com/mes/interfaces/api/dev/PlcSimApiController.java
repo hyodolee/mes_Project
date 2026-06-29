@@ -3,6 +3,8 @@ package com.mes.interfaces.api.dev;
 import com.mes.global.response.ApiResponse;
 import com.mes.mcs.application.service.plc.PlcEventService;
 import com.mes.mcs.domain.plc.dto.PlcEventRequest;
+import io.sentry.Sentry;
+import io.sentry.protocol.SentryId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,14 +18,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * PLC 이벤트 시뮬레이터 (데모/테스트용).
+ * PLC event simulator for local/demo testing.
  *
- * <p>CMD에서 PowerShell 스크립트를 돌리는 대신, 화면 버튼으로 PLC 이벤트를 발생시킨다.
- * 가짜 이벤트를 주입하므로 <b>운영 배포 시에는 비활성화</b>한다:
- * {@code app.plc-sim.enabled=false}. (기본값은 켜짐 — 로컬/데모)</p>
- *
- * <p>인증된 사용자만 호출 가능(/api/v1/** 보호 경로). 내부적으로 병합된
- * {@link PlcEventService#receiveEvent}를 직접 호출한다.</p>
+ * <p>
+ * The UI calls this controller to generate representative PLC events without
+ * running an external script. Disable it in production unless a temporary smoke
+ * test is needed: {@code app.plc-sim.enabled=false}.
+ * </p>
  */
 @RestController
 @RequestMapping("/api/v1/dev/plc-sim")
@@ -38,11 +39,11 @@ public class PlcSimApiController {
 
     private final PlcEventService plcEventService;
 
-    /** 화면에 버튼으로 노출할 시나리오 목록 */
+    /** Scenario list rendered as buttons on the PLC simulator screen. */
     @GetMapping("/scenarios")
     public ApiResponse<List<Map<String, String>>> scenarios() {
         return ApiResponse.ok(List.of(
-                Map.of("code", "NORMAL", "label", "정상 이동", "desc", "시작→완료 정상 흐름"),
+                Map.of("code", "NORMAL", "label", "정상 이동", "desc", "시작부터 완료까지 정상 흐름"),
                 Map.of("code", "MISSING_TO_LOCATION", "label", "목적지 누락", "desc", "toLocationCd 빠짐 → 검증 실패"),
                 Map.of("code", "MISSING_LOT", "label", "LOT 누락", "desc", "lotNo 빠짐 → 검증 실패"),
                 Map.of("code", "EQUIPMENT_ERROR", "label", "설비 오류", "desc", "모터 과부하"),
@@ -51,7 +52,32 @@ public class PlcSimApiController {
         ));
     }
 
-    /** 선택한 이동오더에 대해 시나리오 이벤트를 발생시킨다. */
+    /**
+     * Sends a deliberate error to Sentry and returns a 500 response to the UI.
+     *
+     * <p>
+     * This is a smoke-test path for "screen button -> backend error -> Sentry".
+     * It does not create a PLC event and does not change transfer data.
+     * </p>
+     */
+    @PostMapping("/sentry-error")
+    public ApiResponse<Void> fireSentryError(@RequestBody(required = false) PlcSimRequest body) {
+        Long transferId = body == null ? null : body.getTransferId();
+        String transferText = transferId == null ? "none" : String.valueOf(transferId);
+        IllegalStateException exception = new IllegalStateException(
+                "PLC simulator Sentry error test. transferId=" + transferText
+        );
+
+        SentryId eventId = Sentry.captureException(exception);
+        Sentry.flush(2000);
+
+        throw new IllegalStateException(
+                "PLC simulator Sentry error test sent. sentryEventId=" + eventId,
+                exception
+        );
+    }
+
+    /** Generates PLC events for the selected transfer order and scenario. */
     @PostMapping
     public ApiResponse<Map<String, Object>> fire(@RequestBody PlcSimRequest body) {
         if (body == null || body.getTransferId() == null) {
@@ -67,7 +93,7 @@ public class PlcSimApiController {
                 yield 2;
             }
             case "MISSING_TO_LOCATION" -> {
-                // toLocationCd 누락 → MCS 검증 실패(VALIDATION_FAILED)
+                // Missing toLocationCd should be stored as VALIDATION_FAILED by MCS validation.
                 send(transferId, base("TRANSFER_STARTED", "NORMAL", null, LOT_NO, null, "목적지 누락 이동 시작"));
                 yield 1;
             }

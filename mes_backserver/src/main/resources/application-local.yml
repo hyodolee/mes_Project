@@ -7,6 +7,12 @@ spring:
     username: avnadmin
     password: ${MES_DB_PASSWORD}
 
+app:
+  sentry:
+    # Local profile keeps the manual Sentry smoke-test endpoint available
+    # even when the app is started from the Spring Boot dashboard instead of launch.json.
+    test-endpoint-enabled: ${SENTRY_TEST_ENDPOINT_ENABLED:true}
+
 logging:
   level:
     root: INFO

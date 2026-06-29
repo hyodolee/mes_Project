@@ -49,6 +49,12 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  send-default-pii: false
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.0}
+
 ai:
   rag:
     upload-dir: ${AI_RAG_UPLOAD_DIR:../tmp/rag-uploads}
@@ -71,6 +77,9 @@ app:
   # PLC event simulator (demo/test only). Set false in production.
   plc-sim:
     enabled: ${PLC_SIM_ENABLED:true}
+  sentry:
+    # Manual smoke-test endpoint. Keep disabled outside local launch settings.
+    test-endpoint-enabled: ${SENTRY_TEST_ENDPOINT_ENABLED:false}
   notification:
     email:
       # To enable: NOTIFICATION_EMAIL_ENABLED=true + MAIL_* + from/to

@@ -86,6 +86,9 @@ jobs:
             # .env 파일 생성 (Secrets 값으로 매번 갱신)
             cat > .env << 'ENVEOF'
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+            SENTRY_ENVIRONMENT=prod
+            SENTRY_TRACES_SAMPLE_RATE=0.0
             MES_DB_PASSWORD=${{ secrets.MES_DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             OPENAI_MODEL=gpt-5-mini

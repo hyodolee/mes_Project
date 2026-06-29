@@ -27,6 +27,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-data-neo4j'
+    implementation 'io.sentry:sentry-spring-boot-starter-jakarta:6.13.0'
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-chroma'
     implementation 'com.github.ben-manes.caffeine:caffeine'
