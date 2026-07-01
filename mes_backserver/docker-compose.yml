@@ -48,6 +48,7 @@ services:
       # /etc/letsencrypt 전체를 마운트해야 컨테이너 안에서 링크가 풀린다
       - /etc/letsencrypt:/etc/letsencrypt:ro
     environment:
+      TZ: Asia/Seoul                      # 컨테이너/JVM 타임존을 한국시간으로 (로그·Java 시간 일관성)
       SPRING_PROFILES_ACTIVE: prod
       SPRING_AI_VECTORSTORE_CHROMA_CLIENT_HOST: http://chroma
       SPRING_AI_VECTORSTORE_CHROMA_CLIENT_PORT: "8000"
